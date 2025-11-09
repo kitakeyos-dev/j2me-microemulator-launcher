@@ -197,7 +197,9 @@ public class J2meApplicationManager {
 
             props.setProperty(prefix + "id", app.getId());
             props.setProperty(prefix + "name", app.getName());
-            props.setProperty(prefix + "filePath", app.getFilePath());
+
+            // Save relative path instead of absolute path
+            props.setProperty(prefix + "filePath", getRelativePath(app.getFilePath()));
 
             if (app.getVendor() != null) {
                 props.setProperty(prefix + "vendor", app.getVendor());
@@ -206,7 +208,8 @@ public class J2meApplicationManager {
                 props.setProperty(prefix + "version", app.getVersion());
             }
             if (app.getIconPath() != null) {
-                props.setProperty(prefix + "iconPath", app.getIconPath());
+                // Save relative path for icon as well
+                props.setProperty(prefix + "iconPath", getRelativePath(app.getIconPath()));
             }
 
             props.setProperty(prefix + "installedDate", String.valueOf(app.getInstalledDate()));
@@ -240,27 +243,30 @@ public class J2meApplicationManager {
 
                 String id = props.getProperty(prefix + "id");
                 String name = props.getProperty(prefix + "name");
-                String filePath = props.getProperty(prefix + "filePath");
+                String relativeFilePath = props.getProperty(prefix + "filePath");
 
-                if (id == null || name == null || filePath == null) {
+                if (id == null || name == null || relativeFilePath == null) {
                     continue;
                 }
 
-                // Check if file still exists
-                File file = new File(filePath);
+                // Convert relative path to absolute path
+                String absoluteFilePath = getAbsolutePath(relativeFilePath);
+                File file = new File(absoluteFilePath);
                 if (!file.exists()) {
                     continue;
                 }
 
-                J2meApplication app = new J2meApplication(id, name, filePath);
+                J2meApplication app = new J2meApplication(id, name, absoluteFilePath);
                 app.setVendor(props.getProperty(prefix + "vendor"));
                 app.setVersion(props.getProperty(prefix + "version"));
 
-                String iconPath = props.getProperty(prefix + "iconPath");
-                if (iconPath != null) {
-                    app.setIconPath(iconPath);
+                String relativeIconPath = props.getProperty(prefix + "iconPath");
+                if (relativeIconPath != null) {
+                    // Convert relative path to absolute path
+                    String absoluteIconPath = getAbsolutePath(relativeIconPath);
+                    app.setIconPath(absoluteIconPath);
                     // Load icon if it exists
-                    File iconFile = new File(iconPath);
+                    File iconFile = new File(absoluteIconPath);
                     if (iconFile.exists()) {
                         try {
                             Image icon = ImageIO.read(iconFile);
@@ -272,7 +278,7 @@ public class J2meApplicationManager {
                 }
 
                 // Update file size if not set
-                File appFile = new File(filePath);
+                File appFile = new File(absoluteFilePath);
                 if (appFile.exists() && app.getFileSize() == 0) {
                     app.setFileSize(appFile.length());
                 }
@@ -329,6 +335,52 @@ public class J2meApplicationManager {
         for (ApplicationChangeListener listener : listeners) {
             listener.onApplicationRemoved(app);
         }
+    }
+
+    /**
+     * Convert absolute path to relative path (relative to data directory)
+     */
+    private String getRelativePath(String absolutePath) {
+        if (absolutePath == null) {
+            return null;
+        }
+
+        try {
+            File absoluteFile = new File(absolutePath);
+            File baseDir = dataDirectory.getCanonicalFile();
+            File targetFile = absoluteFile.getCanonicalFile();
+
+            // Get relative path
+            String relativePath = baseDir.toURI().relativize(targetFile.toURI()).getPath();
+
+            // Remove trailing slash if present
+            if (relativePath.endsWith("/")) {
+                relativePath = relativePath.substring(0, relativePath.length() - 1);
+            }
+
+            return relativePath;
+        } catch (IOException e) {
+            // If conversion fails, return the original path
+            return absolutePath;
+        }
+    }
+
+    /**
+     * Convert relative path to absolute path (relative to data directory)
+     */
+    private String getAbsolutePath(String relativePath) {
+        if (relativePath == null) {
+            return null;
+        }
+
+        // If already absolute, return as-is
+        File file = new File(relativePath);
+        if (file.isAbsolute()) {
+            return relativePath;
+        }
+
+        // Convert relative to absolute
+        return new File(dataDirectory, relativePath).getAbsolutePath();
     }
 
     /**
