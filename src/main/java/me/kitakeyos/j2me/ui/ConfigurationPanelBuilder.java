@@ -43,6 +43,7 @@ public class ConfigurationPanelBuilder {
         gbc.gridx = 1;
         panel.add(microemulatorPathField, gbc);
         JButton settingsButton = new JButton("Settings");
+        settingsButton.setToolTipText("Open settings to configure MicroEmulator path");
         settingsButton.addActionListener(e -> onOpenSettings.run());
         gbc.gridx = 2;
         panel.add(settingsButton, gbc);
@@ -69,6 +70,7 @@ public class ConfigurationPanelBuilder {
         gbc.gridx = 1;
         panel.add(j2meFilePathField, gbc);
         JButton browseJ2meButton = new JButton("Browse...");
+        browseJ2meButton.setToolTipText("Select J2ME file (JAR or JAD)");
         browseJ2meButton.addActionListener(e -> onBrowseJ2meFile.run());
         gbc.gridx = 2;
         panel.add(browseJ2meButton, gbc);
@@ -88,6 +90,7 @@ public class ConfigurationPanelBuilder {
         gbc.gridx = 1;
         panel.add(microemulatorPathField, gbc);
         JButton settingsButton = new JButton("Settings");
+        settingsButton.setToolTipText("Open settings to configure MicroEmulator path");
         settingsButton.addActionListener(e -> onOpenSettings.run());
         gbc.gridx = 2;
         panel.add(settingsButton, gbc);

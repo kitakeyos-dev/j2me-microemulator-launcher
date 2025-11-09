@@ -53,6 +53,7 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         panel.add(titleLabel, BorderLayout.WEST);
 
         JButton addButton = new JButton("Add Application");
+        addButton.setToolTipText("Add new J2ME application from JAR or JAD file");
         addButton.addActionListener(e -> addApplication());
         panel.add(addButton, BorderLayout.EAST);
 
@@ -169,6 +170,7 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         buttonsPanel.setBackground(Color.WHITE);
 
         JButton removeButton = new JButton("Remove");
+        removeButton.setToolTipText("Remove this application from the list");
         removeButton.addActionListener(e -> removeApplication(app));
         removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonsPanel.add(removeButton);
