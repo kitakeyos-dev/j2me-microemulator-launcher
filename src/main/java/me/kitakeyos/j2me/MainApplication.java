@@ -3,8 +3,11 @@ package me.kitakeyos.j2me;
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.config.EmulatorInstance;
 import me.kitakeyos.j2me.config.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.config.J2meApplication;
 import me.kitakeyos.j2me.launcher.EmulatorLauncher;
 import me.kitakeyos.j2me.manager.EmulatorInstanceManager;
+import me.kitakeyos.j2me.manager.J2meApplicationManager;
+import me.kitakeyos.j2me.ui.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.ConfigurationPanelBuilder;
 import me.kitakeyos.j2me.ui.EmulatorInstanceUIBuilder;
 import me.kitakeyos.j2me.ui.SettingsDialog;
@@ -22,12 +25,12 @@ public class MainApplication extends JFrame {
 
     public static final MainApplication INSTANCE = new MainApplication();
 
-    private JTextField j2meFilePathField;
+    private JComboBox<J2meApplication> applicationComboBox;
     private JTextField microemulatorPathField;
     private JSpinner instanceCountSpinner;
     private JPanel emulatorInstancesPanel;
     private ApplicationConfig applicationConfig;
-    private File selectedJ2meFile;
+    private J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
 
     public MainApplication() {
@@ -36,26 +39,58 @@ public class MainApplication extends JFrame {
         setSize(1000, 700);
         setLocationRelativeTo(null);
 
-        // Initialize ApplicationConfig
+        // Initialize managers
         applicationConfig = new ApplicationConfig();
+        j2meApplicationManager = new J2meApplicationManager();
 
         initializeComponents();
         loadApplicationConfiguration();
     }
 
     private void initializeComponents() {
+        // Create tabbed pane
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        // Tab 1: Applications
+        ApplicationsPanel applicationsPanel = new ApplicationsPanel(j2meApplicationManager);
+        tabbedPane.addTab("Applications", applicationsPanel);
+
+        // Tab 2: Instances
+        JPanel instancesPanel = createInstancesPanel();
+        tabbedPane.addTab("Instances", instancesPanel);
+
+        add(tabbedPane);
+
+        // Listen for application changes to update combo box
+        j2meApplicationManager.addApplicationChangeListener(new J2meApplicationManager.ApplicationChangeListener() {
+            @Override
+            public void onApplicationAdded(J2meApplication app) {
+                refreshApplicationComboBox();
+            }
+
+            @Override
+            public void onApplicationRemoved(J2meApplication app) {
+                refreshApplicationComboBox();
+            }
+        });
+    }
+
+    private JPanel createInstancesPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        j2meFilePathField = new JTextField(25);
+        // Application combo box
+        applicationComboBox = new JComboBox<>();
+        refreshApplicationComboBox();
+
         microemulatorPathField = new JTextField();
         microemulatorPathField.setEditable(false);
         microemulatorPathField.setBackground(new Color(240, 240, 240));
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 20, 1));
 
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
-                j2meFilePathField, instanceCountSpinner, microemulatorPathField,
-                this::browseJ2meFile, this::openSettingsDialog);
+                applicationComboBox, instanceCountSpinner, microemulatorPathField,
+                this::openSettingsDialog);
         mainPanel.add(configurationPanel, BorderLayout.NORTH);
 
         emulatorInstancesPanel = new JPanel();
@@ -70,7 +105,14 @@ public class MainApplication extends JFrame {
         JPanel buttonPanel = createActionButtonsPanel();
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        add(mainPanel);
+        return mainPanel;
+    }
+
+    private void refreshApplicationComboBox() {
+        applicationComboBox.removeAllItems();
+        for (J2meApplication app : j2meApplicationManager.getApplications()) {
+            applicationComboBox.addItem(app);
+        }
     }
 
     private JPanel createActionButtonsPanel() {
@@ -117,24 +159,14 @@ public class MainApplication extends JFrame {
         }
     }
 
-    private void browseJ2meFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("J2ME Files (JAR, JAD)", "jar", "jad");
-        fileChooser.setFileFilter(filter);
-        int result = fileChooser.showOpenDialog(this);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            selectedJ2meFile = fileChooser.getSelectedFile();
-            j2meFilePathField.setText(selectedJ2meFile.getAbsolutePath());
-        }
-    }
 
     /**
      * Create instances without running them
      */
     private void createEmulatorInstances() {
-        if (selectedJ2meFile == null) {
-            showErrorMessage("Please select a J2ME file");
+        J2meApplication selectedApp = (J2meApplication) applicationComboBox.getSelectedItem();
+        if (selectedApp == null) {
+            showErrorMessage("Please install and select a J2ME application from the Applications tab");
             return;
         }
 
@@ -145,7 +177,7 @@ public class MainApplication extends JFrame {
 
         int numberOfInstances = (Integer) instanceCountSpinner.getValue();
         String microemulatorPath = applicationConfig.getMicroemulatorPath();
-        String j2meFilePath = selectedJ2meFile.getAbsolutePath();
+        String j2meFilePath = selectedApp.getFilePath();
 
         for (int i = 0; i < numberOfInstances; i++) {
             int instanceId = emulatorInstanceManager.getNextInstanceId();
@@ -158,7 +190,7 @@ public class MainApplication extends JFrame {
         emulatorInstancesPanel.revalidate();
         emulatorInstancesPanel.repaint();
 
-        showInfoMessage("Created " + numberOfInstances + " instance(s). Click 'Run' on each instance or 'Run All' to start them.");
+        showInfoMessage("Created " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'. Click 'Run' on each instance or 'Run All' to start them.");
     }
 
     /**
