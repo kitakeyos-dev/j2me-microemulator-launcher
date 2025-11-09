@@ -20,7 +20,7 @@ import java.util.Date;
 public class ApplicationsPanel extends JPanel implements J2meApplicationManager.ApplicationChangeListener {
     private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
-    private JLabel statusLabel;
+    private ModernStatusBar statusBar;
 
     public ApplicationsPanel(J2meApplicationManager applicationManager) {
         this.applicationManager = applicationManager;
@@ -79,9 +79,8 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
 
     private JPanel createBottomPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        statusLabel = new JLabel(" ");
-        statusLabel.setForeground(Color.BLUE);
-        panel.add(statusLabel, BorderLayout.WEST);
+        statusBar = new ModernStatusBar();
+        panel.add(statusBar, BorderLayout.CENTER);
         return panel;
     }
 
@@ -227,15 +226,17 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 J2meApplication app = applicationManager.addApplication(selectedFile);
-                statusLabel.setText("Application added successfully: " + app.getName());
-                statusLabel.setForeground(new Color(0, 150, 0));
+                statusBar.setSuccessStatus("Application added successfully: " + app.getName());
+                ToastNotification.showSuccess("Added: " + app.getName());
             } catch (Exception e) {
-                statusLabel.setText("Error: " + e.getMessage());
-                statusLabel.setForeground(Color.RED);
-                JOptionPane.showMessageDialog(this,
-                        "Failed to add application: " + e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                statusBar.setErrorStatus("Error: " + e.getMessage());
+                ModernMessageDialog.showError(
+                    SwingUtilities.getWindowAncestor(this) instanceof Frame
+                        ? (Frame) SwingUtilities.getWindowAncestor(this)
+                        : null,
+                    "Error",
+                    "Failed to add application: " + e.getMessage()
+                );
             }
         }
     }
@@ -249,11 +250,10 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         if (confirm == JOptionPane.YES_OPTION) {
             boolean success = applicationManager.removeApplication(app.getId());
             if (success) {
-                statusLabel.setText("Application removed: " + app.getName());
-                statusLabel.setForeground(new Color(0, 150, 0));
+                statusBar.setSuccessStatus("Application removed: " + app.getName());
+                ToastNotification.showSuccess("Removed: " + app.getName());
             } else {
-                statusLabel.setText("Failed to remove application");
-                statusLabel.setForeground(Color.RED);
+                statusBar.setErrorStatus("Failed to remove application");
             }
         }
     }
@@ -261,11 +261,10 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
     private void updateStatus() {
         int count = applicationManager.getApplicationCount();
         if (count == 0) {
-            statusLabel.setText("No applications installed");
+            statusBar.setInfoStatus("No applications installed");
         } else {
-            statusLabel.setText(count + " application(s) installed");
+            statusBar.setInfoStatus(count + " application(s) installed");
         }
-        statusLabel.setForeground(Color.BLUE);
     }
 
     @Override

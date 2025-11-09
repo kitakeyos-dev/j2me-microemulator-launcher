@@ -10,7 +10,9 @@ import me.kitakeyos.j2me.manager.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.ConfigurationPanelBuilder;
 import me.kitakeyos.j2me.ui.EmulatorInstanceUIBuilder;
+import me.kitakeyos.j2me.ui.ModernMessageDialog;
 import me.kitakeyos.j2me.ui.SettingsDialog;
+import me.kitakeyos.j2me.ui.ToastNotification;
 import me.kitakeyos.j2me.ui.WindowArrangement;
 
 import javax.swing.*;
@@ -202,7 +204,7 @@ public class MainApplication extends JFrame {
         emulatorInstancesPanel.revalidate();
         emulatorInstancesPanel.repaint();
 
-        showInfoMessage("Created " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'. Click 'Run' on each instance or 'Run All' to start them.");
+        showToast("Created " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'", ToastNotification.ToastType.SUCCESS);
     }
 
     /**
@@ -260,7 +262,7 @@ public class MainApplication extends JFrame {
             updateInstanceUI(instance);
         }
 
-        showInfoMessage("Stopped " + runningInstances.size() + " instance(s).");
+        showToast("Stopped " + runningInstances.size() + " instance(s)", ToastNotification.ToastType.INFO);
     }
 
     public void addEmulatorInstanceToPanel(EmulatorInstance emulatorInstance) {
@@ -320,7 +322,7 @@ public class MainApplication extends JFrame {
 
         WindowArrangement.arrangeInstances(runningInstances);
         String gridInfo = WindowArrangement.getGridInfo(runningInstances);
-        showInfoMessage("Windows arranged: " + gridInfo);
+        showToast("Windows arranged: " + gridInfo, ToastNotification.ToastType.SUCCESS);
     }
 
     /**
@@ -351,16 +353,45 @@ public class MainApplication extends JFrame {
         if (confirm == JOptionPane.YES_OPTION) {
             emulatorInstanceManager.clearAllInstances();
             emulatorInstanceManager.resetInstanceIdCounter();
-            showInfoMessage("Cleared all instances.");
+            showToast("Cleared all instances", ToastNotification.ToastType.SUCCESS);
         }
     }
 
     private void showErrorMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        ModernMessageDialog.showError(this, "Error", message);
     }
 
     private void showInfoMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Info", JOptionPane.INFORMATION_MESSAGE);
+        ModernMessageDialog.showInfo(this, "Info", message);
+    }
+
+    private void showSuccessMessage(String message) {
+        ModernMessageDialog.showSuccess(this, "Success", message);
+    }
+
+    private void showWarningMessage(String message) {
+        ModernMessageDialog.showWarning(this, "Warning", message);
+    }
+
+    /**
+     * Show toast notification for non-critical messages
+     */
+    private void showToast(String message, ToastNotification.ToastType type) {
+        switch (type) {
+            case SUCCESS:
+                ToastNotification.showSuccess(message);
+                break;
+            case ERROR:
+                ToastNotification.showError(message);
+                break;
+            case WARNING:
+                ToastNotification.showWarning(message);
+                break;
+            case INFO:
+            default:
+                ToastNotification.showInfo(message);
+                break;
+        }
     }
 
     public static void main(String[] args) {

@@ -143,41 +143,41 @@ public class SettingsDialog extends JDialog {
     
     private void saveSettings(ActionEvent e) {
         String path = microemulatorPathField.getText().trim();
-        
+
         if (path.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Please select MicroEmulator path!", 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
+            ModernMessageDialog.showError(
+                (Frame) getOwner(),
+                "Error",
+                "Please select MicroEmulator path!"
+            );
             return;
         }
-        
+
         File file = new File(path);
         if (!file.exists() || !file.isFile()) {
-            JOptionPane.showMessageDialog(this, 
-                "File does not exist or is invalid!", 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
+            ModernMessageDialog.showError(
+                (Frame) getOwner(),
+                "Error",
+                "File does not exist or is invalid!"
+            );
             return;
         }
-        
+
         if (!path.toLowerCase().endsWith(".jar")) {
-            JOptionPane.showMessageDialog(this, 
-                "Please select a JAR file!", 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
+            ModernMessageDialog.showError(
+                (Frame) getOwner(),
+                "Error",
+                "Please select a JAR file!"
+            );
             return;
         }
-        
+
         applicationConfig.setMicroemulatorPath(path);
         applicationConfig.saveConfiguration();
         isSettingsModified = true;
-        
-        JOptionPane.showMessageDialog(this, 
-            "Configuration saved successfully!", 
-            "Success", 
-            JOptionPane.INFORMATION_MESSAGE);
-        
+
+        ToastNotification.showSuccess("Configuration saved successfully!");
+
         dispose();
     }
     
