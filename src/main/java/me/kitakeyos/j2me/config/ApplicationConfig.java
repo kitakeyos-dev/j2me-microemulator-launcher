@@ -7,16 +7,25 @@ import java.util.Properties;
  * Manages application configuration, including microemulator path and other settings
  */
 public class ApplicationConfig {
+    private static final String CONFIG_DIR = "data";
     private static final String CONFIG_FILE = "j2me_launcher.properties";
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
-    
+
     private Properties properties;
-    private String userConfigFilePath;
-    
+    private String configFilePath;
+    private File configDirectory;
+
     public ApplicationConfig() {
         this.properties = new Properties();
-        this.userConfigFilePath = System.getProperty("user.home") + File.separator + CONFIG_FILE;
+
+        // Use application directory instead of user home
+        this.configDirectory = new File(CONFIG_DIR);
+        if (!configDirectory.exists()) {
+            configDirectory.mkdirs();
+        }
+
+        this.configFilePath = new File(configDirectory, CONFIG_FILE).getPath();
         loadConfiguration();
     }
     
@@ -24,7 +33,7 @@ public class ApplicationConfig {
      * Load configuration from file
      */
     public void loadConfiguration() {
-        File configFile = new File(userConfigFilePath);
+        File configFile = new File(configFilePath);
         if (configFile.exists()) {
             try (FileInputStream fis = new FileInputStream(configFile)) {
                 properties.load(fis);
@@ -36,12 +45,12 @@ public class ApplicationConfig {
             loadDefaultConfiguration();
         }
     }
-    
+
     /**
      * Save configuration to file
      */
     public void saveConfiguration() {
-        try (FileOutputStream fos = new FileOutputStream(userConfigFilePath)) {
+        try (FileOutputStream fos = new FileOutputStream(configFilePath)) {
             properties.store(fos, "J2ME Launcher Configuration");
         } catch (IOException e) {
             System.err.println("Cannot save configuration file: " + e.getMessage());
@@ -81,7 +90,14 @@ public class ApplicationConfig {
     /**
      * Get configuration file path
      */
-    public String getUserConfigFilePath() {
-        return userConfigFilePath;
+    public String getConfigFilePath() {
+        return configFilePath;
+    }
+
+    /**
+     * Get configuration directory
+     */
+    public File getConfigDirectory() {
+        return configDirectory;
     }
 }

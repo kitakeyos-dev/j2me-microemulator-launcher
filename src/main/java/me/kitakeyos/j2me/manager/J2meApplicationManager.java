@@ -13,25 +13,41 @@ import java.util.stream.Collectors;
  * Manager for installed J2ME applications
  */
 public class J2meApplicationManager {
-    private static final String CONFIG_DIR = System.getProperty("user.home");
-    private static final String APPS_CONFIG_FILE = ".j2me_apps.properties";
-    private static final String ICON_DIR = ".j2me_icons";
+    private static final String DATA_DIR = "data";
+    private static final String APPS_DIR = "apps";
+    private static final String ICONS_DIR = "icons";
+    private static final String APPS_CONFIG_FILE = "j2me_apps.properties";
 
     private List<J2meApplication> applications;
+    private File dataDirectory;
+    private File appsDirectory;
+    private File iconsDirectory;
     private File configFile;
-    private File iconDirectory;
     private List<ApplicationChangeListener> listeners;
 
     public J2meApplicationManager() {
         this.applications = new ArrayList<>();
         this.listeners = new ArrayList<>();
-        this.configFile = new File(CONFIG_DIR, APPS_CONFIG_FILE);
-        this.iconDirectory = new File(CONFIG_DIR, ICON_DIR);
 
-        // Create icon directory if not exists
-        if (!iconDirectory.exists()) {
-            iconDirectory.mkdirs();
+        // Use application directory instead of user home
+        this.dataDirectory = new File(DATA_DIR);
+        if (!dataDirectory.exists()) {
+            dataDirectory.mkdirs();
         }
+
+        // Create apps directory for storing cloned JAR/JAD files
+        this.appsDirectory = new File(dataDirectory, APPS_DIR);
+        if (!appsDirectory.exists()) {
+            appsDirectory.mkdirs();
+        }
+
+        // Create icons directory
+        this.iconsDirectory = new File(dataDirectory, ICONS_DIR);
+        if (!iconsDirectory.exists()) {
+            iconsDirectory.mkdirs();
+        }
+
+        this.configFile = new File(dataDirectory, APPS_CONFIG_FILE);
 
         loadApplications();
     }
@@ -44,23 +60,39 @@ public class J2meApplicationManager {
             throw new FileNotFoundException("File not found: " + file);
         }
 
-        // Check if already installed
-        String absolutePath = file.getAbsolutePath();
+        // Read application info from original file
+        J2meApplication app = ManifestReader.readApplicationInfo(file);
+
+        // Check if already installed (by file name and size)
+        String fileName = file.getName();
+        long fileSize = file.length();
         Optional<J2meApplication> existing = applications.stream()
-                .filter(app -> app.getFilePath().equals(absolutePath))
+                .filter(a -> {
+                    File existingFile = new File(a.getFilePath());
+                    return existingFile.getName().equals(fileName) && a.getFileSize() == fileSize;
+                })
                 .findFirst();
 
         if (existing.isPresent()) {
             throw new IllegalArgumentException("Application already installed: " + existing.get().getName());
         }
 
-        // Read application info
-        J2meApplication app = ManifestReader.readApplicationInfo(file);
+        // Copy/clone the JAR/JAD file to apps directory
+        String fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+        String clonedFileName = app.getId() + fileExtension;
+        File clonedFile = new File(appsDirectory, clonedFileName);
+
+        try {
+            copyFile(file, clonedFile);
+            app.setFilePath(clonedFile.getAbsolutePath());
+        } catch (IOException e) {
+            throw new IOException("Failed to copy application file: " + e.getMessage(), e);
+        }
 
         // Save icon to disk if available
         if (app.getIcon() != null) {
             String iconFileName = app.getId() + ".png";
-            File iconFile = new File(iconDirectory, iconFileName);
+            File iconFile = new File(iconsDirectory, iconFileName);
             try {
                 ImageIO.write(toBufferedImage(app.getIcon()), "png", iconFile);
                 app.setIconPath(iconFile.getAbsolutePath());
@@ -78,6 +110,20 @@ public class J2meApplicationManager {
     }
 
     /**
+     * Copy file from source to destination
+     */
+    private void copyFile(File source, File dest) throws IOException {
+        try (InputStream in = new FileInputStream(source);
+             OutputStream out = new FileOutputStream(dest)) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = in.read(buffer)) > 0) {
+                out.write(buffer, 0, length);
+            }
+        }
+    }
+
+    /**
      * Remove an application
      */
     public boolean removeApplication(String appId) {
@@ -86,17 +132,25 @@ public class J2meApplicationManager {
                 .findFirst();
 
         if (app.isPresent()) {
+            J2meApplication application = app.get();
+
+            // Delete cloned JAR/JAD file
+            File appFile = new File(application.getFilePath());
+            if (appFile.exists()) {
+                appFile.delete();
+            }
+
             // Delete icon file
-            if (app.get().getIconPath() != null) {
-                File iconFile = new File(app.get().getIconPath());
+            if (application.getIconPath() != null) {
+                File iconFile = new File(application.getIconPath());
                 if (iconFile.exists()) {
                     iconFile.delete();
                 }
             }
 
-            applications.remove(app.get());
+            applications.remove(application);
             saveApplications();
-            notifyApplicationRemoved(app.get());
+            notifyApplicationRemoved(application);
             return true;
         }
 
@@ -205,7 +259,7 @@ public class J2meApplicationManager {
                 String iconPath = props.getProperty(prefix + "iconPath");
                 if (iconPath != null) {
                     app.setIconPath(iconPath);
-                    // Load icon
+                    // Load icon if it exists
                     File iconFile = new File(iconPath);
                     if (iconFile.exists()) {
                         try {
@@ -215,6 +269,12 @@ public class J2meApplicationManager {
                             // Ignore icon loading errors
                         }
                     }
+                }
+
+                // Update file size if not set
+                File appFile = new File(filePath);
+                if (appFile.exists() && app.getFileSize() == 0) {
+                    app.setFileSize(appFile.length());
                 }
 
                 try {
