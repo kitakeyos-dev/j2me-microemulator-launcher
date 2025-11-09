@@ -12,8 +12,8 @@ import javax.swing.JPanel;
  * Manages emulator instances
  */
 public class EmulatorInstanceManager {
-    private List<EmulatorInstance> instances;
-    private JPanel instancesPanel;
+    private final List<EmulatorInstance> instances;
+    private final JPanel instancesPanel;
     private int nextInstanceId = 1;
 
     public EmulatorInstanceManager(JPanel instancesPanel) {

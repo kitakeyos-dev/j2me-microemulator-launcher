@@ -36,7 +36,7 @@ import org.objectweb.asm.MethodVisitor;
  */
 public class MethodCallInterceptorClassVisitor extends ClassAdapter {
 
-	private int instanceId;
+	private final int instanceId;
 
 	public MethodCallInterceptorClassVisitor(ClassVisitor cv, int instanceId) {
 		super(cv);

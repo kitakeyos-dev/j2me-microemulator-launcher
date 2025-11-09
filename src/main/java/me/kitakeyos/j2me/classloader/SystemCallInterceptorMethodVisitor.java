@@ -37,7 +37,7 @@ import org.objectweb.asm.Opcodes;
 public class SystemCallInterceptorMethodVisitor extends MethodAdapter implements Opcodes {
 
     private static final String INJECTED_CLASS = codeName(SystemCallHandler.class);
-    private int instanceId;
+    private final int instanceId;
 
     public SystemCallInterceptorMethodVisitor(MethodVisitor mv, int instanceId) {
         super(mv);

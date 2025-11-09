@@ -18,7 +18,7 @@ import java.util.Date;
  * Panel for managing installed J2ME applications
  */
 public class ApplicationsPanel extends JPanel implements J2meApplicationManager.ApplicationChangeListener {
-    private J2meApplicationManager applicationManager;
+    private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
     private JLabel statusLabel;
 

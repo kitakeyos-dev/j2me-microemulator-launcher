@@ -7,7 +7,6 @@ import javax.imageio.ImageIO;
 import java.awt.Image;
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Manager for installed J2ME applications
@@ -18,12 +17,12 @@ public class J2meApplicationManager {
     private static final String ICONS_DIR = "icons";
     private static final String APPS_CONFIG_FILE = "j2me_apps.properties";
 
-    private List<J2meApplication> applications;
-    private File dataDirectory;
-    private File appsDirectory;
-    private File iconsDirectory;
-    private File configFile;
-    private List<ApplicationChangeListener> listeners;
+    private final List<J2meApplication> applications;
+    private final File dataDirectory;
+    private final File appsDirectory;
+    private final File iconsDirectory;
+    private final File configFile;
+    private final List<ApplicationChangeListener> listeners;
 
     public J2meApplicationManager() {
         this.applications = new ArrayList<>();

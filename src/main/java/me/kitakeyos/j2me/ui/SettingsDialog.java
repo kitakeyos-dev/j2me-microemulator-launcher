@@ -12,7 +12,7 @@ import java.io.File;
  * Configuration dialog allowing users to set microemulator path
  */
 public class SettingsDialog extends JDialog {
-    private ApplicationConfig applicationConfig;
+    private final ApplicationConfig applicationConfig;
     private JTextField microemulatorPathField;
     private JButton browseButton;
     private JButton saveButton;

@@ -29,8 +29,8 @@ public class MainApplication extends JFrame {
     private JTextField microemulatorPathField;
     private JSpinner instanceCountSpinner;
     private JPanel emulatorInstancesPanel;
-    private ApplicationConfig applicationConfig;
-    private J2meApplicationManager j2meApplicationManager;
+    private final ApplicationConfig applicationConfig;
+    private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
 
     public MainApplication() {

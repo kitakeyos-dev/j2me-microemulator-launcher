@@ -12,9 +12,9 @@ public class ApplicationConfig {
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
 
-    private Properties properties;
-    private String configFilePath;
-    private File configDirectory;
+    private final Properties properties;
+    private final String configFilePath;
+    private final File configDirectory;
 
     public ApplicationConfig() {
         this.properties = new Properties();

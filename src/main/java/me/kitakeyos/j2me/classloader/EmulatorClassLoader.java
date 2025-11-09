@@ -45,11 +45,11 @@ public class EmulatorClassLoader extends URLClassLoader {
 
     public static boolean instrumentMIDletClasses = true;
 
-    private boolean delegatingToParent = false;
+    private final boolean delegatingToParent = false;
 
-    private boolean shouldSearchPathInParent = false;
+    private final boolean shouldSearchPathInParent = false;
 
-    private int instanceId;
+    private final int instanceId;
 
     public EmulatorClassLoader(int instanceId, URL[] urls, ClassLoader parent) {
         super(urls, parent);
