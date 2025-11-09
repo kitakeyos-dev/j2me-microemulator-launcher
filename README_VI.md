@@ -11,10 +11,12 @@ Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bấ
 ## Tính năng
 
 - **Quản lý Ứng dụng**: Cài đặt và quản lý ứng dụng J2ME với tự động trích xuất tên, icon, nhà phát triển và phiên bản từ manifest của file JAR/JAD.
+- **Clone File**: File JAR/JAD được tự động sao chép vào thư mục dữ liệu của ứng dụng, tránh mất dữ liệu nếu file gốc bị xóa.
+- **Lưu trữ Di động**: Tất cả cấu hình và dữ liệu ứng dụng được lưu trong thư mục `./data/` cục bộ, giúp launcher hoàn toàn di động.
 - **Giao diện Tab**: Tab riêng biệt cho quản lý Ứng dụng và Instances để tổ chức tốt hơn.
 - **Hỗ trợ Đa Instances**: Tạo và chạy nhiều instances emulator từ các ứng dụng J2ME đã cài đặt.
-- **Lưu trữ Lâu dài**: Ứng dụng đã cài sẽ được lưu vào `~/.j2me_apps.properties` và tồn tại giữa các phiên.
-- **Cache Icon**: Icon ứng dụng được tự động trích xuất và cache trong thư mục `~/.j2me_icons/`.
+- **Lưu trữ Lâu dài**: Ứng dụng đã cài tồn tại giữa các phiên với cấu trúc file có tổ chức.
+- **Cache Icon**: Icon ứng dụng được tự động trích xuất và cache cục bộ.
 - **Quản lý GUI**: Giao diện thân thiện để thêm, xóa, khởi động, dừng và sắp xếp lại instances.
 - **Sắp xếp Cửa sổ Tự động**: Tổ chức các cửa sổ emulator theo lưới để dễ quan sát hơn.
 - **Tùy chọn Cấu hình**: Dễ dàng đặt đường dẫn đến file MicroEmulator JAR và chọn từ các ứng dụng đã cài.
@@ -42,6 +44,26 @@ Hoặc đóng gói thành JAR và chạy:
 ```
 java -jar j2me-launcher.jar
 ```
+
+## Cấu trúc Thư mục Dữ liệu
+
+Launcher lưu tất cả dữ liệu trong thư mục `./data/` cục bộ:
+
+```
+./data/
+├── j2me_launcher.properties  # Cấu hình MicroEmulator
+├── j2me_apps.properties      # Danh sách ứng dụng đã cài
+├── apps/                      # File JAR/JAD đã clone
+│   ├── <app-id>.jar
+│   └── <app-id>.jad
+└── icons/                     # Icon ứng dụng đã trích xuất
+    └── <app-id>.png
+```
+
+Cấu trúc này đảm bảo:
+- **Di động**: Di chuyển toàn bộ thư mục ứng dụng đi bất cứ đâu
+- **An toàn**: File gốc có thể bị xóa mà không ảnh hưởng đến apps đã cài
+- **Tổ chức**: Tất cả dữ liệu trong một vị trí sạch sẽ, dễ quản lý
 
 ## Hướng dẫn Sử dụng
 

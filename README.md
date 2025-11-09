@@ -11,10 +11,12 @@ This project is ideal for developers, enthusiasts, or anyone working with J2ME a
 ## Features
 
 - **Application Management**: Install and manage J2ME applications with automatic extraction of app name, icon, vendor, and version from JAR/JAD manifests.
+- **File Cloning**: JAR/JAD files are automatically copied to the application's data directory, preventing data loss if original files are deleted.
+- **Portable Data Storage**: All configuration and application data is stored in a local `./data/` directory, making the launcher fully portable.
 - **Tabbed Interface**: Separate tabs for Applications and Instances management for better organization.
 - **Multi-Instance Support**: Create and run multiple emulator instances from installed J2ME applications.
-- **Persistent Storage**: Installed applications are saved to `~/.j2me_apps.properties` and persist across sessions.
-- **Icon Caching**: Application icons are automatically extracted and cached in `~/.j2me_icons/` directory.
+- **Persistent Storage**: Installed applications persist across sessions with organized file structure.
+- **Icon Caching**: Application icons are automatically extracted and cached locally.
 - **GUI Management**: User-friendly interface to add, remove, start, stop, and rearrange instances.
 - **Automatic Window Arrangement**: Organizes emulator windows in a grid layout for better visibility.
 - **Configuration Options**: Easily set the path to MicroEmulator JAR and select from installed applications.
@@ -42,6 +44,26 @@ Alternatively, package it into a JAR and run:
 ```
 java -jar j2me-launcher.jar
 ```
+
+## Data Directory Structure
+
+The launcher stores all data in a local `./data/` directory:
+
+```
+./data/
+├── j2me_launcher.properties  # MicroEmulator configuration
+├── j2me_apps.properties      # Installed applications list
+├── apps/                      # Cloned JAR/JAD files
+│   ├── <app-id>.jar
+│   └── <app-id>.jad
+└── icons/                     # Extracted application icons
+    └── <app-id>.png
+```
+
+This structure ensures:
+- **Portability**: Move the entire application folder anywhere
+- **Safety**: Original files can be deleted without affecting installed apps
+- **Organization**: All data in one clean, manageable location
 
 ## Usage
 
