@@ -10,10 +10,14 @@ This project is ideal for developers, enthusiasts, or anyone working with J2ME a
 
 ## Features
 
-- **Multi-Instance Support**: Create and run multiple emulator instances from a single J2ME JAR or JAD file.
+- **Application Management**: Install and manage J2ME applications with automatic extraction of app name, icon, vendor, and version from JAR/JAD manifests.
+- **Tabbed Interface**: Separate tabs for Applications and Instances management for better organization.
+- **Multi-Instance Support**: Create and run multiple emulator instances from installed J2ME applications.
+- **Persistent Storage**: Installed applications are saved to `~/.j2me_apps.properties` and persist across sessions.
+- **Icon Caching**: Application icons are automatically extracted and cached in `~/.j2me_icons/` directory.
 - **GUI Management**: User-friendly interface to add, remove, start, stop, and rearrange instances.
 - **Automatic Window Arrangement**: Organizes emulator windows in a grid layout for better visibility.
-- **Configuration Options**: Easily set the path to MicroEmulator JAR and select J2ME files.
+- **Configuration Options**: Easily set the path to MicroEmulator JAR and select from installed applications.
 - **State Tracking**: Monitors instance states (Created, Starting, Running, Stopped) with color-coded UI.
 - **Cross-Platform**: Runs on any system with Java installed (tested on Windows, macOS, Linux).
 
@@ -41,11 +45,36 @@ java -jar j2me-launcher.jar
 
 ## Usage
 
-1. **Set MicroEmulator Path**: Go to Settings and browse for your `microemulator.jar` file.
-2. **Select J2ME File**: Browse for your .jar or .jad file.
-3. **Create Instances**: Choose the number of instances and click "Create Instances".
-4. **Run Instances**: Click "Run All" or individual "Run" buttons.
-5. **Manage Instances**: Stop, remove, or rearrange windows as needed.
+### First-Time Setup
+
+1. **Set MicroEmulator Path**: Go to Settings (in Instances tab) and browse for your `microemulator.jar` file.
+
+### Managing Applications
+
+2. **Install Applications** (Applications tab):
+   - Click "Add Application" to browse for your .jar or .jad file.
+   - The app's name, icon, vendor, and version are automatically extracted from the manifest.
+   - Installed applications are saved and will persist across sessions.
+   - View all installed applications with their details and icons.
+   - Click "Remove" to uninstall any application.
+
+### Running Instances
+
+3. **Create Instances** (Instances tab):
+   - Select an installed application from the dropdown menu.
+   - Choose the number of instances you want to create.
+   - Click "Create Instances".
+
+4. **Run Instances**:
+   - Click "Run All" to start all created instances.
+   - Or click individual "Run" buttons for specific instances.
+   - Emulator windows will automatically arrange in a grid layout.
+
+5. **Manage Instances**:
+   - Stop instances individually or click "Stop All".
+   - Remove instances you no longer need.
+   - Use "Arrange" to reorganize emulator windows.
+   - Move instances up/down to change their order.
 
 For detailed code structure, refer to the source files in the `src` directory.
 
