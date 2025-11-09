@@ -68,13 +68,13 @@ public class SettingsDialog extends JDialog {
         microemulatorPathField = new JTextField();
         microemulatorPathField.setFont(new Font("Arial", Font.PLAIN, 11));
         microemulatorPathField.setPreferredSize(new Dimension(400, 25));
-        microemulatorPathField.setToolTipText("Nhập đường dẫn đầy đủ đến file microemulator.jar");
+        microemulatorPathField.setToolTipText("Enter full path to microemulator.jar file");
         pathPanel.add(microemulatorPathField, BorderLayout.CENTER);
 
         browseButton = new JButton("Browse...");
         browseButton.setFont(new Font("Arial", Font.BOLD, 11));
         browseButton.setPreferredSize(new Dimension(80, 25));
-        browseButton.setToolTipText("Duyệt chọn file microemulator.jar");
+        browseButton.setToolTipText("Browse and select microemulator.jar file");
         browseButton.addActionListener(this::selectMicroemulatorFile);
         pathPanel.add(browseButton, BorderLayout.EAST);
         
@@ -105,13 +105,13 @@ public class SettingsDialog extends JDialog {
         saveButton = new JButton("Save");
         saveButton.setFont(new Font("Arial", Font.BOLD, 12));
         saveButton.setPreferredSize(new Dimension(80, 30));
-        saveButton.setToolTipText("Lưu cấu hình và đóng dialog");
+        saveButton.setToolTipText("Save configuration and close dialog");
         saveButton.addActionListener(this::saveSettings);
 
         cancelButton = new JButton("Cancel");
         cancelButton.setFont(new Font("Arial", Font.BOLD, 12));
         cancelButton.setPreferredSize(new Dimension(80, 30));
-        cancelButton.setToolTipText("Đóng mà không lưu thay đổi");
+        cancelButton.setToolTipText("Close without saving changes");
         cancelButton.addActionListener(e -> dispose());
         
         panel.add(saveButton);

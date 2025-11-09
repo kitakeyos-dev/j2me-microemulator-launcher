@@ -81,15 +81,15 @@ public class MainApplication extends JFrame {
 
         // Application combo box
         applicationComboBox = new JComboBox<>();
-        applicationComboBox.setToolTipText("Chọn ứng dụng J2ME để tạo instances");
+        applicationComboBox.setToolTipText("Select J2ME application to create instances");
         refreshApplicationComboBox();
 
         microemulatorPathField = new JTextField();
         microemulatorPathField.setEditable(false);
         microemulatorPathField.setBackground(new Color(240, 240, 240));
-        microemulatorPathField.setToolTipText("Đường dẫn đến MicroEmulator JAR (cấu hình trong Settings)");
+        microemulatorPathField.setToolTipText("Path to MicroEmulator JAR (configure in Settings)");
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 20, 1));
-        instanceCountSpinner.setToolTipText("Số lượng instances muốn tạo (1-20)");
+        instanceCountSpinner.setToolTipText("Number of instances to create (1-20)");
 
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
@@ -122,19 +122,19 @@ public class MainApplication extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
         JButton createButton = createStyledButton("Create Instances", new Color(70, 130, 180), this::createEmulatorInstances);
-        createButton.setToolTipText("Tạo instances từ ứng dụng được chọn (chưa chạy)");
+        createButton.setToolTipText("Create instances from selected application (not started yet)");
 
         JButton runAllButton = createStyledButton("Run All", new Color(34, 139, 34), this::runAllInstances);
-        runAllButton.setToolTipText("Chạy tất cả instances đã tạo");
+        runAllButton.setToolTipText("Run all created instances");
 
         JButton stopAllButton = createStyledButton("Stop All", new Color(220, 20, 60), this::stopAllInstances);
-        stopAllButton.setToolTipText("Dừng tất cả instances đang chạy");
+        stopAllButton.setToolTipText("Stop all running instances");
 
         JButton clearAllButton = createStyledButton("Clear All", new Color(169, 169, 169), this::clearAllEmulatorInstances);
-        clearAllButton.setToolTipText("Xóa tất cả instances (bao gồm cả instances đang chạy)");
+        clearAllButton.setToolTipText("Remove all instances (including running ones)");
 
         JButton arrangeButton = createStyledButton("Arrange", new Color(255, 140, 0), this::arrangeEmulatorInstances);
-        arrangeButton.setToolTipText("Sắp xếp cửa sổ của các instances đang chạy thành lưới");
+        arrangeButton.setToolTipText("Arrange running instance windows in a grid");
 
         panel.add(createButton);
         panel.add(runAllButton);
