@@ -242,12 +242,14 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
     }
 
     private void removeApplication(J2meApplication app) {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to remove '" + app.getName() + "'?",
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+        boolean confirm = ModernConfirmDialog.showConfirm(
+                parentFrame,
                 "Confirm Remove",
-                JOptionPane.YES_NO_OPTION);
+                "Are you sure you want to remove '" + app.getName() + "'?"
+        );
 
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (confirm) {
             boolean success = applicationManager.removeApplication(app.getId());
             if (success) {
                 statusBar.setSuccessStatus("Application removed: " + app.getName());

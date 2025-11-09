@@ -10,6 +10,7 @@ import me.kitakeyos.j2me.manager.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.ConfigurationPanelBuilder;
 import me.kitakeyos.j2me.ui.EmulatorInstanceUIBuilder;
+import me.kitakeyos.j2me.ui.ModernConfirmDialog;
 import me.kitakeyos.j2me.ui.ModernMessageDialog;
 import me.kitakeyos.j2me.ui.SettingsDialog;
 import me.kitakeyos.j2me.ui.ToastNotification;
@@ -342,15 +343,13 @@ public class MainApplication extends JFrame {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
+        boolean confirm = ModernConfirmDialog.showConfirm(
                 this,
-                "Are you sure you want to clear all " + count + " instance(s)?",
                 "Confirm Clear All",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
+                "Are you sure you want to clear all " + count + " instance(s)?"
         );
 
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (confirm) {
             emulatorInstanceManager.clearAllInstances();
             emulatorInstanceManager.resetInstanceIdCounter();
             showToast("Cleared all instances", ToastNotification.ToastType.SUCCESS);
