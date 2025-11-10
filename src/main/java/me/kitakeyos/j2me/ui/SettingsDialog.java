@@ -145,7 +145,7 @@ public class SettingsDialog extends JDialog {
         String path = microemulatorPathField.getText().trim();
 
         if (path.isEmpty()) {
-            ModernMessageDialog.showError(
+            MessageDialog.showError(
                 (Frame) getOwner(),
                 "Error",
                 "Please select MicroEmulator path!"
@@ -155,7 +155,7 @@ public class SettingsDialog extends JDialog {
 
         File file = new File(path);
         if (!file.exists() || !file.isFile()) {
-            ModernMessageDialog.showError(
+            MessageDialog.showError(
                 (Frame) getOwner(),
                 "Error",
                 "File does not exist or is invalid!"
@@ -164,7 +164,7 @@ public class SettingsDialog extends JDialog {
         }
 
         if (!path.toLowerCase().endsWith(".jar")) {
-            ModernMessageDialog.showError(
+            MessageDialog.showError(
                 (Frame) getOwner(),
                 "Error",
                 "Please select a JAR file!"

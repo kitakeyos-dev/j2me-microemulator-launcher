@@ -2,14 +2,12 @@ package me.kitakeyos.j2me.ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
 /**
  * Modern styled message dialog with gradient backgrounds and smooth animations
  */
-public class ModernMessageDialog extends JDialog {
+public class MessageDialog extends JDialog {
 
     public enum MessageType {
         SUCCESS,
@@ -26,7 +24,7 @@ public class ModernMessageDialog extends JDialog {
     private final String message;
     private final String title;
 
-    public ModernMessageDialog(Frame parent, String title, String message, MessageType messageType) {
+    public MessageDialog(Frame parent, String title, String message, MessageType messageType) {
         super(parent, true);
         this.title = title;
         this.message = message;
@@ -213,7 +211,7 @@ public class ModernMessageDialog extends JDialog {
      * Show a success message dialog
      */
     public static void showSuccess(Frame parent, String title, String message) {
-        ModernMessageDialog dialog = new ModernMessageDialog(parent, title, message, MessageType.SUCCESS);
+        MessageDialog dialog = new MessageDialog(parent, title, message, MessageType.SUCCESS);
         dialog.setVisible(true);
     }
 
@@ -221,7 +219,7 @@ public class ModernMessageDialog extends JDialog {
      * Show an error message dialog
      */
     public static void showError(Frame parent, String title, String message) {
-        ModernMessageDialog dialog = new ModernMessageDialog(parent, title, message, MessageType.ERROR);
+        MessageDialog dialog = new MessageDialog(parent, title, message, MessageType.ERROR);
         dialog.setVisible(true);
     }
 
@@ -229,7 +227,7 @@ public class ModernMessageDialog extends JDialog {
      * Show a warning message dialog
      */
     public static void showWarning(Frame parent, String title, String message) {
-        ModernMessageDialog dialog = new ModernMessageDialog(parent, title, message, MessageType.WARNING);
+        MessageDialog dialog = new MessageDialog(parent, title, message, MessageType.WARNING);
         dialog.setVisible(true);
     }
 
@@ -237,7 +235,7 @@ public class ModernMessageDialog extends JDialog {
      * Show an info message dialog
      */
     public static void showInfo(Frame parent, String title, String message) {
-        ModernMessageDialog dialog = new ModernMessageDialog(parent, title, message, MessageType.INFO);
+        MessageDialog dialog = new MessageDialog(parent, title, message, MessageType.INFO);
         dialog.setVisible(true);
     }
 }

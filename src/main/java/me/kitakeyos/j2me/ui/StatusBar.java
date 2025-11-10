@@ -8,7 +8,7 @@ import java.awt.event.ActionListener;
 /**
  * Modern status bar with icons and smooth color transitions
  */
-public class ModernStatusBar extends JPanel {
+public class StatusBar extends JPanel {
 
     public enum StatusType {
         INFO,
@@ -25,7 +25,7 @@ public class ModernStatusBar extends JPanel {
     private int transitionStep = 0;
     private static final int TRANSITION_STEPS = 10;
 
-    public ModernStatusBar() {
+    public StatusBar() {
         setLayout(new BorderLayout(10, 0));
         setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(200, 200, 200)),

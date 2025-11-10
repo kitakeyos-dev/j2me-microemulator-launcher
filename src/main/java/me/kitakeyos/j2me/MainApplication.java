@@ -10,16 +10,14 @@ import me.kitakeyos.j2me.manager.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.ConfigurationPanelBuilder;
 import me.kitakeyos.j2me.ui.EmulatorInstanceUIBuilder;
-import me.kitakeyos.j2me.ui.ModernConfirmDialog;
-import me.kitakeyos.j2me.ui.ModernMessageDialog;
+import me.kitakeyos.j2me.ui.ConfirmDialog;
+import me.kitakeyos.j2me.ui.MessageDialog;
 import me.kitakeyos.j2me.ui.SettingsDialog;
 import me.kitakeyos.j2me.ui.ToastNotification;
 import me.kitakeyos.j2me.ui.WindowArrangement;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.io.File;
 
 /**
  * Main J2ME Launcher application
@@ -343,7 +341,7 @@ public class MainApplication extends JFrame {
             return;
         }
 
-        boolean confirm = ModernConfirmDialog.showConfirm(
+        boolean confirm = ConfirmDialog.showConfirm(
                 this,
                 "Confirm Clear All",
                 "Are you sure you want to clear all " + count + " instance(s)?"
@@ -357,19 +355,19 @@ public class MainApplication extends JFrame {
     }
 
     private void showErrorMessage(String message) {
-        ModernMessageDialog.showError(this, "Error", message);
+        MessageDialog.showError(this, "Error", message);
     }
 
     private void showInfoMessage(String message) {
-        ModernMessageDialog.showInfo(this, "Info", message);
+        MessageDialog.showInfo(this, "Info", message);
     }
 
     private void showSuccessMessage(String message) {
-        ModernMessageDialog.showSuccess(this, "Success", message);
+        MessageDialog.showSuccess(this, "Success", message);
     }
 
     private void showWarningMessage(String message) {
-        ModernMessageDialog.showWarning(this, "Warning", message);
+        MessageDialog.showWarning(this, "Warning", message);
     }
 
     /**

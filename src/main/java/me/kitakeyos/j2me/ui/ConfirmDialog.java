@@ -7,7 +7,7 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * Modern styled confirmation dialog with gradient backgrounds and smooth styling
  */
-public class ModernConfirmDialog extends JDialog {
+public class ConfirmDialog extends JDialog {
 
     private static final int DIALOG_WIDTH = 450;
     private static final int DIALOG_HEIGHT = 200;
@@ -19,7 +19,7 @@ public class ModernConfirmDialog extends JDialog {
     private final String yesText;
     private final String noText;
 
-    private ModernConfirmDialog(Frame parent, String title, String message, String yesText, String noText) {
+    private ConfirmDialog(Frame parent, String title, String message, String yesText, String noText) {
         super(parent, true);
         this.title = title;
         this.message = message;
@@ -198,7 +198,7 @@ public class ModernConfirmDialog extends JDialog {
      * @return true if user clicked confirmation button, false otherwise
      */
     public static boolean showConfirm(Frame parent, String title, String message, String yesText, String noText) {
-        ModernConfirmDialog dialog = new ModernConfirmDialog(parent, title, message, yesText, noText);
+        ConfirmDialog dialog = new ConfirmDialog(parent, title, message, yesText, noText);
         dialog.setVisible(true);
         return dialog.confirmed;
     }

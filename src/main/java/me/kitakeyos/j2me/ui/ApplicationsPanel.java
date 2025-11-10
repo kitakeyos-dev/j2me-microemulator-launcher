@@ -20,7 +20,7 @@ import java.util.Date;
 public class ApplicationsPanel extends JPanel implements J2meApplicationManager.ApplicationChangeListener {
     private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
-    private ModernStatusBar statusBar;
+    private StatusBar statusBar;
 
     public ApplicationsPanel(J2meApplicationManager applicationManager) {
         this.applicationManager = applicationManager;
@@ -79,7 +79,7 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
 
     private JPanel createBottomPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        statusBar = new ModernStatusBar();
+        statusBar = new StatusBar();
         panel.add(statusBar, BorderLayout.CENTER);
         return panel;
     }
@@ -230,7 +230,7 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
                 ToastNotification.showSuccess("Added: " + app.getName());
             } catch (Exception e) {
                 statusBar.setErrorStatus("Error: " + e.getMessage());
-                ModernMessageDialog.showError(
+                MessageDialog.showError(
                     SwingUtilities.getWindowAncestor(this) instanceof Frame
                         ? (Frame) SwingUtilities.getWindowAncestor(this)
                         : null,
@@ -243,7 +243,7 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
 
     private void removeApplication(J2meApplication app) {
         Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
-        boolean confirm = ModernConfirmDialog.showConfirm(
+        boolean confirm = ConfirmDialog.showConfirm(
                 parentFrame,
                 "Confirm Remove",
                 "Are you sure you want to remove '" + app.getName() + "'?"
