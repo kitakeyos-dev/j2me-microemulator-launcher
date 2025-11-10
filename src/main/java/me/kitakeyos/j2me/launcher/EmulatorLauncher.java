@@ -59,11 +59,11 @@ public class EmulatorLauncher {
             params.add("240");
             params.add("320");
             JFrame frame = launchMicroEmulator(params, emulatorClassLoader);
-            if (frame == null) {
-                // Hiện thông báo lỗi không thể khởi động
-                return;
-            }
-            configure(emulatorInstance, frame);
+            emulatorInstance.emulatorWindow = frame;
+            frame.setResizable(false);
+            emulatorInstance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
+            emulatorInstance.emulatorDisplay = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
+            frame.setTitle("Instance " + emulatorInstance.instanceId);
             // Set state to RUNNING after successful configuration
             emulatorInstance.state = InstanceState.RUNNING;
         } catch (Exception e) {
@@ -77,139 +77,93 @@ public class EmulatorLauncher {
         }
     }
 
-    private static void configure(EmulatorInstance instance, JFrame frame) {
-        instance.emulatorWindow = frame;
-        frame.setResizable(false);
-        instance.menuExitListener = getFieldValue(frame, "menuExitListener", ActionListener.class);
-        instance.emulatorDisplay = getFieldValue(frame, "devicePanel", JPanel.class);
-        frame.setTitle("Instance " + instance.instanceId);
-    }
+    public static JFrame launchMicroEmulator(List<String> params, ClassLoader classLoader)
+            throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException,
+            InvocationTargetException, InstantiationException, IllegalAccessException {
 
-    public static <T> T getFieldValue(Object obj, String fieldName, Class<T> type) {
-        try {
-            Field field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return type.cast(field.get(obj));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            return null;
-        }
-    }
+        // Create instance of Main class
+        JFrame app = (JFrame) ReflectionHelper.createInstance(classLoader, "org.microemu.app.Main");
 
-    public static JFrame launchMicroEmulator(List<String> params, ClassLoader classLoader) {
-        try {
-            // Tạo instance của Main class
-            JFrame app = (JFrame) classLoader.loadClass("org.microemu.app.Main").getDeclaredConstructor().newInstance();
+        // Get required fields
+        Object common = ReflectionHelper.getFieldValue(app, "common");
+        Object selectDevicePanel = ReflectionHelper.getFieldValue(app, "selectDevicePanel");
 
-            // Lấy các field cần thiết
-            Field commonField = app.getClass().getDeclaredField("common");
-            commonField.setAccessible(true);
-            Object common = commonField.get(app);
+        // Get selected device entry
+        Object deviceEntry = ReflectionHelper.invokeMethod(selectDevicePanel, "getSelectedDeviceEntry");
 
-            Field selectDevicePanelField = app.getClass().getDeclaredField("selectDevicePanel");
-            selectDevicePanelField.setAccessible(true);
-            Object selectDevicePanel = selectDevicePanelField.get(app);
+        // Call common.initParams(params, deviceEntry, J2SEDevice.class)
+        Class<?> j2seDeviceClass = ReflectionHelper.loadClass(classLoader, "org.microemu.device.j2se.J2SEDevice");
+        boolean initResult = (boolean) ReflectionHelper.invokeMethod(
+                common,
+                "initParams",
+                new Class<?>[]{List.class, deviceEntry.getClass(), Class.class},
+                params, deviceEntry, j2seDeviceClass
+        );
 
-            // Gọi getSelectedDeviceEntry()
-            Method getSelectedDeviceEntryMethod = selectDevicePanel.getClass().getMethod("getSelectedDeviceEntry");
-            Object deviceEntry = getSelectedDeviceEntryMethod.invoke(selectDevicePanel);
+        if (initResult) {
+            // Set deviceEntry field
+            ReflectionHelper.setFieldValue(app, "deviceEntry", deviceEntry);
 
-            // Gọi common.initParams(params, deviceEntry, J2SEDevice.class)
-            Class<?> j2seDeviceClass = classLoader.loadClass("org.microemu.device.j2se.J2SEDevice");
-            Method initParamsMethod = common.getClass().getMethod("initParams", List.class, deviceEntry.getClass(), Class.class);
-            boolean initResult = (boolean) initParamsMethod.invoke(common, params, deviceEntry, j2seDeviceClass);
+            // Get DeviceDisplayImpl
+            Class<?> deviceFactoryClass = ReflectionHelper.loadClass(classLoader, "org.microemu.device.DeviceFactory");
+            Object device = ReflectionHelper.invokeStaticMethod(deviceFactoryClass, "getDevice", new Class<?>[]{});
+            Object deviceDisplay = ReflectionHelper.invokeMethod(device, "getDeviceDisplay");
 
-            if (initResult) {
-                // Set deviceEntry field
-                Field deviceEntryField = app.getClass().getDeclaredField("deviceEntry");
-                deviceEntryField.setAccessible(true);
-                deviceEntryField.set(app, deviceEntry);
+            // Check if resizable
+            boolean isResizable = (boolean) ReflectionHelper.invokeMethod(deviceDisplay, "isResizable");
 
-                // Lấy DeviceDisplayImpl
-                Class<?> deviceFactoryClass = classLoader.loadClass("org.microemu.device.DeviceFactory");
-                Method getDeviceMethod = deviceFactoryClass.getMethod("getDevice");
-                Object device = getDeviceMethod.invoke(null);
+            if (isResizable) {
+                // Get device entry display size
+                Class<?> configClass = ReflectionHelper.loadClass(classLoader, "org.microemu.app.Config");
+                Object size = ReflectionHelper.invokeStaticMethod(
+                        configClass,
+                        "getDeviceEntryDisplaySize",
+                        new Class<?>[]{Object.class},
+                        deviceEntry
+                );
 
-                Method getDeviceDisplayMethod = device.getClass().getMethod("getDeviceDisplay");
-                Object deviceDisplay = getDeviceDisplayMethod.invoke(device);
-
-                // Kiểm tra isResizable()
-                Method isResizableMethod = deviceDisplay.getClass().getMethod("isResizable");
-                boolean isResizable = (boolean) isResizableMethod.invoke(deviceDisplay);
-
-                if (isResizable) {
-                    // Gọi Config.getDeviceEntryDisplaySize(deviceEntry)
-                    Class<?> configClass = classLoader.loadClass("org.microemu.app.Config");
-                    Method getDeviceEntryDisplaySizeMethod = configClass.getMethod("getDeviceEntryDisplaySize", Object.class);
-                    Object size = getDeviceEntryDisplaySizeMethod.invoke(null, deviceEntry);
-
-                    if (size != null) {
-                        // Gọi deviceDisplay.setDisplayRectangle(size)
-                        Method setDisplayRectangleMethod = deviceDisplay.getClass().getMethod("setDisplayRectangle", Rectangle.class);
-                        setDisplayRectangleMethod.invoke(deviceDisplay, size);
-                    }
+                if (size != null) {
+                    // Set display rectangle
+                    ReflectionHelper.invokeMethod(
+                            deviceDisplay,
+                            "setDisplayRectangle",
+                            new Class<?>[]{Rectangle.class},
+                            size
+                    );
                 }
             }
-
-            // Gọi app.updateDevice()
-            Method updateDeviceMethod = app.getClass().getDeclaredMethod("updateDevice");
-            updateDeviceMethod.setAccessible(true);
-            updateDeviceMethod.invoke(app);
-
-            // Gọi app.validate()
-            Method validateMethod = app.getClass().getMethod("validate");
-            validateMethod.invoke(app);
-
-//            // Gọi app.setVisible(true)
-//            Method setVisibleMethod = app.getClass().getMethod("setVisible", boolean.class);
-//            setVisibleMethod.invoke(app, true);
-
-            // Gọi app.common.initMIDlet(false)
-            Method initMIDletMethod = common.getClass().getMethod("initMIDlet", boolean.class);
-            initMIDletMethod.invoke(common, true);
-
-            // Lấy componentListener và add vào app
-            Field componentListenerField = app.getClass().getDeclaredField("componentListener");
-            componentListenerField.setAccessible(true);
-            Object componentListener = componentListenerField.get(app);
-
-            Method addComponentListenerMethod = app.getClass().getMethod("addComponentListener", ComponentListener.class);
-            addComponentListenerMethod.invoke(app, componentListener);
-
-            // Gọi responseInterfaceListener.stateChanged(true)
-            Field responseInterfaceListenerField = app.getClass().getDeclaredField("responseInterfaceListener");
-            responseInterfaceListenerField.setAccessible(true);
-            Object responseInterfaceListener = responseInterfaceListenerField.get(app);
-
-            Method stateChangedMethod = responseInterfaceListener.getClass().getMethod("stateChanged", boolean.class);
-            stateChangedMethod.setAccessible(true);
-            stateChangedMethod.invoke(responseInterfaceListener, true);
-            return app;
-        } catch (ClassNotFoundException e) {
-            System.err.println("Class not found: " + e.getMessage());
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            System.err.println("Method not found: " + e.getMessage());
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            System.err.println("Field not found: " + e.getMessage());
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            System.err.println("Illegal access: " + e.getMessage());
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            System.err.println("Instantiation error: " + e.getMessage());
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            System.err.println("Invocation target exception: " + e.getMessage());
-            e.printStackTrace();
-            if (e.getCause() != null) {
-                System.err.println("Cause: " + e.getCause().getMessage());
-                e.getCause().printStackTrace();
-            }
-        } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
         }
-        return null;
+
+        // Update device
+        ReflectionHelper.invokeDeclaredMethod(app, "updateDevice");
+
+        // Validate frame
+        ReflectionHelper.invokeMethod(app, "validate");
+
+        // Set visible
+        ReflectionHelper.invokeMethod(app, "setVisible", new Class<?>[]{boolean.class}, true);
+
+        // Initialize MIDlet
+        ReflectionHelper.invokeMethod(common, "initMIDlet", new Class<?>[]{boolean.class}, true);
+
+        // Add component listener
+        Object componentListener = ReflectionHelper.getFieldValue(app, "componentListener");
+        ReflectionHelper.invokeMethod(
+                app,
+                "addComponentListener",
+                new Class<?>[]{ComponentListener.class},
+                componentListener
+        );
+
+        // Notify state changed
+        Object responseInterfaceListener = ReflectionHelper.getFieldValue(app, "responseInterfaceListener");
+        ReflectionHelper.invokeDeclaredMethod(
+                responseInterfaceListener,
+                "stateChanged",
+                new Class<?>[]{boolean.class},
+                true
+        );
+
+        return app;
     }
 }
