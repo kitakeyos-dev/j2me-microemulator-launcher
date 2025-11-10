@@ -22,6 +22,7 @@ public class EmulatorInstance {
     public JPanel uiPanel;
     public JFrame emulatorWindow;
     public ActionListener menuExitListener;
+    public JPanel emulatorDisplay;
 
     public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath) {
         this.instanceId = instanceId;
