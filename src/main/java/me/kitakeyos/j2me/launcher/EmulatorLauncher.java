@@ -11,7 +11,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.io.File;
@@ -78,6 +77,18 @@ public class EmulatorLauncher {
             emulatorInstance.errorMessage = e.getMessage();
             emulatorInstance.state = InstanceState.STOPPED;
             e.printStackTrace();
+
+            // Show error notification to user
+            SwingUtilities.invokeLater(() -> {
+                String errorMessage = "Failed to launch J2ME emulator for instance " + emulatorInstance.instanceId + ":\n" +
+                                     (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+                JOptionPane.showMessageDialog(
+                    null,
+                    errorMessage,
+                    "Emulator Launch Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            });
         } finally {
             if (onComplete != null) {
                 SwingUtilities.invokeLater(onComplete);
@@ -88,7 +99,7 @@ public class EmulatorLauncher {
     private static void configure(EmulatorInstance instance, JFrame frame) {
         instance.emulatorWindow = frame;
         frame.setResizable(false);
-        instance.menuExitListener = getFieldValue(frame, "menuExitListener", ActionListener.class);
+        instance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
         frame.setTitle("Instance " + instance.instanceId);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -96,15 +107,5 @@ public class EmulatorLauncher {
                 MainApplication.INSTANCE.stopEmulatorInstance(instance);
             }
         });
-    }
-
-    public static <T> T getFieldValue(Object obj, String fieldName, Class<T> type) {
-        try {
-            Field field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return type.cast(field.get(obj));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            return null;
-        }
     }
 }

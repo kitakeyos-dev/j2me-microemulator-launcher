@@ -52,22 +52,22 @@ public class SystemCallInterceptorMethodVisitor extends MethodAdapter implements
         if (opcode == INVOKESTATIC) {
             // System.exit(int status) -> Injected.exit(instanceId, status)
             if ((name.equals("exit")) && (owner.equals("java/lang/System"))) {
-                // Stack hiện tại: [status]
-                // Push instanceId từ field
+                // Current stack: [status]
+                // Push instanceId from field
                 mv.visitLdcInsn(instanceId);
                 // Stack: [status, instanceId]
-                // Swap để: [instanceId, status]
+                // Swap to: [instanceId, status]
                 mv.visitInsn(SWAP);
-                // Gọi Injected.exit(instanceId, status)
+                // Call Injected.exit(instanceId, status)
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(II)V");
                 return;
             }
 
             // Config.initMEHomePath() -> Injected.initMEHomePath(instanceId)
             if ((name.equals("initMEHomePath")) && (owner.equals("org/microemu/app/Config"))) {
-                // Push instanceId từ field
+                // Push instanceId from field
                 mv.visitLdcInsn(instanceId);
-                // Gọi Injected.initMEHomePath(instanceId)
+                // Call Injected.initMEHomePath(instanceId)
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(I)Ljava/io/File;");
                 return;
             }
