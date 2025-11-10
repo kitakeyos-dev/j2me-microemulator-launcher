@@ -11,6 +11,11 @@ public class ApplicationConfig {
     private static final String CONFIG_FILE = "j2me_launcher.properties";
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
+    public static final String DATA_DIR = "data";
+    public static final String APPS_DIR = "apps";
+    public static final String ICONS_DIR = "icons";
+    public static final String RMS_DIR = "rms";
+    public static final String APPS_CONFIG_FILE = "j2me_apps.properties";
 
     private final Properties properties;
     private final String configFilePath;

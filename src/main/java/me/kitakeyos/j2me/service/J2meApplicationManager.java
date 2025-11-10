@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.service;
 
+import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.J2meApplication;
 import me.kitakeyos.j2me.util.ManifestReader;
 
@@ -12,10 +13,6 @@ import java.util.*;
  * Manager for installed J2ME applications
  */
 public class J2meApplicationManager {
-    private static final String DATA_DIR = "data";
-    private static final String APPS_DIR = "apps";
-    private static final String ICONS_DIR = "icons";
-    private static final String APPS_CONFIG_FILE = "j2me_apps.properties";
 
     private final List<J2meApplication> applications;
     private final File dataDirectory;
@@ -29,24 +26,24 @@ public class J2meApplicationManager {
         this.listeners = new ArrayList<>();
 
         // Use application directory instead of user home
-        this.dataDirectory = new File(DATA_DIR);
+        this.dataDirectory = new File(ApplicationConfig.DATA_DIR);
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }
 
         // Create apps directory for storing cloned JAR/JAD files
-        this.appsDirectory = new File(dataDirectory, APPS_DIR);
+        this.appsDirectory = new File(dataDirectory, ApplicationConfig.APPS_DIR);
         if (!appsDirectory.exists()) {
             appsDirectory.mkdirs();
         }
 
         // Create icons directory
-        this.iconsDirectory = new File(dataDirectory, ICONS_DIR);
+        this.iconsDirectory = new File(dataDirectory, ApplicationConfig.ICONS_DIR);
         if (!iconsDirectory.exists()) {
             iconsDirectory.mkdirs();
         }
 
-        this.configFile = new File(dataDirectory, APPS_CONFIG_FILE);
+        this.configFile = new File(dataDirectory, ApplicationConfig.APPS_CONFIG_FILE);
 
         loadApplications();
     }

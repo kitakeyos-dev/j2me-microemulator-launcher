@@ -28,22 +28,25 @@ package me.kitakeyos.j2me.core.bytecode;
 
 
 import me.kitakeyos.j2me.MainApplication;
+import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Paths;
 
 /**
  * @author vlads
  *
  * This code is added to MIDlet application to solve problems with security policy  while running in Applet and Webstart.
- * Also solves resource resource loading paterns commonly used in MIDlet and not aceptable in Java SE application
+ * Also solves resource loading paterns commonly used in MIDlet and not aceptable in Java SE application
  * The calls to this code is injected by ClassLoader or "Save for Web...".
- * 
+ * <p>
  * This class is used instead injected one when application is running in Applet with MicroEmulator. 
  *
  * Serializable is just internal flag to verify tha proper class is loaded by application.
  */
+@SuppressWarnings("unused")
 public final class SystemCallHandler implements Serializable {
 
 	private static final long serialVersionUID = -1L;
@@ -63,6 +66,6 @@ public final class SystemCallHandler implements Serializable {
     }
 
     public static File initMEHomePath(int instanceId) {
-        return new File("data", String.valueOf(instanceId));
+        return Paths.get(ApplicationConfig.DATA_DIR, ApplicationConfig.RMS_DIR, String.valueOf(instanceId)).toFile();
     }
 }
