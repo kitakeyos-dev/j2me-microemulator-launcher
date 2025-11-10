@@ -1,8 +1,9 @@
-package me.kitakeyos.j2me.launcher;
+package me.kitakeyos.j2me.service;
 
-import me.kitakeyos.j2me.classloader.EmulatorClassLoader;
-import me.kitakeyos.j2me.config.EmulatorInstance;
-import me.kitakeyos.j2me.config.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.core.classloader.EmulatorClassLoader;
+import me.kitakeyos.j2me.model.EmulatorInstance;
+import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.util.ReflectionHelper;
 
 import javax.swing.*;
 import java.awt.*;

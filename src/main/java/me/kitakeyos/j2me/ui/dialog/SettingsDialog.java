@@ -1,6 +1,7 @@
-package me.kitakeyos.j2me.ui;
+package me.kitakeyos.j2me.ui.dialog;
 
 import me.kitakeyos.j2me.config.ApplicationConfig;
+import me.kitakeyos.j2me.ui.component.ToastNotification;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;

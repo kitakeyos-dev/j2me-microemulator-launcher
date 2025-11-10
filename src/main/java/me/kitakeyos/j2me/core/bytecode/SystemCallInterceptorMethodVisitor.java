@@ -24,7 +24,7 @@
  *
  * @version $Id: ChangeCallsMethodVisitor.java 2092 2009-06-13 10:14:45Z barteo $
  */
-package me.kitakeyos.j2me.classloader;
+package me.kitakeyos.j2me.core.bytecode;
 
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;

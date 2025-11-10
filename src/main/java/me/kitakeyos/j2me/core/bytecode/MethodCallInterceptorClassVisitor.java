@@ -22,34 +22,30 @@
  *  See the LGPL or the AL for the specific language governing permissions and
  *  limitations.
  *
- *  @version $Id: ClassPreprocessor.java 1605 2008-02-25 21:07:14Z barteo $
+ *  @version $Id: ChangeCallsClassVisitor.java 2092 2009-06-13 10:14:45Z barteo $
  */
-package me.kitakeyos.j2me.classloader;
+package me.kitakeyos.j2me.core.bytecode;
 
-import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-
-import java.io.IOException;
-import java.io.InputStream;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * @author vlads
- *
+ * 
  */
-public class ClassPreprocessor {
+public class MethodCallInterceptorClassVisitor extends ClassAdapter {
 
-	public static byte[] instrumentAndModifyBytecode(final InputStream classInputStream, int instanceId) {
-		try {
-			ClassReader cr = new ClassReader(classInputStream);
-			ClassWriter cw = new ClassWriter(0);
-			ClassVisitor cv = new MethodCallInterceptorClassVisitor(cw, instanceId);
-			cr.accept(cv, 0);
-			return cw.toByteArray();
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		} 
-    }
-	
+	private final int instanceId;
+
+	public MethodCallInterceptorClassVisitor(ClassVisitor cv, int instanceId) {
+		super(cv);
+		this.instanceId = instanceId;
+	}
+
+	public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
+			final String[] exceptions) {
+		return new SystemCallInterceptorMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions), instanceId);
+	}
+
 }

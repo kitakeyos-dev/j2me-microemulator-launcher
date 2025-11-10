@@ -1,6 +1,6 @@
-package me.kitakeyos.j2me.manager;
+package me.kitakeyos.j2me.service;
 
-import me.kitakeyos.j2me.config.J2meApplication;
+import me.kitakeyos.j2me.model.J2meApplication;
 import me.kitakeyos.j2me.util.ManifestReader;
 
 import javax.imageio.ImageIO;

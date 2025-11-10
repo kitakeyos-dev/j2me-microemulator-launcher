@@ -24,11 +24,11 @@
  *
  *  @version $Id: Injected.java 1605 2008-02-25 21:07:14Z barteo $
  */
-package me.kitakeyos.j2me.classloader;
+package me.kitakeyos.j2me.core.bytecode;
 
 
 import me.kitakeyos.j2me.MainApplication;
-import me.kitakeyos.j2me.config.EmulatorInstance;
+import me.kitakeyos.j2me.model.EmulatorInstance;
 
 import java.io.File;
 import java.io.Serializable;

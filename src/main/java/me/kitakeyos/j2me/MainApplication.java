@@ -1,20 +1,20 @@
 package me.kitakeyos.j2me;
 
 import me.kitakeyos.j2me.config.ApplicationConfig;
-import me.kitakeyos.j2me.config.EmulatorInstance;
-import me.kitakeyos.j2me.config.EmulatorInstance.InstanceState;
-import me.kitakeyos.j2me.config.J2meApplication;
-import me.kitakeyos.j2me.launcher.EmulatorLauncher;
-import me.kitakeyos.j2me.manager.EmulatorInstanceManager;
-import me.kitakeyos.j2me.manager.J2meApplicationManager;
-import me.kitakeyos.j2me.ui.ApplicationsPanel;
-import me.kitakeyos.j2me.ui.ConfigurationPanelBuilder;
-import me.kitakeyos.j2me.ui.EmulatorInstanceUIBuilder;
-import me.kitakeyos.j2me.ui.ConfirmDialog;
-import me.kitakeyos.j2me.ui.MessageDialog;
-import me.kitakeyos.j2me.ui.SettingsDialog;
-import me.kitakeyos.j2me.ui.ToastNotification;
-import me.kitakeyos.j2me.ui.WindowArrangement;
+import me.kitakeyos.j2me.model.EmulatorInstance;
+import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.model.J2meApplication;
+import me.kitakeyos.j2me.service.EmulatorLauncher;
+import me.kitakeyos.j2me.service.EmulatorInstanceManager;
+import me.kitakeyos.j2me.service.J2meApplicationManager;
+import me.kitakeyos.j2me.ui.panel.ApplicationsPanel;
+import me.kitakeyos.j2me.ui.builder.ConfigurationPanelBuilder;
+import me.kitakeyos.j2me.ui.builder.EmulatorInstanceUIBuilder;
+import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
+import me.kitakeyos.j2me.ui.dialog.MessageDialog;
+import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
+import me.kitakeyos.j2me.ui.component.ToastNotification;
+import me.kitakeyos.j2me.util.WindowArrangement;
 
 import javax.swing.*;
 import java.awt.*;

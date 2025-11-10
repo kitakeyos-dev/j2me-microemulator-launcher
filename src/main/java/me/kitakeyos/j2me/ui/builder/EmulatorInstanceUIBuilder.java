@@ -1,7 +1,7 @@
-package me.kitakeyos.j2me.ui;
+package me.kitakeyos.j2me.ui.builder;
 
-import me.kitakeyos.j2me.config.EmulatorInstance;
-import me.kitakeyos.j2me.config.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.model.EmulatorInstance;
+import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
 
 import javax.swing.*;
 import java.awt.*;

@@ -1,7 +1,7 @@
-package me.kitakeyos.j2me.manager;
+package me.kitakeyos.j2me.service;
 
-import me.kitakeyos.j2me.config.EmulatorInstance;
-import me.kitakeyos.j2me.config.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.model.EmulatorInstance;
+import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
 
 import java.util.ArrayList;
 import java.util.Collections;

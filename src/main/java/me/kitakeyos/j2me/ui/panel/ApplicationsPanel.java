@@ -1,7 +1,11 @@
-package me.kitakeyos.j2me.ui;
+package me.kitakeyos.j2me.ui.panel;
 
-import me.kitakeyos.j2me.config.J2meApplication;
-import me.kitakeyos.j2me.manager.J2meApplicationManager;
+import me.kitakeyos.j2me.model.J2meApplication;
+import me.kitakeyos.j2me.service.J2meApplicationManager;
+import me.kitakeyos.j2me.ui.component.StatusBar;
+import me.kitakeyos.j2me.ui.component.ToastNotification;
+import me.kitakeyos.j2me.ui.dialog.MessageDialog;
+import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

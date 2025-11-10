@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.ui;
+package me.kitakeyos.j2me.ui.component;
 
 import javax.swing.*;
 import java.awt.*;

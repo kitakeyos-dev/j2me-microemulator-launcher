@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.config;
+package me.kitakeyos.j2me.model;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;

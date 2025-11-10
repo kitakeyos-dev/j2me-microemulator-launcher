@@ -24,7 +24,7 @@
  *
  * @version $Id: MIDletClassLoader.java 2052 2009-05-13 14:31:06Z barteo $
  */
-package me.kitakeyos.j2me.classloader;
+package me.kitakeyos.j2me.core.classloader;
 
 import java.io.IOException;
 import java.io.InputStream;

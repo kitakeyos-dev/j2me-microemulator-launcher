@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.launcher;
+package me.kitakeyos.j2me.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

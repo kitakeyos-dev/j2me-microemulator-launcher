@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.util;
 
-import me.kitakeyos.j2me.config.J2meApplication;
+import me.kitakeyos.j2me.model.J2meApplication;
 
 import javax.imageio.ImageIO;
 import java.awt.Image;
