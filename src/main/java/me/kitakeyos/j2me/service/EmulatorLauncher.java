@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.service;
 
+import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.core.classloader.EmulatorClassLoader;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
@@ -9,6 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -38,38 +41,38 @@ public class EmulatorLauncher {
         return new EmulatorClassLoader(instanceId, urls.toArray(new URL[0]), ClassLoader.getSystemClassLoader());
     }
 
-    public static void startEmulatorInstance(EmulatorInstance emulatorInstance, Runnable onComplete, Runnable onStarted) {
+    public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete, Runnable onStarted) {
         // Set state to STARTING
-        emulatorInstance.state = InstanceState.STARTING;
+        instance.state = InstanceState.STARTING;
         if (onStarted != null) {
             SwingUtilities.invokeLater(onStarted);
         }
 
         try {
             EmulatorClassLoader emulatorClassLoader = initializeEmulatorClassLoader(
-                    emulatorInstance.instanceId,
-                    emulatorInstance.microemulatorPath
+                    instance.instanceId,
+                    instance.microemulatorPath
             );
 
             // Ensure emulator runs with its own context ClassLoader
             Thread.currentThread().setContextClassLoader(emulatorClassLoader);
 
             List<String> params = new ArrayList<>();
-            params.add(emulatorInstance.j2meFilePath);
+            params.add(instance.j2meFilePath);
             params.add("--resizableDevice");
             params.add("240");
             params.add("320");
-            JFrame frame = launchMicroEmulator(params, emulatorClassLoader);
-            emulatorInstance.emulatorWindow = frame;
+            JFrame frame = launchMicroEmulator(instance, params, emulatorClassLoader);
+            instance.emulatorWindow = frame;
+            instance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
+            instance.emulatorDisplay = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
             frame.setResizable(false);
-            emulatorInstance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
-            emulatorInstance.emulatorDisplay = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
-            frame.setTitle("Instance " + emulatorInstance.instanceId);
+            frame.setTitle("Instance " + instance.instanceId);
             // Set state to RUNNING after successful configuration
-            emulatorInstance.state = InstanceState.RUNNING;
+            instance.state = InstanceState.RUNNING;
         } catch (Exception e) {
-            emulatorInstance.errorMessage = e.getMessage();
-            emulatorInstance.state = InstanceState.STOPPED;
+            instance.errorMessage = e.getMessage();
+            instance.state = InstanceState.STOPPED;
             e.printStackTrace();
         } finally {
             if (onComplete != null) {
@@ -78,7 +81,7 @@ public class EmulatorLauncher {
         }
     }
 
-    public static JFrame launchMicroEmulator(List<String> params, ClassLoader classLoader)
+    public static JFrame launchMicroEmulator(EmulatorInstance instance, List<String> params, ClassLoader classLoader)
             throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException,
             InvocationTargetException, InstantiationException, IllegalAccessException {
 
@@ -143,6 +146,12 @@ public class EmulatorLauncher {
 
         // Set visible
         ReflectionHelper.invokeMethod(app, "setVisible", new Class<?>[]{boolean.class}, true);
+        app.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                MainApplication.INSTANCE.stopEmulatorInstance(instance);
+            }
+        });
 
         // Initialize MIDlet
         ReflectionHelper.invokeMethod(common, "initMIDlet", new Class<?>[]{boolean.class}, true);
