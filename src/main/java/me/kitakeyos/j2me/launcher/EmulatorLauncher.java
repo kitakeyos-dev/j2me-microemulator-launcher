@@ -3,7 +3,6 @@ package me.kitakeyos.j2me.launcher;
 import me.kitakeyos.j2me.classloader.EmulatorClassLoader;
 import me.kitakeyos.j2me.config.EmulatorInstance;
 import me.kitakeyos.j2me.config.EmulatorInstance.InstanceState;
-import me.kitakeyos.j2me.ui.MessageDialog;
 
 import javax.swing.*;
 import java.awt.*;

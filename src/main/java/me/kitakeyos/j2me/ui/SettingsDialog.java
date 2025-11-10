@@ -34,12 +34,12 @@ public class SettingsDialog extends JDialog {
         
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Panel cấu hình
+
+        // Configuration panel
         JPanel configPanel = createConfigPanel();
         mainPanel.add(configPanel, BorderLayout.CENTER);
-        
-        // Panel nút bấm
+
+        // Button panel
         JPanel buttonPanel = createButtonPanel();
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         
