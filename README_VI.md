@@ -4,24 +4,35 @@
 
 ## Tổng quan
 
-J2ME MicroEmulator Launcher là một ứng dụng desktop được xây dựng bằng Java, cho phép người dùng khởi chạy và quản lý nhiều instances của ứng dụng J2ME (Java 2 Micro Edition) sử dụng MicroEmulator. Nó cung cấp giao diện GUI trực quan để cấu hình, chạy và sắp xếp các cửa sổ emulator, giúp dễ dàng kiểm tra hoặc chạy các ứng dụng Java di động cũ trên máy tính hiện đại.
+J2ME MicroEmulator Launcher là ứng dụng desktop hiệu năng cao được xây dựng bằng Java, cho phép người dùng khởi chạy và quản lý nhiều instances của ứng dụng J2ME (Java 2 Micro Edition) sử dụng MicroEmulator. Ứng dụng tích hợp công nghệ bytecode instrumentation caching tiên tiến, classloader pre-warming, và quản lý bộ nhớ thông minh để mang lại tốc độ khởi động cực nhanh và tối ưu hóa tài nguyên hệ thống.
 
-Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bất kỳ ai làm việc với ứng dụng J2ME cần mô phỏng nhiều thiết bị cùng lúc.
+Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bất kỳ ai làm việc với ứng dụng J2ME cần mô phỏng nhiều thiết bị cùng lúc với hiệu năng chuyên nghiệp.
 
-## Tính năng
+## Tính năng Chính
 
-- **Quản lý Ứng dụng**: Cài đặt và quản lý ứng dụng J2ME với tự động trích xuất tên, icon, nhà phát triển và phiên bản từ manifest của file JAR/JAD.
-- **Clone File**: File JAR/JAD được tự động sao chép vào thư mục dữ liệu của ứng dụng, tránh mất dữ liệu nếu file gốc bị xóa.
-- **Lưu trữ Di động**: Tất cả cấu hình và dữ liệu ứng dụng được lưu trong thư mục `./data/` cục bộ, giúp launcher hoàn toàn di động.
-- **Giao diện Tab**: Tab riêng biệt cho quản lý Ứng dụng và Instances để tổ chức tốt hơn.
-- **Hỗ trợ Đa Instances**: Tạo và chạy nhiều instances emulator từ các ứng dụng J2ME đã cài đặt.
-- **Lưu trữ Lâu dài**: Ứng dụng đã cài tồn tại giữa các phiên với cấu trúc file có tổ chức.
-- **Cache Icon**: Icon ứng dụng được tự động trích xuất và cache cục bộ.
-- **Quản lý GUI**: Giao diện thân thiện để thêm, xóa, khởi động, dừng và sắp xếp lại instances.
-- **Sắp xếp Cửa sổ Tự động**: Tổ chức các cửa sổ emulator theo lưới để dễ quan sát hơn.
-- **Tùy chọn Cấu hình**: Dễ dàng đặt đường dẫn đến file MicroEmulator JAR và chọn từ các ứng dụng đã cài.
-- **Theo dõi Trạng thái**: Giám sát trạng thái instances (Created, Starting, Running, Stopped) với giao diện mã màu.
-- **Đa Nền tảng**: Chạy trên bất kỳ hệ thống nào có Java (đã kiểm tra trên Windows, macOS, Linux).
+### Quản lý Ứng dụng
+- **Cài đặt Thông minh**: Cài đặt và quản lý ứng dụng J2ME với tự động trích xuất tên, icon, nhà phát triển và phiên bản từ manifest của file JAR/JAD
+- **Clone File**: File JAR/JAD được tự động sao chép vào thư mục dữ liệu, tránh mất dữ liệu nếu file gốc bị xóa
+- **Cache Icon**: Icon ứng dụng được tự động trích xuất và cache cục bộ để hiển thị tức thì
+
+### Hỗ trợ Đa Instance
+- **Không giới hạn Instance**: Tạo và chạy không giới hạn instances emulator từ các ứng dụng J2ME đã cài
+- **Giao diện Tab**: Ba tab chuyên biệt cho quản lý Applications, Instances và Running Instances
+- **Tự động Sắp xếp**: Instances đang chạy được tự động sắp xếp theo ID để dễ dàng theo dõi
+- **Theo dõi Trạng thái**: Giám sát trạng thái real-time (Created, Starting, Running, Stopped) với giao diện mã màu
+- **Điều khiển Độc lập**: Khởi động, dừng và quản lý từng instance một cách riêng biệt
+
+### Tối ưu hóa Hiệu năng ⚡
+- **Cache Bytecode**: Các class đã instrument được cache và chia sẻ giữa các instances, loại bỏ xử lý trùng lặp
+- **Pre-warming ClassLoader**: Các class emulator được pre-load khi khởi động để launch instance đầu tiên cực nhanh
+- **ThreadLocal Context**: Dynamic instance ID injection cho phép chia sẻ bytecode mà không xung đột bộ nhớ
+- **Quản lý Bộ nhớ Thông minh**: Cleanup tài nguyên đúng cách và garbage collection ngăn chặn memory leak
+
+### Trải nghiệm Người dùng
+- **Lưu trữ Di động**: Tất cả cấu hình và dữ liệu được lưu trong thư mục `./data/` cục bộ
+- **UI Mượt mà**: Các thao tác background đảm bảo giao diện không bao giờ bị đơ
+- **Tự động Cleanup**: Instances được dispose đúng cách khi dừng, giải phóng tài nguyên hệ thống
+- **Đa Nền tảng**: Chạy mượt mà trên Windows, macOS và Linux
 
 ## Yêu cầu
 
@@ -56,47 +67,94 @@ Launcher lưu tất cả dữ liệu trong thư mục `./data/` cục bộ:
 ├── apps/                      # File JAR/JAD đã clone
 │   ├── <app-id>.jar
 │   └── <app-id>.jad
-└── icons/                     # Icon ứng dụng đã trích xuất
-    └── <app-id>.png
+├── icons/                     # Icon ứng dụng đã trích xuất
+│   └── <app-id>.png
+└── rms/                       # Record Management System (dữ liệu theo instance)
+    ├── 1/                     # Dữ liệu của Instance #1
+    ├── 2/                     # Dữ liệu của Instance #2
+    └── ...
 ```
 
 Cấu trúc này đảm bảo:
 - **Di động**: Di chuyển toàn bộ thư mục ứng dụng đi bất cứ đâu
 - **An toàn**: File gốc có thể bị xóa mà không ảnh hưởng đến apps đã cài
+- **Cô lập**: Mỗi instance có thư mục dữ liệu riêng
 - **Tổ chức**: Tất cả dữ liệu trong một vị trí sạch sẽ, dễ quản lý
 
 ## Hướng dẫn Sử dụng
 
 ### Thiết lập Lần đầu
 
-1. **Đặt Đường dẫn MicroEmulator**: Vào Settings (trong tab Instances) và chọn file `microemulator.jar`.
+1. **Đặt Đường dẫn MicroEmulator**:
+   - Vào Settings (icon ⚙️ trong tab Instances)
+   - Chọn file `microemulator.jar` của bạn
+   - Classloader sẽ tự động pre-warm các class quan trọng để khởi động nhanh hơn
 
 ### Quản lý Ứng dụng
 
 2. **Cài đặt Ứng dụng** (tab Applications):
-   - Nhấn "Add Application" để chọn file .jar hoặc .jad.
-   - Tên, icon, nhà phát triển và phiên bản của ứng dụng được tự động trích xuất từ manifest.
-   - Ứng dụng đã cài sẽ được lưu và tồn tại giữa các phiên.
-   - Xem tất cả ứng dụng đã cài với chi tiết và icon.
-   - Nhấn "Remove" để gỡ bỏ ứng dụng.
+   - Nhấn "Add Application" để chọn file .jar hoặc .jad
+   - Tên, icon, nhà phát triển và phiên bản được tự động trích xuất từ manifest
+   - Ứng dụng đã cài sẽ được lưu và tồn tại giữa các phiên
+   - Xem tất cả ứng dụng đã cài với chi tiết và icon
+   - Nhấn "Remove" để gỡ bỏ ứng dụng
 
-### Chạy Instances
+### Tạo và Chạy Instances
 
 3. **Tạo Instances** (tab Instances):
-   - Chọn một ứng dụng đã cài từ menu dropdown.
-   - Chọn số lượng instances muốn tạo.
-   - Nhấn "Create Instances".
+   - Chọn một ứng dụng đã cài từ menu dropdown
+   - Chọn số lượng instances muốn tạo
+   - Nhấn "Create Instances"
+   - Instances xuất hiện trong danh sách với trạng thái mã màu
 
 4. **Chạy Instances**:
-   - Nhấn "Run All" để khởi động tất cả instances đã tạo.
-   - Hoặc nhấn nút "Run" riêng lẻ cho từng instance.
-   - Cửa sổ emulator sẽ tự động sắp xếp theo lưới.
+   - Nhấn "Run All" để khởi động tất cả instances đã tạo
+   - Hoặc nhấn nút "Run" riêng lẻ cho từng instance
+   - Instance đầu tiên khởi động nhanh nhờ pre-warming
+   - Các instance tiếp theo khởi động còn nhanh hơn nhờ cached bytecode
 
-5. **Quản lý Instances**:
-   - Dừng instances riêng lẻ hoặc nhấn "Stop All".
-   - Xóa instances không cần thiết.
-   - Dùng "Arrange" để tổ chức lại cửa sổ emulator.
-   - Di chuyển instances lên/xuống để thay đổi thứ tự.
+5. **Xem Running Instances** (tab Running Instances):
+   - Tất cả instances đang chạy được hiển thị theo thứ tự đã sắp xếp (1, 2, 3...)
+   - Instances tự động sắp xếp theo layout lưới responsive
+   - Thay đổi kích thước cửa sổ tự động điều chỉnh layout
+
+6. **Quản lý Instances**:
+   - Dừng instances riêng lẻ bằng nút "Stop" hoặc nhấn "Stop All"
+   - Xóa instances không cần thiết bằng nút "Remove"
+   - Di chuyển instances lên/xuống để thay đổi thứ tự trong tab Instances
+   - Khi dừng, instances tự động được xóa khỏi tab Running Instances và tất cả tài nguyên được giải phóng
+
+## Chi tiết Kỹ thuật
+
+### Kiến trúc Hiệu năng
+
+#### Bytecode Instrumentation Caching
+- Các class emulator được instrument một lần và cache trong bộ nhớ
+- Instrumented bytecode được chia sẻ giữa tất cả instances qua `InstrumentedClassCache`
+- `ThreadLocal<Integer>` lưu trữ instance ID hiện tại để tra cứu động tại runtime
+- Instance đầu tiên: Instrument và cache các class
+- Các instance tiếp theo: Khởi động tức thì sử dụng cached bytecode
+
+#### ClassLoader Pre-warming
+- Khi ứng dụng khởi động, 10 class emulator quan trọng được pre-load
+- Pre-warming chạy trong background thread để tránh block UI
+- Các class phổ biến (Main, Config, DeviceFactory, v.v.) sẵn sàng trước khi launch instance đầu tiên
+- Thời gian pre-warming điển hình: 100-300ms
+
+#### Quản lý Bộ nhớ
+- Instances bị dừng kích hoạt cleanup toàn diện:
+  - Dispose JFrame để giải phóng native window resources
+  - Clear component hierarchies để phá vỡ circular references
+  - Clean ThreadLocal contexts đúng cách
+  - Null tất cả object references để garbage collection
+- System.gc() được gọi sau cleanup để suggest thu hồi ngay
+- Không memory leak ngay cả sau khi chạy/dừng hàng trăm instances
+
+#### Cô lập Instance
+- Mỗi instance có `EmulatorClassLoader` riêng để cô lập class
+- Mỗi instance có thư mục RMS (Record Management System) riêng
+- System calls (System.exit, Config.initMEHomePath) được intercept và route theo instance
+- Static fields KHÔNG được chia sẻ giữa các instances (namespace class riêng biệt)
 
 Để biết cấu trúc code chi tiết, tham khảo các file nguồn trong thư mục `src`.
 
