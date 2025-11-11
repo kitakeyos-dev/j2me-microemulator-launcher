@@ -45,6 +45,12 @@ public class MainApplication extends JFrame {
         applicationConfig = new ApplicationConfig();
         j2meApplicationManager = new J2meApplicationManager();
 
+        // Add window state listener to detect full screen changes
+        addWindowStateListener(e -> {
+            // Recalculate layout when window state changes (e.g., maximized/restored)
+            SwingUtilities.invokeLater(this::recalculateGridLayout);
+        });
+
         initializeComponents();
         loadApplicationConfiguration();
     }
@@ -86,12 +92,20 @@ public class MainApplication extends JFrame {
 
         // Create panel to hold all running instances
         runningInstancesPanel = new JPanel();
-        runningInstancesPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        runningInstancesPanel.setLayout(new GridLayout(0, 1, 10, 10)); // Start with 1 column, will be recalculated
         runningInstancesPanel.setBackground(new Color(240, 240, 240));
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Add component listener to handle window resize
+        mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                recalculateGridLayout();
+            }
+        });
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         return mainPanel;
@@ -336,6 +350,45 @@ public class MainApplication extends JFrame {
     }
 
     /**
+     * Recalculate grid layout based on panel size
+     */
+    private void recalculateGridLayout() {
+        if (runningInstancesPanel == null || runningInstancesPanel.getComponentCount() == 0) {
+            return;
+        }
+
+        // Get available width
+        int availableWidth = runningInstancesPanel.getWidth();
+        if (availableWidth <= 0) {
+            return;
+        }
+
+        // Get the width of a single instance (from first component)
+        Component firstComponent = runningInstancesPanel.getComponent(0);
+        int instanceWidth = firstComponent.getPreferredSize().width;
+
+        if (instanceWidth <= 0) {
+            // Use default emulator display width (around 240-260px)
+            instanceWidth = 280;
+        }
+
+        // Calculate optimal number of columns with spacing
+        int spacing = 10;
+        int columns = Math.max(1, (availableWidth + spacing) / (instanceWidth + spacing));
+
+        // Update grid layout
+        GridLayout layout = (GridLayout) runningInstancesPanel.getLayout();
+        int currentColumns = layout.getColumns();
+
+        // Only update if columns changed to avoid unnecessary reflows
+        if (currentColumns != columns) {
+            layout.setColumns(columns);
+            runningInstancesPanel.revalidate();
+            runningInstancesPanel.repaint();
+        }
+    }
+
+    /**
      * Add emulator display to running instances panel
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
@@ -351,6 +404,9 @@ public class MainApplication extends JFrame {
             runningInstancesPanel.add(wrapperPanel);
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
+
+            // Recalculate grid layout after adding instance
+            SwingUtilities.invokeLater(this::recalculateGridLayout);
         }
     }
 
@@ -365,6 +421,9 @@ public class MainApplication extends JFrame {
                 runningInstancesPanel.remove(wrapperPanel);
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
+
+                // Recalculate grid layout after removing instance
+                SwingUtilities.invokeLater(this::recalculateGridLayout);
             }
         }
     }
