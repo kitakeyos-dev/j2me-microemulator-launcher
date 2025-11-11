@@ -26,6 +26,7 @@
  */
 package me.kitakeyos.j2me.core.bytecode;
 
+import me.kitakeyos.j2me.core.classloader.InstanceContext;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -37,11 +38,10 @@ import org.objectweb.asm.Opcodes;
 public class SystemCallInterceptorMethodVisitor extends MethodAdapter implements Opcodes {
 
     private static final String INJECTED_CLASS = codeName(SystemCallHandler.class);
-    private final int instanceId;
+    private static final String INSTANCE_CONTEXT_CLASS = codeName(InstanceContext.class);
 
-    public SystemCallInterceptorMethodVisitor(MethodVisitor mv, int instanceId) {
+    public SystemCallInterceptorMethodVisitor(MethodVisitor mv) {
         super(mv);
-        this.instanceId = instanceId;
     }
 
     public static String codeName(Class klass) {
@@ -53,8 +53,8 @@ public class SystemCallInterceptorMethodVisitor extends MethodAdapter implements
             // System.exit(int status) -> Injected.exit(instanceId, status)
             if ((name.equals("exit")) && (owner.equals("java/lang/System"))) {
                 // Current stack: [status]
-                // Push instanceId from field
-                mv.visitLdcInsn(instanceId);
+                // Call InstanceContext.getInstanceId() to get instanceId dynamically
+                mv.visitMethodInsn(INVOKESTATIC, INSTANCE_CONTEXT_CLASS, "getInstanceId", "()I");
                 // Stack: [status, instanceId]
                 // Swap to: [instanceId, status]
                 mv.visitInsn(SWAP);
@@ -65,8 +65,8 @@ public class SystemCallInterceptorMethodVisitor extends MethodAdapter implements
 
             // Config.initMEHomePath() -> Injected.initMEHomePath(instanceId)
             if ((name.equals("initMEHomePath")) && (owner.equals("org/microemu/app/Config"))) {
-                // Push instanceId from field
-                mv.visitLdcInsn(instanceId);
+                // Call InstanceContext.getInstanceId() to get instanceId dynamically
+                mv.visitMethodInsn(INVOKESTATIC, INSTANCE_CONTEXT_CLASS, "getInstanceId", "()I");
                 // Call Injected.initMEHomePath(instanceId)
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(I)Ljava/io/File;");
                 return;

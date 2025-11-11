@@ -206,6 +206,11 @@ public class MainApplication extends JFrame {
 
     private void loadApplicationConfiguration() {
         microemulatorPathField.setText(applicationConfig.getMicroemulatorPath());
+
+        // Pre-warm classloader in background if microemulator path is valid
+        if (applicationConfig.isMicroemulatorPathValid()) {
+            EmulatorLauncher.prewarmClassLoader(applicationConfig.getMicroemulatorPath());
+        }
     }
 
     private void openSettingsDialog() {
@@ -342,7 +347,7 @@ public class MainApplication extends JFrame {
     /**
      * Update UI for an instance
      */
-    private void updateInstanceUI(EmulatorInstance instance) {
+    public void updateInstanceUI(EmulatorInstance instance) {
         EmulatorInstanceUIBuilder.updateInstancePanel(
                 instance,
                 () -> emulatorInstanceManager.moveInstanceUp(instance),
@@ -375,6 +380,7 @@ public class MainApplication extends JFrame {
 
     /**
      * Add emulator display to running instances panel
+     * Instances are automatically sorted by instanceId
      * WrapLayout automatically wraps instances to fill horizontal space
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
@@ -386,13 +392,36 @@ public class MainApplication extends JFrame {
 
             // Store wrapper panel reference for later removal
             emulatorInstance.emulatorDisplay.putClientProperty("wrapperPanel", wrapperPanel);
+            // Store instanceId for sorting
+            wrapperPanel.putClientProperty("instanceId", emulatorInstance.instanceId);
 
-            runningInstancesPanel.add(wrapperPanel);
+            // Find the correct position to insert based on instanceId
+            int insertIndex = findInsertPosition(emulatorInstance.instanceId);
+            runningInstancesPanel.add(wrapperPanel, insertIndex);
+
             // Invalidate and revalidate to trigger layout recalculation
             runningInstancesPanel.invalidate();
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
         }
+    }
+
+    /**
+     * Find the correct position to insert an instance based on instanceId
+     * Instances are sorted in ascending order by instanceId
+     */
+    private int findInsertPosition(int instanceId) {
+        Component[] components = runningInstancesPanel.getComponents();
+        for (int i = 0; i < components.length; i++) {
+            if (components[i] instanceof JPanel) {
+                JPanel panel = (JPanel) components[i];
+                Integer existingId = (Integer) panel.getClientProperty("instanceId");
+                if (existingId != null && existingId > instanceId) {
+                    return i; // Insert before this component
+                }
+            }
+        }
+        return components.length; // Insert at the end if not found
     }
 
     /**

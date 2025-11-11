@@ -188,68 +188,84 @@ public class EmulatorClassLoader extends URLClassLoader {
     }
 
     protected Class findClass(final String name) throws ClassNotFoundException {
-        InputStream is;
-        is = getResourceAsStream(getClassResourceName(name));
+        // Set the instance ID in ThreadLocal for dynamic instrumentation
+        InstanceContext.setInstanceId(instanceId);
 
-        // Relax ClassLoader behavior
-        if ((is == null) && (this.shouldSearchPathInParent)) {
-            boolean classFound;
-            try {
-                addClassURL(name);
-                classFound = true;
-            } catch (MalformedURLException e) {
-                classFound = false;
-            }
-            if (classFound) {
-                is = getResourceAsStream(getClassResourceName(name));
-            }
-        }
-
-        if (is == null) {
-            throw new ClassNotFoundException(name);
-        }
-        byte[] byteCode;
-        int byteCodeLength;
         try {
-            if (instrumentMIDletClasses) {
-                byteCode = ClassPreprocessor.instrumentAndModifyBytecode(is, instanceId);
-                byteCodeLength = byteCode.length;
-            } else {
-                final int chunkSize = 1024 * 2;
-                // No class or data object must be bigger than 16 Kilobyte
-                final int maxClassSizeSize = 1024 * 16;
-                byteCode = new byte[chunkSize];
-                byteCodeLength = 0;
-                do {
-                    int retrived;
-                    try {
-                        retrived = is.read(byteCode, byteCodeLength, byteCode.length - byteCodeLength);
-                    } catch (IOException e) {
-                        throw new ClassNotFoundException(name, e);
-                    }
-                    if (retrived == -1) {
-                        break;
-                    }
-                    if (byteCode.length + chunkSize > maxClassSizeSize) {
-                        throw new ClassNotFoundException(name, new ClassFormatError(
-                                "Class object is bigger than 16 Kilobyte"));
-                    }
-                    byteCodeLength += retrived;
-                    if (byteCode.length == byteCodeLength) {
-                        byte[] newData = new byte[byteCode.length + chunkSize];
-                        System.arraycopy(byteCode, 0, newData, 0, byteCode.length);
-                        byteCode = newData;
-                    } else if (byteCode.length < byteCodeLength) {
-                        throw new ClassNotFoundException(name, new ClassFormatError("Internal read error"));
-                    }
-                } while (true);
+            InputStream is;
+            is = getResourceAsStream(getClassResourceName(name));
+
+            // Relax ClassLoader behavior
+            if ((is == null) && (this.shouldSearchPathInParent)) {
+                boolean classFound;
+                try {
+                    addClassURL(name);
+                    classFound = true;
+                } catch (MalformedURLException e) {
+                    classFound = false;
+                }
+                if (classFound) {
+                    is = getResourceAsStream(getClassResourceName(name));
+                }
             }
-        } finally {
+
+            if (is == null) {
+                throw new ClassNotFoundException(name);
+            }
+            byte[] byteCode;
+            int byteCodeLength;
             try {
-                is.close();
-            } catch (IOException ignore) {
+                if (instrumentMIDletClasses) {
+                    // Try to get from cache first
+                    byteCode = InstrumentedClassCache.get(name);
+                    if (byteCode == null) {
+                        // Not in cache, instrument and cache it
+                        byteCode = ClassPreprocessor.instrumentAndModifyBytecode(is);
+                        if (byteCode != null) {
+                            InstrumentedClassCache.put(name, byteCode);
+                        }
+                    }
+                    byteCodeLength = byteCode.length;
+                } else {
+                    final int chunkSize = 1024 * 2;
+                    // No class or data object must be bigger than 16 Kilobyte
+                    final int maxClassSizeSize = 1024 * 16;
+                    byteCode = new byte[chunkSize];
+                    byteCodeLength = 0;
+                    do {
+                        int retrived;
+                        try {
+                            retrived = is.read(byteCode, byteCodeLength, byteCode.length - byteCodeLength);
+                        } catch (IOException e) {
+                            throw new ClassNotFoundException(name, e);
+                        }
+                        if (retrived == -1) {
+                            break;
+                        }
+                        if (byteCode.length + chunkSize > maxClassSizeSize) {
+                            throw new ClassNotFoundException(name, new ClassFormatError(
+                                    "Class object is bigger than 16 Kilobyte"));
+                        }
+                        byteCodeLength += retrived;
+                        if (byteCode.length == byteCodeLength) {
+                            byte[] newData = new byte[byteCode.length + chunkSize];
+                            System.arraycopy(byteCode, 0, newData, 0, byteCode.length);
+                            byteCode = newData;
+                        } else if (byteCode.length < byteCodeLength) {
+                            throw new ClassNotFoundException(name, new ClassFormatError("Internal read error"));
+                        }
+                    } while (true);
+                }
+            } finally {
+                try {
+                    is.close();
+                } catch (IOException ignore) {
+                }
             }
+            return defineClass(name, byteCode, 0, byteCodeLength);
+        } finally {
+            // Keep the instance ID in ThreadLocal for the lifetime of the emulator instance
+            // Don't clear it here as the class will be used in the same thread
         }
-        return defineClass(name, byteCode, 0, byteCodeLength);
     }
 }

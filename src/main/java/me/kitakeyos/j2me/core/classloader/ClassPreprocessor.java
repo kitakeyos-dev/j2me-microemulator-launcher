@@ -40,17 +40,22 @@ import java.io.InputStream;
  */
 public class ClassPreprocessor {
 
-	public static byte[] instrumentAndModifyBytecode(final InputStream classInputStream, int instanceId) {
+	/**
+	 * Instrument bytecode without baking instanceId into the code.
+	 * The instrumented code will call InstanceContext.getInstanceId() dynamically.
+	 * This allows the same instrumented bytecode to be shared across multiple instances.
+	 */
+	public static byte[] instrumentAndModifyBytecode(final InputStream classInputStream) {
 		try {
 			ClassReader cr = new ClassReader(classInputStream);
 			ClassWriter cw = new ClassWriter(0);
-			ClassVisitor cv = new MethodCallInterceptorClassVisitor(cw, instanceId);
+			ClassVisitor cv = new MethodCallInterceptorClassVisitor(cw);
 			cr.accept(cv, 0);
 			return cw.toByteArray();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
-		} 
+		}
     }
-	
+
 }

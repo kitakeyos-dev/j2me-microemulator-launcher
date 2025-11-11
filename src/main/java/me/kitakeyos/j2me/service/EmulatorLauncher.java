@@ -1,6 +1,7 @@
 package me.kitakeyos.j2me.service;
 
 import me.kitakeyos.j2me.core.classloader.EmulatorClassLoader;
+import me.kitakeyos.j2me.core.classloader.InstrumentedClassCache;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
 import me.kitakeyos.j2me.util.ReflectionHelper;
@@ -15,11 +16,78 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Launches emulator instances
  */
 public class EmulatorLauncher {
+
+    private static final Logger logger = Logger.getLogger(EmulatorLauncher.class.getName());
+
+    /**
+     * Pre-warm the emulator classloader by loading and caching common classes.
+     * This should be called once at application startup to improve instance launch performance.
+     *
+     * @param microemulatorJarPath Path to the microemulator JAR file
+     */
+    public static void prewarmClassLoader(String microemulatorJarPath) {
+        // Check if file exists first
+        File microemulatorJar = new File(microemulatorJarPath);
+        if (!microemulatorJar.exists()) {
+            logger.warning("Cannot prewarm classloader: MicroEmulator JAR not found at " + microemulatorJarPath);
+            return;
+        }
+
+        // Run in background thread to avoid blocking UI
+        new Thread(() -> {
+            try {
+                long startTime = System.currentTimeMillis();
+                logger.info("Pre-warming emulator classloader...");
+
+                // Create a temporary classloader with dummy instanceId = 0
+                EmulatorClassLoader tempClassLoader = initializeEmulatorClassLoader(0, microemulatorJarPath);
+
+                // List of important classes to pre-load and cache
+                String[] classesToPreload = {
+                    "org.microemu.app.Main",
+                    "org.microemu.app.Config",
+                    "org.microemu.app.Common",
+                    "org.microemu.device.DeviceFactory",
+                    "org.microemu.device.j2se.J2SEDevice",
+                    "org.microemu.device.j2se.J2SEDeviceDisplay",
+                    "org.microemu.device.j2se.J2SEInputMethod",
+                    "org.microemu.MIDletBridge",
+                    "org.microemu.DisplayAccess",
+                    "org.microemu.MicroEmulator"
+                };
+
+                int successCount = 0;
+                int failCount = 0;
+
+                // Load each class to trigger instrumentation and caching
+                for (String className : classesToPreload) {
+                    try {
+                        Class<?> clazz = tempClassLoader.loadClass(className);
+                        successCount++;
+                        logger.fine("Pre-loaded class: " + className);
+                    } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                        failCount++;
+                        logger.fine("Could not pre-load class: " + className + " - " + e.getMessage());
+                    }
+                }
+
+                long duration = System.currentTimeMillis() - startTime;
+                logger.info(String.format(
+                    "Classloader pre-warming completed in %d ms. Loaded: %d, Failed: %d. %s",
+                    duration, successCount, failCount, InstrumentedClassCache.getStatistics()
+                ));
+
+            } catch (Exception e) {
+                logger.warning("Failed to prewarm classloader: " + e.getMessage());
+            }
+        }, "ClassLoader-PreWarmer").start();
+    }
 
     public static EmulatorClassLoader initializeEmulatorClassLoader(int instanceId, String microemulatorJarPath) throws IOException {
         List<URL> urls = new ArrayList<>();
