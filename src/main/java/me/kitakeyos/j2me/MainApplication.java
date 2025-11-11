@@ -206,6 +206,11 @@ public class MainApplication extends JFrame {
 
     private void loadApplicationConfiguration() {
         microemulatorPathField.setText(applicationConfig.getMicroemulatorPath());
+
+        // Pre-warm classloader in background if microemulator path is valid
+        if (applicationConfig.isMicroemulatorPathValid()) {
+            EmulatorLauncher.prewarmClassLoader(applicationConfig.getMicroemulatorPath());
+        }
     }
 
     private void openSettingsDialog() {
