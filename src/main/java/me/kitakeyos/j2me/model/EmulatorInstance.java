@@ -31,10 +31,6 @@ public class EmulatorInstance {
         this.state = InstanceState.CREATED;
     }
 
-    public boolean isRunning() {
-        return state == InstanceState.RUNNING;
-    }
-
     public boolean canRun() {
         return state == InstanceState.CREATED || state == InstanceState.STOPPED;
     }
