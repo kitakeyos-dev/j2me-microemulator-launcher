@@ -81,13 +81,17 @@ public class WrapLayout extends FlowLayout {
 
         if (visibleCount == 0) return;
 
-        // Calculate extra space and distribute it
+        // Calculate used width
         int totalGaps = (visibleCount - 1) * getHgap();
         int usedWidth = totalWidth + totalGaps;
         int extraSpace = maxWidth - usedWidth;
-        int extraGap = extraSpace > 0 ? extraSpace / (visibleCount + 1) : 0;
 
-        // Position components with distributed space
+        // Only distribute space if row is nearly full (>70% of available width)
+        // This prevents spreading out rows with only 1-2 components
+        double fillRatio = (double) usedWidth / maxWidth;
+        int extraGap = (fillRatio > 0.7 && extraSpace > 0) ? extraSpace / (visibleCount + 1) : 0;
+
+        // Position components with or without distributed space
         int currentX = x + extraGap;
 
         for (int i = start; i < end; i++) {
