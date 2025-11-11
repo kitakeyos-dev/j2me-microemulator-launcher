@@ -40,17 +40,30 @@ public class WrapLayout extends FlowLayout {
      */
     private Dimension layoutSize(Container target, boolean preferred) {
         synchronized (target.getTreeLock()) {
-            // Get the available width from the parent container (viewport)
-            int targetWidth = target.getSize().width;
-            Container container = target;
+            // Always get the width from parent viewport for accurate wrapping
+            int targetWidth = 0;
 
-            // If target width is 0, try to get width from viewport
-            while (container.getSize().width == 0 && container.getParent() != null) {
-                container = container.getParent();
+            // First try to get width from parent viewport
+            Container parent = target.getParent();
+            if (parent != null) {
+                targetWidth = parent.getWidth();
             }
 
-            targetWidth = container.getSize().width;
+            // If parent width is 0, use target's current width
+            if (targetWidth == 0) {
+                targetWidth = target.getWidth();
+            }
 
+            // If still 0, traverse up to find valid width
+            if (targetWidth == 0) {
+                Container container = target;
+                while (container.getSize().width == 0 && container.getParent() != null) {
+                    container = container.getParent();
+                }
+                targetWidth = container.getSize().width;
+            }
+
+            // Fallback to max value if no valid width found
             if (targetWidth == 0) {
                 targetWidth = Integer.MAX_VALUE;
             }

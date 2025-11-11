@@ -51,6 +51,8 @@ public class MainApplication extends JFrame {
             // WrapLayout will automatically rewrap instances to fill available width
             SwingUtilities.invokeLater(() -> {
                 if (runningInstancesPanel != null) {
+                    // Invalidate to force layout recalculation
+                    runningInstancesPanel.invalidate();
                     runningInstancesPanel.revalidate();
                     runningInstancesPanel.repaint();
                 }
@@ -111,7 +113,9 @@ public class MainApplication extends JFrame {
         mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
-                // WrapLayout automatically handles wrapping, just need to revalidate
+                // WrapLayout automatically handles wrapping, just need to invalidate and revalidate
+                // Invalidate forces the layout manager to recalculate preferred size
+                runningInstancesPanel.invalidate();
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
             }
@@ -371,6 +375,8 @@ public class MainApplication extends JFrame {
             emulatorInstance.emulatorDisplay.putClientProperty("wrapperPanel", wrapperPanel);
 
             runningInstancesPanel.add(wrapperPanel);
+            // Invalidate and revalidate to trigger layout recalculation
+            runningInstancesPanel.invalidate();
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
         }
@@ -385,6 +391,8 @@ public class MainApplication extends JFrame {
             JPanel wrapperPanel = (JPanel) emulatorInstance.emulatorDisplay.getClientProperty("wrapperPanel");
             if (wrapperPanel != null) {
                 runningInstancesPanel.remove(wrapperPanel);
+                // Invalidate and revalidate to trigger layout recalculation
+                runningInstancesPanel.invalidate();
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
             }
