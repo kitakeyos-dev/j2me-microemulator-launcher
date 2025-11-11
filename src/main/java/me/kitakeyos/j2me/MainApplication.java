@@ -306,6 +306,7 @@ public class MainApplication extends JFrame {
         for (EmulatorInstance instance : runningInstances) {
             instance.shutdown();
             updateInstanceUI(instance);
+            removeEmulatorInstanceTab(instance);
         }
 
         showToast("Stopped " + runningInstances.size() + " instance(s)", ToastNotification.ToastType.INFO);
@@ -320,8 +321,14 @@ public class MainApplication extends JFrame {
                 () -> {
                     emulatorInstance.shutdown();
                     updateInstanceUI(emulatorInstance);
+                    removeEmulatorInstanceTab(emulatorInstance);
                 },
                 () -> {
+                    // Shutdown if running before removing
+                    if (emulatorInstance.state == InstanceState.RUNNING) {
+                        emulatorInstance.shutdown();
+                        removeEmulatorInstanceTab(emulatorInstance);
+                    }
                     emulatorInstanceManager.removeInstance(emulatorInstance);
                     emulatorInstancesPanel.revalidate();
                     emulatorInstancesPanel.repaint();
@@ -344,8 +351,14 @@ public class MainApplication extends JFrame {
                 () -> {
                     instance.shutdown();
                     updateInstanceUI(instance);
+                    removeEmulatorInstanceTab(instance);
                 },
                 () -> {
+                    // Shutdown if running before removing
+                    if (instance.state == InstanceState.RUNNING) {
+                        instance.shutdown();
+                        removeEmulatorInstanceTab(instance);
+                    }
                     emulatorInstanceManager.removeInstance(instance);
                     emulatorInstancesPanel.revalidate();
                     emulatorInstancesPanel.repaint();
@@ -415,6 +428,10 @@ public class MainApplication extends JFrame {
         if (confirm) {
             emulatorInstanceManager.clearAllInstances();
             emulatorInstanceManager.resetInstanceIdCounter();
+            // Clear running instances panel
+            runningInstancesPanel.removeAll();
+            runningInstancesPanel.revalidate();
+            runningInstancesPanel.repaint();
             showToast("Cleared all instances", ToastNotification.ToastType.SUCCESS);
         }
     }
