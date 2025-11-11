@@ -89,9 +89,10 @@ public class MainApplication extends JFrame {
     private JPanel createRunningInstancesPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // Create panel to hold all running instances
+        // Create panel to hold all running instances in a grid
         runningInstancesPanel = new JPanel();
-        runningInstancesPanel.setLayout(new GridLayout(0, 1, 10, 10)); // Start with 1 column, will be recalculated
+        // GridLayout(rows, cols, hgap, vgap): 0 rows = unlimited rows (auto-expand), columns will be calculated dynamically
+        runningInstancesPanel.setLayout(new GridLayout(0, 1, 10, 10)); // Start with 1 column
         runningInstancesPanel.setBackground(new Color(240, 240, 240));
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
@@ -345,33 +346,60 @@ public class MainApplication extends JFrame {
     }
 
     /**
-     * Recalculate grid layout based on panel size
+     * Recalculate grid layout based on panel size and emulator display dimensions
      */
     private void recalculateGridLayout() {
         if (runningInstancesPanel == null || runningInstancesPanel.getComponentCount() == 0) {
             return;
         }
 
-        // Get available width
+        // Get available width (accounting for scrollbar)
         int availableWidth = runningInstancesPanel.getWidth();
         if (availableWidth <= 0) {
             return;
         }
 
-        // Get the width of a single instance (from first component)
-        Component firstComponent = runningInstancesPanel.getComponent(0);
-        int instanceWidth = firstComponent.getPreferredSize().width;
+        // Get the actual width of emulatorDisplay from first wrapper panel
+        Component firstWrapperPanel = runningInstancesPanel.getComponent(0);
+        int instanceWidth = 0;
 
+        if (firstWrapperPanel instanceof JPanel) {
+            JPanel wrapper = (JPanel) firstWrapperPanel;
+            // Get the emulatorDisplay from wrapper
+            if (wrapper.getComponentCount() > 0) {
+                Component display = wrapper.getComponent(0);
+
+                // Try to get actual width from the display component
+                if (display.getWidth() > 0) {
+                    instanceWidth = display.getWidth();
+                } else if (display.getPreferredSize().width > 0) {
+                    instanceWidth = display.getPreferredSize().width;
+                }
+
+                // Add border width to instance width
+                if (instanceWidth > 0 && wrapper.getBorder() != null) {
+                    Insets insets = wrapper.getBorder().getBorderInsets(wrapper);
+                    instanceWidth += insets.left + insets.right;
+                }
+            }
+        }
+
+        // Fallback to wrapper's preferred size if display width not available
         if (instanceWidth <= 0) {
-            // Use default emulator display width (around 240-260px)
-            instanceWidth = 280;
+            instanceWidth = firstWrapperPanel.getPreferredSize().width;
+        }
+
+        // Use default size if still not available
+        if (instanceWidth <= 0) {
+            // Default emulator display width (240px) + border (around 20-30px)
+            instanceWidth = 270;
         }
 
         // Calculate optimal number of columns with spacing
         int spacing = 10;
         int columns = Math.max(1, (availableWidth + spacing) / (instanceWidth + spacing));
 
-        // Update grid layout
+        // Update grid layout (0 rows means unlimited rows, auto-expand)
         GridLayout layout = (GridLayout) runningInstancesPanel.getLayout();
         int currentColumns = layout.getColumns();
 
@@ -400,8 +428,11 @@ public class MainApplication extends JFrame {
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
 
-            // Recalculate grid layout after adding instance
-            SwingUtilities.invokeLater(this::recalculateGridLayout);
+            // Recalculate grid layout after component is fully rendered
+            // Use invokeLater twice to ensure component has been laid out
+            SwingUtilities.invokeLater(() -> {
+                SwingUtilities.invokeLater(this::recalculateGridLayout);
+            });
         }
     }
 
