@@ -1,6 +1,5 @@
 package me.kitakeyos.j2me.service;
 
-import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.core.classloader.EmulatorClassLoader;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
@@ -10,13 +9,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
