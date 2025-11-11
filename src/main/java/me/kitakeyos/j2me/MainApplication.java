@@ -30,7 +30,7 @@ public class MainApplication extends JFrame {
     private JTextField microemulatorPathField;
     private JSpinner instanceCountSpinner;
     private JPanel emulatorInstancesPanel;
-    private JTabbedPane runningInstancesTabbedPane;
+    private JPanel runningInstancesPanel;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
@@ -83,8 +83,17 @@ public class MainApplication extends JFrame {
 
     private JPanel createRunningInstancesPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        runningInstancesTabbedPane = new JTabbedPane();
-        mainPanel.add(runningInstancesTabbedPane, BorderLayout.CENTER);
+
+        // Create panel to hold all running instances
+        runningInstancesPanel = new JPanel();
+        runningInstancesPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        runningInstancesPanel.setBackground(new Color(240, 240, 240));
+
+        JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
         return mainPanel;
     }
 
@@ -327,31 +336,35 @@ public class MainApplication extends JFrame {
     }
 
     /**
-     * Add emulator display to running instances tab
+     * Add emulator display to running instances panel
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.emulatorDisplay != null) {
-            String tabTitle = "Instance #" + emulatorInstance.instanceId;
-            runningInstancesTabbedPane.addTab(tabTitle, emulatorInstance.emulatorDisplay);
+            // Add title border to the display panel
+            JPanel wrapperPanel = new JPanel(new BorderLayout());
+            wrapperPanel.setBorder(BorderFactory.createTitledBorder("Instance #" + emulatorInstance.instanceId));
+            wrapperPanel.add(emulatorInstance.emulatorDisplay, BorderLayout.CENTER);
 
-            // Switch to the new tab
-            int tabIndex = runningInstancesTabbedPane.getTabCount() - 1;
-            runningInstancesTabbedPane.setSelectedIndex(tabIndex);
+            // Store wrapper panel reference for later removal
+            emulatorInstance.emulatorDisplay.putClientProperty("wrapperPanel", wrapperPanel);
+
+            runningInstancesPanel.add(wrapperPanel);
+            runningInstancesPanel.revalidate();
+            runningInstancesPanel.repaint();
         }
     }
 
     /**
-     * Remove emulator display from running instances tab
+     * Remove emulator display from running instances panel
      */
     public void removeEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.emulatorDisplay != null) {
-            int tabCount = runningInstancesTabbedPane.getTabCount();
-            for (int i = 0; i < tabCount; i++) {
-                Component comp = runningInstancesTabbedPane.getComponentAt(i);
-                if (comp == emulatorInstance.emulatorDisplay) {
-                    runningInstancesTabbedPane.removeTabAt(i);
-                    break;
-                }
+            // Get wrapper panel and remove it
+            JPanel wrapperPanel = (JPanel) emulatorInstance.emulatorDisplay.getClientProperty("wrapperPanel");
+            if (wrapperPanel != null) {
+                runningInstancesPanel.remove(wrapperPanel);
+                runningInstancesPanel.revalidate();
+                runningInstancesPanel.repaint();
             }
         }
     }
