@@ -8,7 +8,8 @@ import javax.swing.SwingUtilities;
  * WrapLayout is a custom layout manager that arranges components in a row,
  * wrapping to the next row when the horizontal space is filled.
  * Unlike FlowLayout, this properly handles wrapping inside JScrollPane
- * and distributes extra space evenly between components.
+ * and distributes extra space evenly between components with uniform spacing
+ * calculated from the first row, ensuring vertical column alignment.
  */
 public class WrapLayout extends FlowLayout {
 
@@ -38,6 +39,9 @@ public class WrapLayout extends FlowLayout {
 
             boolean ltr = target.getComponentOrientation().isLeftToRight();
 
+            // First pass: group components into rows and find the first full row
+            java.util.List<RowInfo> rows = new java.util.ArrayList<>();
+
             for (int i = 0; i < nmembers; i++) {
                 Component m = target.getComponent(i);
                 if (m.isVisible()) {
@@ -45,10 +49,8 @@ public class WrapLayout extends FlowLayout {
                     m.setSize(d);
 
                     if ((rowWidth + d.width > maxWidth) && rowWidth > 0) {
-                        // Layout the current row with distributed space
-                        layoutRow(target, x, y, maxWidth, rowHeight, start, i, ltr);
-                        y += rowHeight + getVgap();
-                        x = insets.left + getHgap();
+                        // Save row info
+                        rows.add(new RowInfo(start, i, rowHeight));
                         rowHeight = 0;
                         rowWidth = 0;
                         start = i;
@@ -61,13 +63,26 @@ public class WrapLayout extends FlowLayout {
                     rowHeight = Math.max(rowHeight, d.height);
                 }
             }
-            // Layout the last row
-            layoutRow(target, x, y, maxWidth, rowHeight, start, nmembers, ltr);
+            // Add last row
+            rows.add(new RowInfo(start, nmembers, rowHeight));
+
+            // Calculate uniform spacing from first row (which is typically the fullest)
+            int uniformExtraGap = 0;
+            if (!rows.isEmpty()) {
+                RowInfo firstRow = rows.get(0);
+                uniformExtraGap = calculateExtraGap(target, maxWidth, firstRow.start, firstRow.end);
+            }
+
+            // Second pass: layout all rows with uniform spacing
+            y = insets.top + getVgap();
+            for (RowInfo row : rows) {
+                layoutRow(target, x, y, maxWidth, row.height, row.start, row.end, ltr, uniformExtraGap);
+                y += row.height + getVgap();
+            }
         }
     }
 
-    private void layoutRow(Container target, int x, int y, int maxWidth, int rowHeight, int start, int end, boolean ltr) {
-        // Calculate total width of components in this row
+    private int calculateExtraGap(Container target, int maxWidth, int start, int end) {
         int totalWidth = 0;
         int visibleCount = 0;
 
@@ -79,20 +94,32 @@ public class WrapLayout extends FlowLayout {
             }
         }
 
-        if (visibleCount == 0) return;
+        if (visibleCount == 0) return 0;
 
-        // Calculate used width
         int totalGaps = (visibleCount - 1) * getHgap();
         int usedWidth = totalWidth + totalGaps;
         int extraSpace = maxWidth - usedWidth;
 
-        // Only distribute space if row is nearly full (>70% of available width)
-        // This prevents spreading out rows with only 1-2 components
+        // Calculate extra gap if row is reasonably full
         double fillRatio = (double) usedWidth / maxWidth;
-        int extraGap = (fillRatio > 0.7 && extraSpace > 0) ? extraSpace / (visibleCount + 1) : 0;
+        return (fillRatio > 0.7 && extraSpace > 0) ? extraSpace / (visibleCount + 1) : 0;
+    }
 
-        // Position components with or without distributed space
-        int currentX = x + extraGap;
+    private static class RowInfo {
+        int start;
+        int end;
+        int height;
+
+        RowInfo(int start, int end, int height) {
+            this.start = start;
+            this.end = end;
+            this.height = height;
+        }
+    }
+
+    private void layoutRow(Container target, int x, int y, int maxWidth, int rowHeight, int start, int end, boolean ltr, int uniformExtraGap) {
+        // Position components with uniform spacing from first row
+        int currentX = x + uniformExtraGap;
 
         for (int i = start; i < end; i++) {
             Component m = target.getComponent(i);
@@ -103,7 +130,7 @@ public class WrapLayout extends FlowLayout {
                 } else {
                     m.setLocation(target.getWidth() - currentX - m.getWidth(), cy);
                 }
-                currentX += m.getWidth() + getHgap() + extraGap;
+                currentX += m.getWidth() + getHgap() + uniformExtraGap;
             }
         }
     }
