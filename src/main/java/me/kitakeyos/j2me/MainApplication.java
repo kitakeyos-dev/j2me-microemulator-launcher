@@ -347,7 +347,7 @@ public class MainApplication extends JFrame {
     /**
      * Update UI for an instance
      */
-    private void updateInstanceUI(EmulatorInstance instance) {
+    public void updateInstanceUI(EmulatorInstance instance) {
         EmulatorInstanceUIBuilder.updateInstancePanel(
                 instance,
                 () -> emulatorInstanceManager.moveInstanceUp(instance),
