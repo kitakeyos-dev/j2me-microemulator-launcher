@@ -347,21 +347,36 @@ public class MainApplication extends JFrame {
 
     /**
      * Recalculate grid layout based on panel size and emulator display dimensions
+     * Automatically adjusts the number of instances per row based on available width
      */
     private void recalculateGridLayout() {
         if (runningInstancesPanel == null || runningInstancesPanel.getComponentCount() == 0) {
             return;
         }
 
-        // Get available width (accounting for scrollbar)
-        int availableWidth = runningInstancesPanel.getWidth();
+        // Get parent container (ScrollPane viewport) for accurate available width
+        Container parent = runningInstancesPanel.getParent();
+        int availableWidth;
+
+        if (parent instanceof JViewport) {
+            // Get viewport width for accurate calculation (excludes scrollbar)
+            availableWidth = ((JViewport) parent).getWidth();
+        } else {
+            availableWidth = runningInstancesPanel.getWidth();
+        }
+
         if (availableWidth <= 0) {
             return;
         }
 
+        // Subtract padding to account for panel margins
+        int panelPadding = 20; // Account for potential scrollbar and padding
+        availableWidth = Math.max(100, availableWidth - panelPadding);
+
         // Get the actual width of emulatorDisplay from first wrapper panel
         Component firstWrapperPanel = runningInstancesPanel.getComponent(0);
         int instanceWidth = 0;
+        int instanceHeight = 0;
 
         if (firstWrapperPanel instanceof JPanel) {
             JPanel wrapper = (JPanel) firstWrapperPanel;
@@ -369,24 +384,37 @@ public class MainApplication extends JFrame {
             if (wrapper.getComponentCount() > 0) {
                 Component display = wrapper.getComponent(0);
 
-                // Try to get actual width from the display component
-                if (display.getWidth() > 0) {
+                // Try to get actual dimensions from the display component
+                if (display.getWidth() > 0 && display.getHeight() > 0) {
                     instanceWidth = display.getWidth();
-                } else if (display.getPreferredSize().width > 0) {
+                    instanceHeight = display.getHeight();
+                } else if (display.getPreferredSize().width > 0 && display.getPreferredSize().height > 0) {
                     instanceWidth = display.getPreferredSize().width;
+                    instanceHeight = display.getPreferredSize().height;
                 }
 
-                // Add border width to instance width
-                if (instanceWidth > 0 && wrapper.getBorder() != null) {
+                // Add border insets to both width and height
+                if (wrapper.getBorder() != null) {
                     Insets insets = wrapper.getBorder().getBorderInsets(wrapper);
-                    instanceWidth += insets.left + insets.right;
+                    if (instanceWidth > 0) {
+                        instanceWidth += insets.left + insets.right;
+                    }
+                    if (instanceHeight > 0) {
+                        instanceHeight += insets.top + insets.bottom;
+                    }
                 }
             }
         }
 
-        // Fallback to wrapper's preferred size if display width not available
-        if (instanceWidth <= 0) {
-            instanceWidth = firstWrapperPanel.getPreferredSize().width;
+        // Fallback to wrapper's preferred size if display size not available
+        if (instanceWidth <= 0 || instanceHeight <= 0) {
+            Dimension wrapperSize = firstWrapperPanel.getPreferredSize();
+            if (instanceWidth <= 0 && wrapperSize.width > 0) {
+                instanceWidth = wrapperSize.width;
+            }
+            if (instanceHeight <= 0 && wrapperSize.height > 0) {
+                instanceHeight = wrapperSize.height;
+            }
         }
 
         // Use default size if still not available
@@ -394,10 +422,14 @@ public class MainApplication extends JFrame {
             // Default emulator display width (240px) + border (around 20-30px)
             instanceWidth = 270;
         }
+        if (instanceHeight <= 0) {
+            // Default emulator display height (320px) + border
+            instanceHeight = 350;
+        }
 
-        // Calculate optimal number of columns with spacing
-        int spacing = 10;
-        int columns = Math.max(1, (availableWidth + spacing) / (instanceWidth + spacing));
+        // Calculate optimal number of columns based on available width and instance width
+        int hgap = 10; // Horizontal gap between instances
+        int columns = Math.max(1, (availableWidth + hgap) / (instanceWidth + hgap));
 
         // Update grid layout (0 rows means unlimited rows, auto-expand)
         GridLayout layout = (GridLayout) runningInstancesPanel.getLayout();
