@@ -14,6 +14,7 @@ import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
+import me.kitakeyos.j2me.util.WrapLayout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class MainApplication extends JFrame {
         // Add window state listener to detect full screen changes
         addWindowStateListener(e -> {
             // Revalidate layout when window state changes (e.g., maximized/restored)
-            // FlowLayout will automatically rewrap instances to fill available width
+            // WrapLayout will automatically rewrap instances to fill available width
             SwingUtilities.invokeLater(() -> {
                 if (runningInstancesPanel != null) {
                     runningInstancesPanel.revalidate();
@@ -97,8 +98,9 @@ public class MainApplication extends JFrame {
 
         // Create panel to hold all running instances with automatic wrapping
         runningInstancesPanel = new JPanel();
-        // FlowLayout automatically wraps to next row when horizontal space is full
-        runningInstancesPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        // WrapLayout automatically wraps to next row when horizontal space is full
+        // Unlike FlowLayout, WrapLayout works properly inside JScrollPane
+        runningInstancesPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 10, 10));
         runningInstancesPanel.setBackground(new Color(240, 240, 240));
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
@@ -109,7 +111,7 @@ public class MainApplication extends JFrame {
         mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
-                // FlowLayout automatically handles wrapping, just need to revalidate
+                // WrapLayout automatically handles wrapping, just need to revalidate
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
             }
@@ -356,7 +358,7 @@ public class MainApplication extends JFrame {
 
     /**
      * Add emulator display to running instances panel
-     * FlowLayout automatically wraps instances to fill horizontal space
+     * WrapLayout automatically wraps instances to fill horizontal space
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.emulatorDisplay != null) {
