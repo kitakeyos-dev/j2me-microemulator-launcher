@@ -134,7 +134,6 @@ public class EmulatorLauncher {
             params.add("240");
             params.add("320");
             JFrame frame = launchMicroEmulator(instance, params, emulatorClassLoader);
-            instance.emulatorWindow = frame;
             instance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
             instance.emulatorDisplay = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
             frame.setResizable(false);
