@@ -14,7 +14,6 @@ import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
-import me.kitakeyos.j2me.util.WindowArrangement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -169,14 +168,10 @@ public class MainApplication extends JFrame {
         JButton clearAllButton = createStyledButton("Clear All", new Color(169, 169, 169), this::clearAllEmulatorInstances);
         clearAllButton.setToolTipText("Remove all instances (including running ones)");
 
-        JButton arrangeButton = createStyledButton("Arrange", new Color(255, 140, 0), this::arrangeEmulatorInstances);
-        arrangeButton.setToolTipText("Arrange running instance windows in a grid");
-
         panel.add(createButton);
         panel.add(runAllButton);
         panel.add(stopAllButton);
         panel.add(clearAllButton);
-        panel.add(arrangeButton);
 
         return panel;
     }
@@ -425,29 +420,6 @@ public class MainApplication extends JFrame {
                 // Recalculate grid layout after removing instance
                 SwingUtilities.invokeLater(this::recalculateGridLayout);
             }
-        }
-    }
-
-    private void arrangeEmulatorInstances() {
-        java.util.List<EmulatorInstance> runningInstances = emulatorInstanceManager.getRunningInstances();
-
-        if (runningInstances.isEmpty()) {
-            showInfoMessage("No running instances to arrange");
-            return;
-        }
-
-        WindowArrangement.arrangeInstances(runningInstances);
-        String gridInfo = WindowArrangement.getGridInfo(runningInstances);
-        showToast("Windows arranged: " + gridInfo, ToastNotification.ToastType.SUCCESS);
-    }
-
-    /**
-     * Auto-arrange running instances
-     */
-    private void autoArrangeEmulatorInstances() {
-        java.util.List<EmulatorInstance> runningInstances = emulatorInstanceManager.getRunningInstances();
-        if (!runningInstances.isEmpty()) {
-            WindowArrangement.arrangeInstances(runningInstances);
         }
     }
 
