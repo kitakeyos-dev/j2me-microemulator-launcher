@@ -111,8 +111,11 @@ public class EmulatorLauncher {
             SwingUtilities.invokeLater(onStarted);
         }
 
+        long instanceStartTime = System.currentTimeMillis();
+        EmulatorClassLoader emulatorClassLoader = null;
+
         try {
-            EmulatorClassLoader emulatorClassLoader = initializeEmulatorClassLoader(
+            emulatorClassLoader = initializeEmulatorClassLoader(
                     instance.instanceId,
                     instance.microemulatorPath
             );
@@ -126,13 +129,17 @@ public class EmulatorLauncher {
             params.add("240");
             params.add("320");
             JFrame frame = launchMicroEmulator(instance, params, emulatorClassLoader);
-            instance.emulatorWindow = frame;
             instance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
             instance.emulatorDisplay = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
             frame.setResizable(false);
             frame.setTitle("Instance " + instance.instanceId);
             // Set state to RUNNING after successful configuration
             instance.state = InstanceState.RUNNING;
+
+            long instanceDuration = System.currentTimeMillis() - instanceStartTime;
+            logger.info(String.format("Instance #%d started in %d ms", instance.instanceId, instanceDuration));
+            logger.info(emulatorClassLoader.getStatistics());
+            logger.info("Global " + InstrumentedClassCache.getStatistics());
         } catch (Exception e) {
             instance.errorMessage = e.getMessage();
             instance.state = InstanceState.STOPPED;

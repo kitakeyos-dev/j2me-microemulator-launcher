@@ -138,7 +138,7 @@ public class MainApplication extends JFrame {
         microemulatorPathField.setEditable(false);
         microemulatorPathField.setBackground(new Color(240, 240, 240));
         microemulatorPathField.setToolTipText("Path to MicroEmulator JAR (configure in Settings)");
-        instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 20, 1));
+        instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         instanceCountSpinner.setToolTipText("Number of instances to create (1-20)");
 
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
@@ -288,8 +288,6 @@ public class MainApplication extends JFrame {
                     updateInstanceUI(emulatorInstance);
                     if (emulatorInstance.state == InstanceState.RUNNING) {
                         addEmulatorInstanceTab(emulatorInstance);
-                        // No need to arrange windows since instances are displayed in tabs
-                        // autoArrangeEmulatorInstances();
                     }
                 }),
                 // onStarted callback
@@ -309,9 +307,9 @@ public class MainApplication extends JFrame {
         }
 
         for (EmulatorInstance instance : runningInstances) {
+            removeEmulatorInstanceTab(instance);
             instance.shutdown();
             updateInstanceUI(instance);
-            removeEmulatorInstanceTab(instance);
         }
 
         showToast("Stopped " + runningInstances.size() + " instance(s)", ToastNotification.ToastType.INFO);
@@ -324,15 +322,15 @@ public class MainApplication extends JFrame {
                 () -> emulatorInstanceManager.moveInstanceDown(emulatorInstance),
                 () -> runSingleInstance(emulatorInstance),
                 () -> {
+                    removeEmulatorInstanceTab(emulatorInstance);
                     emulatorInstance.shutdown();
                     updateInstanceUI(emulatorInstance);
-                    removeEmulatorInstanceTab(emulatorInstance);
                 },
                 () -> {
                     // Shutdown if running before removing
                     if (emulatorInstance.state == InstanceState.RUNNING) {
-                        emulatorInstance.shutdown();
                         removeEmulatorInstanceTab(emulatorInstance);
+                        emulatorInstance.shutdown();
                     }
                     emulatorInstanceManager.removeInstance(emulatorInstance);
                     emulatorInstancesPanel.revalidate();
@@ -354,27 +352,21 @@ public class MainApplication extends JFrame {
                 () -> emulatorInstanceManager.moveInstanceDown(instance),
                 () -> runSingleInstance(instance),
                 () -> {
+                    removeEmulatorInstanceTab(instance);
                     instance.shutdown();
                     updateInstanceUI(instance);
-                    removeEmulatorInstanceTab(instance);
                 },
                 () -> {
                     // Shutdown if running before removing
                     if (instance.state == InstanceState.RUNNING) {
-                        instance.shutdown();
                         removeEmulatorInstanceTab(instance);
+                        instance.shutdown();
                     }
                     emulatorInstanceManager.removeInstance(instance);
                     emulatorInstancesPanel.revalidate();
                     emulatorInstancesPanel.repaint();
                 }
         );
-    }
-
-    public void stopEmulatorInstance(EmulatorInstance emulatorInstance) {
-        emulatorInstance.state = InstanceState.STOPPED;
-        updateInstanceUI(emulatorInstance);
-        removeEmulatorInstanceTab(emulatorInstance);
     }
 
 

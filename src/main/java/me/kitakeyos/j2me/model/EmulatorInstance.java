@@ -25,7 +25,6 @@ public class EmulatorInstance {
     public InstanceState state;
     public String errorMessage;
     public JPanel uiPanel;
-    public JFrame emulatorWindow;
     public ActionListener menuExitListener;
     public JPanel emulatorDisplay;
 
@@ -44,6 +43,9 @@ public class EmulatorInstance {
      * Shutdown the instance and release all resources for garbage collection
      */
     public void shutdown() {
+        if (state == InstanceState.STOPPED) {
+            return;
+        }
         logger.info("Shutting down instance #" + instanceId + " and releasing resources...");
 
         // Set state to stopped first
@@ -55,16 +57,6 @@ public class EmulatorInstance {
                 menuExitListener.actionPerformed(null);
             } catch (Exception e) {
                 logger.warning("Error during menu exit: " + e.getMessage());
-            }
-        }
-
-        // Dispose window to release native resources
-        if (emulatorWindow != null) {
-            try {
-                emulatorWindow.setVisible(false);
-                emulatorWindow.dispose();
-            } catch (Exception e) {
-                logger.warning("Error disposing window: " + e.getMessage());
             }
         }
 
@@ -80,15 +72,6 @@ public class EmulatorInstance {
             }
         }
 
-        // Clear UI panel
-        if (uiPanel != null) {
-            try {
-                uiPanel.removeAll();
-            } catch (Exception e) {
-                logger.warning("Error cleaning UI panel: " + e.getMessage());
-            }
-        }
-
         // Clear ThreadLocal if this thread is associated with this instance
         try {
             if (InstanceContext.isSet() && InstanceContext.getInstanceId() == this.instanceId) {
@@ -99,10 +82,8 @@ public class EmulatorInstance {
         }
 
         // Null out all references to help garbage collector
-        emulatorWindow = null;
         emulatorDisplay = null;
         menuExitListener = null;
-        uiPanel = null;
         errorMessage = null;
 
         logger.info("Instance #" + instanceId + " resources released");

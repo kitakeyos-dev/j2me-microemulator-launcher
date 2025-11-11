@@ -61,13 +61,13 @@ public final class SystemCallHandler implements Serializable {
     public static void exit(int instanceId, int status) {
         EmulatorInstance emulatorInstance = MainApplication.INSTANCE.emulatorInstanceManager.findInstance(instanceId);
         if (emulatorInstance != null) {
-            // Shutdown the instance and release all resources
-            emulatorInstance.shutdown();
 
             // Update UI and remove from running instances tab
             javax.swing.SwingUtilities.invokeLater(() -> {
-                MainApplication.INSTANCE.updateInstanceUI(emulatorInstance);
                 MainApplication.INSTANCE.removeEmulatorInstanceTab(emulatorInstance);
+                MainApplication.INSTANCE.updateInstanceUI(emulatorInstance);
+                // Shutdown the instance and release all resources
+                emulatorInstance.shutdown();
             });
         }
     }

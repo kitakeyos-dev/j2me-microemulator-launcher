@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.logging.Logger;
 
 /**
  * Main features of this class loader Security aware - enables load and run app in Webstart. Proper class loading order.
@@ -40,6 +41,8 @@ import java.net.URLClassLoader;
  * @author vlads
  */
 public class EmulatorClassLoader extends URLClassLoader {
+
+    private static final Logger logger = Logger.getLogger(EmulatorClassLoader.class.getName());
 
     // TODO make this configurable
 
@@ -51,9 +54,24 @@ public class EmulatorClassLoader extends URLClassLoader {
 
     private final int instanceId;
 
+    // Statistics for this classloader instance
+    private int cacheHits = 0;
+    private int cacheMisses = 0;
+
     public EmulatorClassLoader(int instanceId, URL[] urls, ClassLoader parent) {
         super(urls, parent);
         this.instanceId = instanceId;
+        logger.info("Creating EmulatorClassLoader for instance #" + instanceId);
+    }
+
+    /**
+     * Get statistics for this classloader
+     */
+    public String getStatistics() {
+        int total = cacheHits + cacheMisses;
+        double hitRate = total > 0 ? (cacheHits * 100.0 / total) : 0.0;
+        return String.format("Instance #%d ClassLoader - Cache hits: %d, Cache misses: %d, Hit rate: %.2f%%",
+                instanceId, cacheHits, cacheMisses, hitRate);
     }
 
 
@@ -220,10 +238,19 @@ public class EmulatorClassLoader extends URLClassLoader {
                     byteCode = InstrumentedClassCache.get(name);
                     if (byteCode == null) {
                         // Not in cache, instrument and cache it
+                        cacheMisses++;
+                        long startTime = System.nanoTime();
                         byteCode = ClassPreprocessor.instrumentAndModifyBytecode(is);
+                        long duration = System.nanoTime() - startTime;
                         if (byteCode != null) {
                             InstrumentedClassCache.put(name, byteCode);
+                            logger.fine(String.format("Instance #%d: Instrumented and cached class '%s' in %.2f ms",
+                                    instanceId, name, duration / 1_000_000.0));
                         }
+                    } else {
+                        // Cache hit!
+                        cacheHits++;
+                        logger.fine(String.format("Instance #%d: Cache HIT for class '%s'", instanceId, name));
                     }
                     byteCodeLength = byteCode.length;
                 } else {
