@@ -32,20 +32,17 @@ import org.objectweb.asm.MethodVisitor;
 
 /**
  * @author vlads
- * 
+ *
  */
 public class MethodCallInterceptorClassVisitor extends ClassAdapter {
 
-	private final int instanceId;
-
-	public MethodCallInterceptorClassVisitor(ClassVisitor cv, int instanceId) {
+	public MethodCallInterceptorClassVisitor(ClassVisitor cv) {
 		super(cv);
-		this.instanceId = instanceId;
 	}
 
 	public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
 			final String[] exceptions) {
-		return new SystemCallInterceptorMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions), instanceId);
+		return new SystemCallInterceptorMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
 	}
 
 }
