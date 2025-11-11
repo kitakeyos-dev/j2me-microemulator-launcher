@@ -144,14 +144,14 @@ public class EmulatorLauncher {
         // Validate frame
         ReflectionHelper.invokeMethod(app, "validate");
 
-        // Set visible
-        ReflectionHelper.invokeMethod(app, "setVisible", new Class<?>[]{boolean.class}, true);
-        app.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                MainApplication.INSTANCE.stopEmulatorInstance(instance);
-            }
-        });
+        // Don't show the frame window - the display panel will be added to a tab instead
+        // ReflectionHelper.invokeMethod(app, "setVisible", new Class<?>[]{boolean.class}, true);
+        // app.addWindowListener(new WindowAdapter() {
+        //     @Override
+        //     public void windowClosed(WindowEvent e) {
+        //         MainApplication.INSTANCE.stopEmulatorInstance(instance);
+        //     }
+        // });
 
         // Initialize MIDlet
         ReflectionHelper.invokeMethod(common, "initMIDlet", new Class<?>[]{boolean.class}, true);

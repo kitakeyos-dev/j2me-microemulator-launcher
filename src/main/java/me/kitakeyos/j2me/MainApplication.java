@@ -30,6 +30,7 @@ public class MainApplication extends JFrame {
     private JTextField microemulatorPathField;
     private JSpinner instanceCountSpinner;
     private JPanel emulatorInstancesPanel;
+    private JTabbedPane runningInstancesTabbedPane;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
@@ -60,6 +61,10 @@ public class MainApplication extends JFrame {
         JPanel instancesPanel = createInstancesPanel();
         tabbedPane.addTab("Instances", instancesPanel);
 
+        // Tab 3: Running Instances
+        JPanel runningInstancesPanel = createRunningInstancesPanel();
+        tabbedPane.addTab("Running Instances", runningInstancesPanel);
+
         add(tabbedPane);
 
         // Listen for application changes to update combo box
@@ -74,6 +79,13 @@ public class MainApplication extends JFrame {
                 refreshApplicationComboBox();
             }
         });
+    }
+
+    private JPanel createRunningInstancesPanel() {
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        runningInstancesTabbedPane = new JTabbedPane();
+        mainPanel.add(runningInstancesTabbedPane, BorderLayout.CENTER);
+        return mainPanel;
     }
 
     private JPanel createInstancesPanel() {
@@ -237,7 +249,9 @@ public class MainApplication extends JFrame {
                 () -> SwingUtilities.invokeLater(() -> {
                     updateInstanceUI(emulatorInstance);
                     if (emulatorInstance.state == InstanceState.RUNNING) {
-                        autoArrangeEmulatorInstances();
+                        addEmulatorInstanceTab(emulatorInstance);
+                        // No need to arrange windows since instances are displayed in tabs
+                        // autoArrangeEmulatorInstances();
                     }
                 }),
                 // onStarted callback
@@ -309,6 +323,37 @@ public class MainApplication extends JFrame {
     public void stopEmulatorInstance(EmulatorInstance emulatorInstance) {
         emulatorInstance.state = InstanceState.STOPPED;
         updateInstanceUI(emulatorInstance);
+        removeEmulatorInstanceTab(emulatorInstance);
+    }
+
+    /**
+     * Add emulator display to running instances tab
+     */
+    public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
+        if (emulatorInstance.emulatorDisplay != null) {
+            String tabTitle = "Instance #" + emulatorInstance.instanceId;
+            runningInstancesTabbedPane.addTab(tabTitle, emulatorInstance.emulatorDisplay);
+
+            // Switch to the new tab
+            int tabIndex = runningInstancesTabbedPane.getTabCount() - 1;
+            runningInstancesTabbedPane.setSelectedIndex(tabIndex);
+        }
+    }
+
+    /**
+     * Remove emulator display from running instances tab
+     */
+    public void removeEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
+        if (emulatorInstance.emulatorDisplay != null) {
+            int tabCount = runningInstancesTabbedPane.getTabCount();
+            for (int i = 0; i < tabCount; i++) {
+                Component comp = runningInstancesTabbedPane.getComponentAt(i);
+                if (comp == emulatorInstance.emulatorDisplay) {
+                    runningInstancesTabbedPane.removeTabAt(i);
+                    break;
+                }
+            }
+        }
     }
 
     private void arrangeEmulatorInstances() {
