@@ -7,7 +7,8 @@ import javax.swing.SwingUtilities;
 /**
  * WrapLayout is a custom layout manager that arranges components in a row,
  * wrapping to the next row when the horizontal space is filled.
- * Unlike FlowLayout, this properly handles wrapping inside JScrollPane.
+ * Unlike FlowLayout, this properly handles wrapping inside JScrollPane
+ * and distributes extra space evenly between components.
  */
 public class WrapLayout extends FlowLayout {
 
@@ -21,6 +22,86 @@ public class WrapLayout extends FlowLayout {
 
     public WrapLayout(int align, int hgap, int vgap) {
         super(align, hgap, vgap);
+    }
+
+    @Override
+    public void layoutContainer(Container target) {
+        synchronized (target.getTreeLock()) {
+            Insets insets = target.getInsets();
+            int maxWidth = target.getWidth() - (insets.left + insets.right + getHgap() * 2);
+            int nmembers = target.getComponentCount();
+            int x = insets.left + getHgap();
+            int y = insets.top + getVgap();
+            int rowHeight = 0;
+            int rowWidth = 0;
+            int start = 0;
+
+            boolean ltr = target.getComponentOrientation().isLeftToRight();
+
+            for (int i = 0; i < nmembers; i++) {
+                Component m = target.getComponent(i);
+                if (m.isVisible()) {
+                    Dimension d = m.getPreferredSize();
+                    m.setSize(d);
+
+                    if ((rowWidth + d.width > maxWidth) && rowWidth > 0) {
+                        // Layout the current row with distributed space
+                        layoutRow(target, x, y, maxWidth, rowHeight, start, i, ltr);
+                        y += rowHeight + getVgap();
+                        x = insets.left + getHgap();
+                        rowHeight = 0;
+                        rowWidth = 0;
+                        start = i;
+                    }
+
+                    if (rowWidth != 0) {
+                        rowWidth += getHgap();
+                    }
+                    rowWidth += d.width;
+                    rowHeight = Math.max(rowHeight, d.height);
+                }
+            }
+            // Layout the last row
+            layoutRow(target, x, y, maxWidth, rowHeight, start, nmembers, ltr);
+        }
+    }
+
+    private void layoutRow(Container target, int x, int y, int maxWidth, int rowHeight, int start, int end, boolean ltr) {
+        // Calculate total width of components in this row
+        int totalWidth = 0;
+        int visibleCount = 0;
+
+        for (int i = start; i < end; i++) {
+            Component m = target.getComponent(i);
+            if (m.isVisible()) {
+                totalWidth += m.getWidth();
+                visibleCount++;
+            }
+        }
+
+        if (visibleCount == 0) return;
+
+        // Calculate extra space and distribute it
+        int totalGaps = (visibleCount - 1) * getHgap();
+        int usedWidth = totalWidth + totalGaps;
+        int extraSpace = maxWidth - usedWidth;
+        int extraGap = extraSpace > 0 ? extraSpace / (visibleCount + 1) : 0;
+
+        // Position components with distributed space
+        int currentX = x + extraGap;
+
+        for (int i = start; i < end; i++) {
+            Component m = target.getComponent(i);
+            if (m.isVisible()) {
+                int cy = y + (rowHeight - m.getHeight()) / 2;
+                if (ltr) {
+                    m.setLocation(currentX, cy);
+                } else {
+                    m.setLocation(target.getWidth() - currentX - m.getWidth(), cy);
+                }
+                currentX += m.getWidth() + getHgap() + extraGap;
+            }
+        }
     }
 
     @Override
