@@ -2,6 +2,7 @@ package me.kitakeyos.j2me.model;
 
 import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.core.classloader.InstanceContext;
+import me.kitakeyos.j2me.core.thread.XThread;
 import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 
 import javax.swing.*;
@@ -35,17 +36,24 @@ public class EmulatorInstance {
     public ActionListener menuExitListener;
     public JPanel emulatorDisplay;
     private List<Socket> sockets;
+    private List<XThread> threads;
 
     public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath) {
         this.instanceId = instanceId;
         this.microemulatorPath = microemulatorPath;
         this.j2meFilePath = j2meFilePath;
-        this.state = InstanceState.CREATED;
         this.sockets = new ArrayList<>();
+        this.threads = new ArrayList<>();
+        this.state = InstanceState.CREATED;
     }
 
     public boolean canRun() {
         return state == InstanceState.CREATED || state == InstanceState.STOPPED;
+    }
+
+    public void addThread(XThread thread) {
+        threads.add(thread);
+        System.out.println("Add Thread to instance " + instanceId);
     }
 
     public void addSocket(Socket socket) {
@@ -66,6 +74,13 @@ public class EmulatorInstance {
 
         EmulatorInstanceManager manager = MainApplication.INSTANCE.emulatorInstanceManager;
         manager.removeInstance(this);
+
+        for (XThread thread : threads) {
+            if (thread.isAlive()) {
+                thread.interrupt();
+            }
+        }
+        threads.clear();
 
         for (Socket socket : sockets) {
             if (!socket.isClosed()) {

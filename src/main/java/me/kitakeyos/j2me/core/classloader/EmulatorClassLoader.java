@@ -26,17 +26,26 @@
  */
 package me.kitakeyos.j2me.core.classloader;
 
+import me.kitakeyos.j2me.util.ByteCodeHelper;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Main features of this class loader Security aware - enables load and run app in Webstart. Proper class loading order.
- * MIDlet classes loaded first then system and MicroEmulator classes Proper resource loading order. MIDlet resources
- * only can be loaded. MIDlet Bytecode preprocessing/instrumentation
+ * Custom class loader for MIDlet execution with bytecode instrumentation support.
+ *
+ * Features:
+ * - Reverse delegation (loads MIDlet classes before system classes)
+ * - Bytecode instrumentation via ASM
+ * - Shared instrumented bytecode cache across instances
+ * - Per-instance statistics tracking
+ * - Thread-safe class loading
  *
  * @author vlads
  */
@@ -44,151 +53,158 @@ public class EmulatorClassLoader extends URLClassLoader {
 
     private static final Logger logger = Logger.getLogger(EmulatorClassLoader.class.getName());
 
-    // TODO make this configurable
+    // Configuration
+    private static final boolean ENABLE_INSTRUMENTATION = true;
+    private static final boolean DELEGATE_TO_PARENT = false;
+    private static final boolean SEARCH_IN_PARENT = false;
 
-    public static boolean instrumentMIDletClasses = true;
-
-    private final boolean delegatingToParent = false;
-
-    private final boolean shouldSearchPathInParent = false;
+    // Read buffer size for non-instrumented classes
+    private static final int READ_CHUNK_SIZE = 2048;
+    private static final int MAX_CLASS_SIZE = 16 * 1024; // 16KB
 
     private final int instanceId;
 
-    // Statistics for this classloader instance
+    // Per-instance statistics
     private int cacheHits = 0;
     private int cacheMisses = 0;
+    private int classesLoaded = 0;
+    private long totalInstrumentationTime = 0; // nanoseconds
 
     public EmulatorClassLoader(int instanceId, URL[] urls, ClassLoader parent) {
         super(urls, parent);
         this.instanceId = instanceId;
-        logger.info("Creating EmulatorClassLoader for instance #" + instanceId);
+        logger.info("Created EmulatorClassLoader for instance #" + instanceId +
+                " with " + urls.length + " URL(s)");
     }
 
     /**
-     * Get statistics for this classloader
+     * Get instance ID for this class loader
      */
-    public String getStatistics() {
-        int total = cacheHits + cacheMisses;
-        double hitRate = total > 0 ? (cacheHits * 100.0 / total) : 0.0;
-        return String.format("Instance #%d ClassLoader - Cache hits: %d, Cache misses: %d, Hit rate: %.2f%%",
-                instanceId, cacheHits, cacheMisses, hitRate);
+    public int getInstanceId() {
+        return instanceId;
     }
 
+    /**
+     * Get detailed statistics for this classloader
+     */
+    public String getStatistics() {
+        int totalCacheRequests = cacheHits + cacheMisses;
+        double hitRate = totalCacheRequests > 0 ? (cacheHits * 100.0 / totalCacheRequests) : 0.0;
+        double avgInstrumentationTime = cacheMisses > 0 ?
+                (totalInstrumentationTime / cacheMisses / 1_000_000.0) : 0.0;
+
+        return String.format(
+                "Instance #%d ClassLoader Stats:\n" +
+                        "  Classes loaded: %d\n" +
+                        "  Cache hits: %d, Cache misses: %d\n" +
+                        "  Cache hit rate: %.2f%%\n" +
+                        "  Avg instrumentation time: %.2f ms",
+                instanceId, classesLoaded, cacheHits, cacheMisses, hitRate, avgInstrumentationTime
+        );
+    }
+
+    /**
+     * Reset statistics counters
+     */
+    public void resetStatistics() {
+        cacheHits = 0;
+        cacheMisses = 0;
+        classesLoaded = 0;
+        totalInstrumentationTime = 0;
+    }
 
     /**
      * Appends the Class Location URL to the list of URLs to search for classes and resources.
      */
     public void addClassURL(String className) throws MalformedURLException {
-        String resource = getClassResourceName(className);
-        URL url = getParent().getResource(resource);
-        if (url == null) {
-            url = this.getResource(resource);
-        }
-        if (url == null) {
-            throw new MalformedURLException("Unable to find class " + className + " URL");
-        }
-        String path = url.toExternalForm();
-        addURL(new URL(path.substring(0, path.length() - resource.length())));
-    }
+        String resourcePath = ByteCodeHelper.getClassResourcePath(className);
+        URL url = findClassLocationURL(resourcePath);
 
-    static URL getClassURL(ClassLoader parent, String className) throws MalformedURLException {
-        String resource = getClassResourceName(className);
-        URL url = parent.getResource(resource);
         if (url == null) {
             throw new MalformedURLException("Unable to find class " + className + " URL");
         }
-        String path = url.toExternalForm();
-        return new URL(path.substring(0, path.length() - resource.length()));
+
+        addURL(url);
     }
 
     /**
-     * Loads the class with the specified <a href="#name">binary name</a>.
-     *
-     * <p>
-     * Search order is reverse to standard implemenation
-     * </p>
-     * <p>
-     * This implementation of this method searches for classes in the following order:
-     *
-     * <p>
-     * <ol>
-     *
-     * <li>
-     * <p>
-     * Invoke {@link #findLoadedClass(String)} to check if the class has already been loaded.
-     * </p>
-     * </li>
-     *
-     * <li>
-     * <p>
-     * Invoke the {@link #findClass(String)} method to find the class in this class loader URLs.
-     * </p>
-     * </li>
-     *
-     * <li>
-     * <p>
-     * Invoke the {@link #loadClass(String) <tt>loadClass</tt>} method on the parent class loader. If the parent is
-     * <tt>null</tt> the class loader built-in to the virtual machine is used, instead.
-     * </p>
-     * </li>
-     *
-     * </ol>
+     * Find the base URL for a class resource
      */
-    protected synchronized Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    private URL findClassLocationURL(String resourcePath) throws MalformedURLException {
+        // Try parent first
+        URL url = getParent() != null ? getParent().getResource(resourcePath) : null;
+
+        // Then try this classloader
+        if (url == null) {
+            url = findResource(resourcePath);
+        }
+
+        if (url == null) {
+            return null;
+        }
+
+        // Extract base URL (remove resource path)
+        String externalForm = url.toExternalForm();
+        String baseUrl = externalForm.substring(0, externalForm.length() - resourcePath.length());
+        return new URL(baseUrl);
+    }
+
+    /**
+     * Loads the class with the specified binary name.
+     *
+     * Search order (reverse delegation):
+     * 1. Check if already loaded
+     * 2. Try to find in this classloader's URLs (MIDlet JAR)
+     * 3. Delegate to parent (System ClassLoader)
+     */
+    @Override
+    protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         // First, check if the class has already been loaded
-        Class result = findLoadedClass(name);
-        if (result == null) {
+        Class<?> loadedClass = findLoadedClass(name);
+
+        if (loadedClass == null) {
             try {
-                result = findClass(name);
+                // Try to load from MIDlet JAR first (reverse delegation)
+                loadedClass = findClass(name);
             } catch (ClassNotFoundException e) {
-                // This will call our findClass again if Class is not found
-                // in parent
-                result = super.loadClass(name, false);
-                if (result == null) {
-                    throw new ClassNotFoundException(name);
-                }
+                // Not found in MIDlet JAR, delegate to parent
+                loadedClass = super.loadClass(name, false);
             }
         }
-        if (resolve) {
-            resolveClass(result);
+
+        if (loadedClass == null) {
+            throw new ClassNotFoundException(name);
         }
-        return result;
+
+        if (resolve) {
+            resolveClass(loadedClass);
+        }
+
+        return loadedClass;
     }
 
     /**
-     * Finds the resource with the given name. A resource is some data (images, audio, text, etc) that can be accessed
-     * by class code in a way that is independent of the location of the code.
-     *
-     * <p>
-     * The name of a resource is a '<tt>/</tt>'-separated path name that identifies the resource.
-     *
-     * <p>
-     * Search order is reverse to standard implementation
-     * </p>
-     *
-     * <p>
-     * This method will first use {@link #findResource(String)} to find the resource. That failing, this method will NOT
-     * invoke the parent class loader if delegatingToParent=false.
-     * </p>
-     *
-     * @param name The resource name
-     * @return A <tt>URL</tt> object for reading the resource, or <tt>null</tt> if the resource could not be found or
-     * the invoker doesn't have adequate privileges to get the resource.
+     * Find resource with reverse delegation
      */
-
-    public URL getResource(final String name) {
+    @Override
+    public URL getResource(String name) {
+        // Try this classloader first
         URL url = findResource(name);
-        if ((url == null) && delegatingToParent && (getParent() != null)) {
+
+        // Delegate to parent only if configured
+        if (url == null && DELEGATE_TO_PARENT && getParent() != null) {
             url = getParent().getResource(name);
         }
+
         return url;
     }
 
     /**
-     * Allow access to resources
+     * Get resource as input stream
      */
+    @Override
     public InputStream getResourceAsStream(String name) {
-        final URL url = getResource(name);
+        URL url = getResource(name);
         if (url == null) {
             return null;
         }
@@ -196,102 +212,136 @@ public class EmulatorClassLoader extends URLClassLoader {
         try {
             return url.openStream();
         } catch (IOException e) {
+            logger.log(Level.WARNING, "Failed to open resource stream: " + name, e);
             return null;
         }
-
     }
 
-    public static String getClassResourceName(String className) {
-        return className.replace('.', '/').concat(".class");
-    }
-
-    protected Class findClass(final String name) throws ClassNotFoundException {
+    /**
+     * Find and load class from MIDlet JAR
+     */
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
         // Set the instance ID in ThreadLocal for dynamic instrumentation
         InstanceContext.setInstanceId(instanceId);
-        try {
-            InputStream is;
-            is = getResourceAsStream(getClassResourceName(name));
 
-            // Relax ClassLoader behavior
-            if ((is == null) && (this.shouldSearchPathInParent)) {
-                boolean classFound;
+        try {
+            String resourcePath = ByteCodeHelper.getClassResourcePath(name);
+            InputStream is = getResourceAsStream(resourcePath);
+
+            // Relax ClassLoader behavior - search in parent if needed
+            if (is == null && SEARCH_IN_PARENT) {
                 try {
                     addClassURL(name);
-                    classFound = true;
+                    is = getResourceAsStream(resourcePath);
                 } catch (MalformedURLException e) {
-                    classFound = false;
-                }
-                if (classFound) {
-                    is = getResourceAsStream(getClassResourceName(name));
+                    // Ignore and continue
                 }
             }
 
             if (is == null) {
                 throw new ClassNotFoundException(name);
             }
-            byte[] byteCode;
-            int byteCodeLength;
+
+            byte[] bytecode;
             try {
-                if (instrumentMIDletClasses) {
-                    // Try to get from cache first
-                    byteCode = InstrumentedClassCache.get(name);
-                    if (byteCode == null) {
-                        // Not in cache, instrument and cache it
-                        cacheMisses++;
-                        long startTime = System.nanoTime();
-                        byteCode = ClassPreprocessor.instrumentAndModifyBytecode(is);
-                        long duration = System.nanoTime() - startTime;
-                        if (byteCode != null) {
-                            InstrumentedClassCache.put(name, byteCode);
-                            logger.fine(String.format("Instance #%d: Instrumented and cached class '%s' in %.2f ms",
-                                    instanceId, name, duration / 1_000_000.0));
-                        }
-                    } else {
-                        // Cache hit!
-                        cacheHits++;
-                        logger.fine(String.format("Instance #%d: Cache HIT for class '%s'", instanceId, name));
-                    }
-                    byteCodeLength = byteCode.length;
+                if (ENABLE_INSTRUMENTATION) {
+                    bytecode = loadWithInstrumentation(name, is);
                 } else {
-                    final int chunkSize = 1024 * 2;
-                    // No class or data object must be bigger than 16 Kilobyte
-                    final int maxClassSizeSize = 1024 * 16;
-                    byteCode = new byte[chunkSize];
-                    byteCodeLength = 0;
-                    do {
-                        int retrived;
-                        try {
-                            retrived = is.read(byteCode, byteCodeLength, byteCode.length - byteCodeLength);
-                        } catch (IOException e) {
-                            throw new ClassNotFoundException(name, e);
-                        }
-                        if (retrived == -1) {
-                            break;
-                        }
-                        if (byteCode.length + chunkSize > maxClassSizeSize) {
-                            throw new ClassNotFoundException(name, new ClassFormatError(
-                                    "Class object is bigger than 16 Kilobyte"));
-                        }
-                        byteCodeLength += retrived;
-                        if (byteCode.length == byteCodeLength) {
-                            byte[] newData = new byte[byteCode.length + chunkSize];
-                            System.arraycopy(byteCode, 0, newData, 0, byteCode.length);
-                            byteCode = newData;
-                        } else if (byteCode.length < byteCodeLength) {
-                            throw new ClassNotFoundException(name, new ClassFormatError("Internal read error"));
-                        }
-                    } while (true);
+                    bytecode = loadWithoutInstrumentation(is);
                 }
             } finally {
-                try {
-                    is.close();
-                } catch (IOException ignore) {
-                }
+                closeQuietly(is);
             }
-            return defineClass(name, byteCode, 0, byteCodeLength);
+
+            classesLoaded++;
+            return defineClass(name, bytecode, 0, bytecode.length);
+
         } finally {
-            // Keep the instance ID in ThreadLocal for the lifetime of the emulator instance
+            // Keep instance ID in ThreadLocal for the lifetime of the emulator instance
             // Don't clear it here as the class will be used in the same thread
         }
+    }
+
+    /**
+     * Load class bytecode with instrumentation and caching
+     */
+    private byte[] loadWithInstrumentation(String className, InputStream is) throws ClassNotFoundException {
+        // Try to get from cache first
+        byte[] bytecode = InstrumentedClassCache.get(className);
+
+        if (bytecode != null) {
+            // Cache hit!
+            cacheHits++;
+            logger.fine(String.format("Instance #%d: Cache HIT for '%s'", instanceId, className));
+            return bytecode;
+        }
+
+        // Cache miss - instrument and cache
+        cacheMisses++;
+        long startTime = System.nanoTime();
+
+        bytecode = ClassPreprocessor.instrumentAndModifyBytecode(is);
+        long duration = System.nanoTime() - startTime;
+        totalInstrumentationTime += duration;
+
+        if (bytecode != null) {
+            // Cache the instrumented bytecode
+            InstrumentedClassCache.put(className, bytecode);
+
+            logger.fine(String.format(
+                    "Instance #%d: Instrumented and cached '%s' in %.2f ms",
+                    instanceId, className, duration / 1_000_000.0
+            ));
+        }
+
+        return bytecode;
+
+    }
+
+    /**
+     * Load class bytecode without instrumentation
+     */
+    private byte[] loadWithoutInstrumentation(InputStream is) throws ClassNotFoundException {
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream(READ_CHUNK_SIZE);
+            byte[] chunk = new byte[READ_CHUNK_SIZE];
+            int bytesRead;
+
+            while ((bytesRead = is.read(chunk)) != -1) {
+                buffer.write(chunk, 0, bytesRead);
+
+                // Check size limit
+                if (buffer.size() > MAX_CLASS_SIZE) {
+                    throw new ClassFormatError("Class size exceeds maximum limit of " + MAX_CLASS_SIZE + " bytes");
+                }
+            }
+
+            return buffer.toByteArray();
+
+        } catch (IOException e) {
+            throw new ClassNotFoundException("Failed to read class bytecode", e);
+        }
+    }
+
+    /**
+     * Close stream quietly without throwing exceptions
+     */
+    private void closeQuietly(InputStream is) {
+        if (is != null) {
+            try {
+                is.close();
+            } catch (IOException e) {
+                // Ignore
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("EmulatorClassLoader[instance=%d, classes=%d, cacheHitRate=%.1f%%]",
+                instanceId, classesLoaded,
+                (cacheHits + cacheMisses) > 0 ? (cacheHits * 100.0 / (cacheHits + cacheMisses)) : 0.0
+        );
     }
 }
