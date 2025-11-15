@@ -77,7 +77,11 @@ public class EmulatorInstance {
 
         for (XThread thread : threads) {
             if (thread.isAlive()) {
-                thread.interrupt();
+                try {
+                    thread.interrupt();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         threads.clear();
@@ -86,7 +90,7 @@ public class EmulatorInstance {
             if (!socket.isClosed()) {
                 try {
                     socket.close();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
