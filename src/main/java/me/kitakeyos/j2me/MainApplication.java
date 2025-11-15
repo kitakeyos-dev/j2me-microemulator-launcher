@@ -161,12 +161,8 @@ public class MainApplication extends JFrame {
         JButton stopAllButton = createStyledButton("Stop All", new Color(220, 20, 60), this::stopAllInstances);
         stopAllButton.setToolTipText("Stop all running instances");
 
-        JButton clearAllButton = createStyledButton("Clear All", new Color(169, 169, 169), this::clearAllEmulatorInstances);
-        clearAllButton.setToolTipText("Remove all instances");
-
         panel.add(createButton);
         panel.add(stopAllButton);
-        panel.add(clearAllButton);
 
         return panel;
     }
