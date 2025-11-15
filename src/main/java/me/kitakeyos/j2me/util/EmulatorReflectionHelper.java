@@ -40,12 +40,11 @@ public class EmulatorReflectionHelper {
                 params, deviceEntry, j2seDeviceClass
         );
 
-        if (!initResult) {
-            throw new RuntimeException("Failed to initialize emulator parameters");
+        // Only set deviceEntry if initialization succeeded
+        if (initResult) {
+            // Set deviceEntry field
+            ReflectionHelper.setFieldValue(app, "deviceEntry", deviceEntry);
         }
-
-        // Set deviceEntry field
-        ReflectionHelper.setFieldValue(app, "deviceEntry", deviceEntry);
 
         return deviceEntry;
     }
