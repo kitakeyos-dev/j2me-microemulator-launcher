@@ -67,23 +67,27 @@ public class EmulatorReflectionHelper {
         boolean isResizable = (boolean) ReflectionHelper.invokeMethod(deviceDisplay, "isResizable");
 
         if (isResizable) {
-            // Get device entry display size
-            Class<?> configClass = ReflectionHelper.loadClass(classLoader, "org.microemu.app.Config");
-            Object size = ReflectionHelper.invokeStaticMethod(
-                    configClass,
-                    "getDeviceEntryDisplaySize",
-                    new Class<?>[]{Object.class},
-                    deviceEntry
-            );
-
-            if (size != null) {
-                // Set display rectangle
-                ReflectionHelper.invokeMethod(
-                        deviceDisplay,
-                        "setDisplayRectangle",
-                        new Class<?>[]{Rectangle.class},
-                        size
+            try {
+                // Get device entry display size
+                Class<?> configClass = ReflectionHelper.loadClass(classLoader, "org.microemu.app.Config");
+                Object size = ReflectionHelper.invokeStaticMethod(
+                        configClass,
+                        "getDeviceEntryDisplaySize",
+                        new Class<?>[]{Object.class},
+                        deviceEntry
                 );
+
+                if (size != null) {
+                    // Set display rectangle
+                    ReflectionHelper.invokeMethod(
+                            deviceDisplay,
+                            "setDisplayRectangle",
+                            new Class<?>[]{Rectangle.class},
+                            size
+                    );
+                }
+            } catch (NoSuchMethodException e) {
+                // Method might not exist in all MicroEmulator versions, continue without setting display size
             }
         }
     }
