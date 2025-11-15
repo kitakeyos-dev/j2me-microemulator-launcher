@@ -15,8 +15,8 @@ public class EmulatorReflectionHelper {
     /**
      * Initialize parameters for the MicroEmulator
      *
-     * @param app The Main application instance
-     * @param params Parameters list
+     * @param app         The Main application instance
+     * @param params      Parameters list
      * @param classLoader ClassLoader to use
      * @return Device entry object
      */
@@ -67,27 +67,23 @@ public class EmulatorReflectionHelper {
         boolean isResizable = (boolean) ReflectionHelper.invokeMethod(deviceDisplay, "isResizable");
 
         if (isResizable) {
-            try {
-                // Get device entry display size
-                Class<?> configClass = ReflectionHelper.loadClass(classLoader, "org.microemu.app.Config");
-                Object size = ReflectionHelper.invokeStaticMethod(
-                        configClass,
-                        "getDeviceEntryDisplaySize",
-                        new Class<?>[]{Object.class},
-                        deviceEntry
-                );
+            // Get device entry display size
+            Class<?> configClass = ReflectionHelper.loadClass(classLoader, "org.microemu.app.Config");
+            Object size = ReflectionHelper.invokeStaticMethod(
+                    configClass,
+                    "getDeviceEntryDisplaySize",
+                    new Class<?>[]{deviceEntry.getClass()},
+                    deviceEntry
+            );
 
-                if (size != null) {
-                    // Set display rectangle
-                    ReflectionHelper.invokeMethod(
-                            deviceDisplay,
-                            "setDisplayRectangle",
-                            new Class<?>[]{Rectangle.class},
-                            size
-                    );
-                }
-            } catch (NoSuchMethodException e) {
-                // Method might not exist in all MicroEmulator versions, continue without setting display size
+            if (size != null) {
+                // Set display rectangle
+                ReflectionHelper.invokeMethod(
+                        deviceDisplay,
+                        "setDisplayRectangle",
+                        new Class<?>[]{Rectangle.class},
+                        size
+                );
             }
         }
     }

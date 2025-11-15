@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.core.lifecycle;
 
+import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.core.classloader.InstanceContext;
 import me.kitakeyos.j2me.core.resource.ResourceManager;
 import me.kitakeyos.j2me.model.EmulatorInstance;
@@ -31,6 +32,8 @@ public class InstanceLifecycleManager {
 
         // Set state to stopped first to prevent concurrent shutdowns
         instance.setState(EmulatorInstance.InstanceState.STOPPED);
+
+        MainApplication.INSTANCE.emulatorInstanceManager.removeInstance(instance);
 
         // Clean up managed resources (threads and sockets)
         cleanupResources(instance);

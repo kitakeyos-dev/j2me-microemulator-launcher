@@ -39,41 +39,6 @@ public class EmulatorInstanceManager {
         }
     }
 
-    public void moveInstanceUp(EmulatorInstance instance) {
-        int currentIndex = instances.indexOf(instance);
-        if (currentIndex > 0) {
-            Collections.swap(instances, currentIndex, currentIndex - 1);
-            updatePanelOrder();
-        }
-    }
-
-    public void moveInstanceDown(EmulatorInstance instance) {
-        int currentIndex = instances.indexOf(instance);
-        if (currentIndex < instances.size() - 1) {
-            Collections.swap(instances, currentIndex, currentIndex + 1);
-            updatePanelOrder();
-        }
-    }
-
-    public void updatePanelOrder() {
-        instancesPanel.removeAll();
-        for (EmulatorInstance instance : instances) {
-            if (instance.getUIPanel() != null) {
-                instancesPanel.add(instance.getUIPanel());
-            }
-        }
-        instancesPanel.revalidate();
-        instancesPanel.repaint();
-    }
-
-    public void stopAllInstances() {
-        for (EmulatorInstance instance : new ArrayList<>(instances)) {
-            if (instance.getState() == InstanceState.RUNNING) {
-                instance.shutdown();
-            }
-        }
-    }
-
     public void clearAllInstances() {
         for (EmulatorInstance instance : new ArrayList<>(instances)) {
             if (instance.getState() == InstanceState.RUNNING) {
