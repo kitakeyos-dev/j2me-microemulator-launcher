@@ -4,15 +4,13 @@ import me.kitakeyos.j2me.core.classloader.EmulatorClassLoader;
 import me.kitakeyos.j2me.core.classloader.InstrumentedClassCache;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.util.EmulatorReflectionHelper;
 import me.kitakeyos.j2me.util.ReflectionHelper;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentListener;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +18,25 @@ import java.util.logging.Logger;
 
 /**
  * Launches emulator instances
+ * Refactored to separate concerns and improve maintainability
  */
 public class EmulatorLauncher {
 
     private static final Logger logger = Logger.getLogger(EmulatorLauncher.class.getName());
+
+    // Common classes to pre-load for better performance
+    private static final String[] PRELOAD_CLASSES = {
+        "org.microemu.app.Main",
+        "org.microemu.app.Config",
+        "org.microemu.app.Common",
+        "org.microemu.device.DeviceFactory",
+        "org.microemu.device.j2se.J2SEDevice",
+        "org.microemu.device.j2se.J2SEDeviceDisplay",
+        "org.microemu.device.j2se.J2SEInputMethod",
+        "org.microemu.MIDletBridge",
+        "org.microemu.DisplayAccess",
+        "org.microemu.MicroEmulator"
+    };
 
     /**
      * Pre-warm the emulator classloader by loading and caching common classes.
@@ -48,27 +61,13 @@ public class EmulatorLauncher {
                 // Create a temporary classloader with dummy instanceId = 0
                 EmulatorClassLoader tempClassLoader = initializeEmulatorClassLoader(0, microemulatorJarPath);
 
-                // List of important classes to pre-load and cache
-                String[] classesToPreload = {
-                    "org.microemu.app.Main",
-                    "org.microemu.app.Config",
-                    "org.microemu.app.Common",
-                    "org.microemu.device.DeviceFactory",
-                    "org.microemu.device.j2se.J2SEDevice",
-                    "org.microemu.device.j2se.J2SEDeviceDisplay",
-                    "org.microemu.device.j2se.J2SEInputMethod",
-                    "org.microemu.MIDletBridge",
-                    "org.microemu.DisplayAccess",
-                    "org.microemu.MicroEmulator"
-                };
-
                 int successCount = 0;
                 int failCount = 0;
 
                 // Load each class to trigger instrumentation and caching
-                for (String className : classesToPreload) {
+                for (String className : PRELOAD_CLASSES) {
                     try {
-                        Class<?> clazz = tempClassLoader.loadClass(className);
+                        tempClassLoader.loadClass(className);
                         successCount++;
                         logger.fine("Pre-loaded class: " + className);
                     } catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -89,7 +88,15 @@ public class EmulatorLauncher {
         }, "ClassLoader-PreWarmer").start();
     }
 
-    public static EmulatorClassLoader initializeEmulatorClassLoader(int instanceId, String microemulatorJarPath) throws IOException {
+    /**
+     * Initialize an emulator classloader for the given instance
+     *
+     * @param instanceId Instance ID
+     * @param microemulatorJarPath Path to microemulator JAR
+     * @return Initialized classloader
+     */
+    public static EmulatorClassLoader initializeEmulatorClassLoader(int instanceId, String microemulatorJarPath)
+            throws IOException {
         List<URL> urls = new ArrayList<>();
         File microemulatorJar = new File(microemulatorJarPath);
 
@@ -104,45 +111,52 @@ public class EmulatorLauncher {
         return new EmulatorClassLoader(instanceId, urls.toArray(new URL[0]), ClassLoader.getSystemClassLoader());
     }
 
+    /**
+     * Start an emulator instance
+     *
+     * @param instance The instance to start
+     * @param onComplete Callback when instance startup completes (success or failure)
+     * @param onStarted Callback when instance startup begins
+     */
     public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete, Runnable onStarted) {
         // Set state to STARTING
-        instance.state = InstanceState.STARTING;
+        instance.setState(InstanceState.STARTING);
         if (onStarted != null) {
             SwingUtilities.invokeLater(onStarted);
         }
 
         long instanceStartTime = System.currentTimeMillis();
-        EmulatorClassLoader emulatorClassLoader = null;
 
         try {
-            emulatorClassLoader = initializeEmulatorClassLoader(
-                    instance.instanceId,
-                    instance.microemulatorPath
+            EmulatorClassLoader emulatorClassLoader = initializeEmulatorClassLoader(
+                    instance.getInstanceId(),
+                    instance.getMicroemulatorPath()
             );
 
             // Ensure emulator runs with its own context ClassLoader
             Thread.currentThread().setContextClassLoader(emulatorClassLoader);
 
-            List<String> params = new ArrayList<>();
-            params.add(instance.j2meFilePath);
-            params.add("--resizableDevice");
-            params.add("240");
-            params.add("320");
-            JFrame frame = launchMicroEmulator(instance, params, emulatorClassLoader);
-            instance.menuExitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
-            instance.emulatorDisplay = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
-            frame.setResizable(false);
-            frame.setTitle("Instance " + instance.instanceId);
+            // Build parameters
+            List<String> params = buildEmulatorParameters(instance);
+
+            // Launch the emulator
+            JFrame frame = launchMicroEmulator(params, emulatorClassLoader);
+
+            // Extract and store UI components
+            configureInstanceComponents(instance, frame);
+
             // Set state to RUNNING after successful configuration
-            instance.state = InstanceState.RUNNING;
+            instance.setState(InstanceState.RUNNING);
 
             long instanceDuration = System.currentTimeMillis() - instanceStartTime;
-            logger.info(String.format("Instance #%d started in %d ms", instance.instanceId, instanceDuration));
+            logger.info(String.format("Instance #%d started in %d ms", instance.getInstanceId(), instanceDuration));
             logger.info(emulatorClassLoader.getStatistics());
             logger.info("Global " + InstrumentedClassCache.getStatistics());
+
         } catch (Exception e) {
-            instance.errorMessage = e.getMessage();
-            instance.state = InstanceState.STOPPED;
+            instance.setErrorMessage(e.getMessage());
+            instance.setState(InstanceState.STOPPED);
+            logger.severe("Failed to start instance #" + instance.getInstanceId() + ": " + e.getMessage());
             e.printStackTrace();
         } finally {
             if (onComplete != null) {
@@ -151,98 +165,70 @@ public class EmulatorLauncher {
         }
     }
 
-    public static JFrame launchMicroEmulator(EmulatorInstance instance, List<String> params, ClassLoader classLoader)
-            throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException,
-            InvocationTargetException, InstantiationException, IllegalAccessException {
+    /**
+     * Build emulator launch parameters
+     */
+    private static List<String> buildEmulatorParameters(EmulatorInstance instance) {
+        List<String> params = new ArrayList<>();
+        params.add(instance.getJ2meFilePath());
+        params.add("--resizableDevice");
+        params.add("240");
+        params.add("320");
+        return params;
+    }
+
+    /**
+     * Configure instance components after successful launch
+     */
+    private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame)
+            throws NoSuchFieldException, IllegalAccessException {
+        ActionListener exitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
+        JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
+
+        instance.setMenuExitListener(exitListener);
+        instance.setEmulatorDisplay(devicePanel);
+
+        frame.setResizable(false);
+        frame.setTitle("Instance " + instance.getInstanceId());
+    }
+
+    /**
+     * Launch MicroEmulator using reflection
+     * Refactored to use EmulatorReflectionHelper for cleaner code
+     *
+     * @param params Launch parameters
+     * @param classLoader ClassLoader to use
+     * @return Configured JFrame
+     */
+    public static JFrame launchMicroEmulator(List<String> params, ClassLoader classLoader)
+            throws Exception {
 
         // Create instance of Main class
         JFrame app = (JFrame) ReflectionHelper.createInstance(classLoader, "org.microemu.app.Main");
 
-        // Get required fields
-        Object common = ReflectionHelper.getFieldValue(app, "common");
-        Object selectDevicePanel = ReflectionHelper.getFieldValue(app, "selectDevicePanel");
+        // Initialize parameters
+        Object deviceEntry = EmulatorReflectionHelper.initializeEmulatorParams(app, params, classLoader);
 
-        // Get selected device entry
-        Object deviceEntry = ReflectionHelper.invokeMethod(selectDevicePanel, "getSelectedDeviceEntry");
-
-        // Call common.initParams(params, deviceEntry, J2SEDevice.class)
-        Class<?> j2seDeviceClass = ReflectionHelper.loadClass(classLoader, "org.microemu.device.j2se.J2SEDevice");
-        boolean initResult = (boolean) ReflectionHelper.invokeMethod(
-                common,
-                "initParams",
-                new Class<?>[]{List.class, deviceEntry.getClass(), Class.class},
-                params, deviceEntry, j2seDeviceClass
-        );
-
-        if (initResult) {
-            // Set deviceEntry field
-            ReflectionHelper.setFieldValue(app, "deviceEntry", deviceEntry);
-
-            // Get DeviceDisplayImpl
-            Class<?> deviceFactoryClass = ReflectionHelper.loadClass(classLoader, "org.microemu.device.DeviceFactory");
-            Object device = ReflectionHelper.invokeStaticMethod(deviceFactoryClass, "getDevice", new Class<?>[]{});
-            Object deviceDisplay = ReflectionHelper.invokeMethod(device, "getDeviceDisplay");
-
-            // Check if resizable
-            boolean isResizable = (boolean) ReflectionHelper.invokeMethod(deviceDisplay, "isResizable");
-
-            if (isResizable) {
-                // Get device entry display size
-                Class<?> configClass = ReflectionHelper.loadClass(classLoader, "org.microemu.app.Config");
-                Object size = ReflectionHelper.invokeStaticMethod(
-                        configClass,
-                        "getDeviceEntryDisplaySize",
-                        new Class<?>[]{Object.class},
-                        deviceEntry
-                );
-
-                if (size != null) {
-                    // Set display rectangle
-                    ReflectionHelper.invokeMethod(
-                            deviceDisplay,
-                            "setDisplayRectangle",
-                            new Class<?>[]{Rectangle.class},
-                            size
-                    );
-                }
-            }
-        }
+        // Configure display size
+        EmulatorReflectionHelper.configureDisplaySize(deviceEntry, classLoader);
 
         // Update device
-        ReflectionHelper.invokeDeclaredMethod(app, "updateDevice");
+        EmulatorReflectionHelper.updateDevice(app);
 
         // Validate frame
-        ReflectionHelper.invokeMethod(app, "validate");
+        app.validate();
 
-        // Don't show the frame window - the display panel will be added to a tab instead
-        // ReflectionHelper.invokeMethod(app, "setVisible", new Class<?>[]{boolean.class}, true);
-        // app.addWindowListener(new WindowAdapter() {
-        //     @Override
-        //     public void windowClosed(WindowEvent e) {
-        //         MainApplication.INSTANCE.stopEmulatorInstance(instance);
-        //     }
-        // });
+        // Get common object for MIDlet initialization
+        Object common = ReflectionHelper.getFieldValue(app, "common");
 
         // Initialize MIDlet
-        ReflectionHelper.invokeMethod(common, "initMIDlet", new Class<?>[]{boolean.class}, true);
+        EmulatorReflectionHelper.initializeMIDlet(common);
 
-        // Add component listener
-        Object componentListener = ReflectionHelper.getFieldValue(app, "componentListener");
-        ReflectionHelper.invokeMethod(
-                app,
-                "addComponentListener",
-                new Class<?>[]{ComponentListener.class},
-                componentListener
-        );
+        // Setup component listener
+        EmulatorReflectionHelper.setupComponentListener(app);
 
         // Notify state changed
-        Object responseInterfaceListener = ReflectionHelper.getFieldValue(app, "responseInterfaceListener");
-        ReflectionHelper.invokeDeclaredMethod(
-                responseInterfaceListener,
-                "stateChanged",
-                new Class<?>[]{boolean.class},
-                true
-        );
+        EmulatorReflectionHelper.notifyStateChanged(app);
 
         return app;
     }

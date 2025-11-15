@@ -236,7 +236,7 @@ public class MainApplication extends JFrame {
      */
     public void runSingleInstance(EmulatorInstance emulatorInstance) {
         if (!emulatorInstance.canRun()) {
-            showErrorMessage("Instance #" + emulatorInstance.instanceId + " cannot be run in current state.");
+            showErrorMessage("Instance #" + emulatorInstance.getInstanceId() + " cannot be run in current state.");
             return;
         }
 
@@ -244,7 +244,7 @@ public class MainApplication extends JFrame {
                 emulatorInstance,
                 // onComplete callback
                 () -> SwingUtilities.invokeLater(() -> {
-                    if (emulatorInstance.state == InstanceState.RUNNING) {
+                    if (emulatorInstance.getState() == InstanceState.RUNNING) {
                         addEmulatorInstanceTab(emulatorInstance);
                     }
                 }),
@@ -279,7 +279,7 @@ public class MainApplication extends JFrame {
      * WrapLayout automatically wraps instances to fill horizontal space
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
-        if (emulatorInstance.emulatorDisplay != null) {
+        if (emulatorInstance.getEmulatorDisplay() != null) {
             // Create wrapper panel with BorderLayout
             JPanel wrapperPanel = new JPanel(new BorderLayout());
 
@@ -289,7 +289,7 @@ public class MainApplication extends JFrame {
             headerPanel.setBackground(new Color(230, 230, 250));
 
             // Title label
-            JLabel titleLabel = new JLabel("Instance #" + emulatorInstance.instanceId);
+            JLabel titleLabel = new JLabel("Instance #" + emulatorInstance.getInstanceId());
             titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
             headerPanel.add(titleLabel, BorderLayout.WEST);
 
@@ -305,22 +305,22 @@ public class MainApplication extends JFrame {
             stopButton.addActionListener(e -> {
                 removeEmulatorInstanceTab(emulatorInstance);
                 emulatorInstance.shutdown();
-                showToast("Stopped Instance #" + emulatorInstance.instanceId, ToastNotification.ToastType.INFO);
+                showToast("Stopped Instance #" + emulatorInstance.getInstanceId(), ToastNotification.ToastType.INFO);
             });
             headerPanel.add(stopButton, BorderLayout.EAST);
 
             // Add header and display to wrapper
             wrapperPanel.add(headerPanel, BorderLayout.NORTH);
-            wrapperPanel.add(emulatorInstance.emulatorDisplay, BorderLayout.CENTER);
+            wrapperPanel.add(emulatorInstance.getEmulatorDisplay(), BorderLayout.CENTER);
             wrapperPanel.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180), 1));
 
             // Store wrapper panel reference for later removal
-            emulatorInstance.emulatorDisplay.putClientProperty("wrapperPanel", wrapperPanel);
+            emulatorInstance.getEmulatorDisplay().putClientProperty("wrapperPanel", wrapperPanel);
             // Store instanceId for sorting
-            wrapperPanel.putClientProperty("instanceId", emulatorInstance.instanceId);
+            wrapperPanel.putClientProperty("instanceId", emulatorInstance.getInstanceId());
 
             // Find the correct position to insert based on instanceId
-            int insertIndex = findInsertPosition(emulatorInstance.instanceId);
+            int insertIndex = findInsertPosition(emulatorInstance.getInstanceId());
             runningInstancesPanel.add(wrapperPanel, insertIndex);
 
             // Invalidate and revalidate to trigger layout recalculation
@@ -352,9 +352,9 @@ public class MainApplication extends JFrame {
      * Remove emulator display from running instances panel
      */
     public void removeEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
-        if (emulatorInstance.emulatorDisplay != null) {
+        if (emulatorInstance.getEmulatorDisplay() != null) {
             // Get wrapper panel and remove it
-            JPanel wrapperPanel = (JPanel) emulatorInstance.emulatorDisplay.getClientProperty("wrapperPanel");
+            JPanel wrapperPanel = (JPanel) emulatorInstance.getEmulatorDisplay().getClientProperty("wrapperPanel");
             if (wrapperPanel != null) {
                 runningInstancesPanel.remove(wrapperPanel);
                 // Invalidate and revalidate to trigger layout recalculation

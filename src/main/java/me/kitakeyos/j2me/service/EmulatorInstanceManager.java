@@ -2,25 +2,26 @@ package me.kitakeyos.j2me.service;
 
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.util.InstanceIdPool;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.PriorityQueue;
 import javax.swing.JPanel;
 
 /**
  * Manages emulator instances with ID pool for efficient ID reuse
+ * Refactored to use separate InstanceIdPool class
  */
 public class EmulatorInstanceManager {
     private final List<EmulatorInstance> instances;
     private final JPanel instancesPanel;
-    private final IdPool idPool;
+    private final InstanceIdPool idPool;
 
     public EmulatorInstanceManager(JPanel instancesPanel) {
         this.instances = new ArrayList<>();
         this.instancesPanel = instancesPanel;
-        this.idPool = new IdPool();
+        this.idPool = new InstanceIdPool();
     }
 
     public void addInstance(EmulatorInstance instance) {
@@ -31,10 +32,10 @@ public class EmulatorInstanceManager {
         instances.remove(instance);
 
         // Return the ID back to pool for reuse
-        idPool.releaseId(instance.instanceId);
+        idPool.releaseId(instance.getInstanceId());
 
-        if (instance.uiPanel != null) {
-            instancesPanel.remove(instance.uiPanel);
+        if (instance.getUIPanel() != null) {
+            instancesPanel.remove(instance.getUIPanel());
         }
     }
 
@@ -57,8 +58,8 @@ public class EmulatorInstanceManager {
     public void updatePanelOrder() {
         instancesPanel.removeAll();
         for (EmulatorInstance instance : instances) {
-            if (instance.uiPanel != null) {
-                instancesPanel.add(instance.uiPanel);
+            if (instance.getUIPanel() != null) {
+                instancesPanel.add(instance.getUIPanel());
             }
         }
         instancesPanel.revalidate();
@@ -67,7 +68,7 @@ public class EmulatorInstanceManager {
 
     public void stopAllInstances() {
         for (EmulatorInstance instance : new ArrayList<>(instances)) {
-            if (instance.state == InstanceState.RUNNING) {
+            if (instance.getState() == InstanceState.RUNNING) {
                 instance.shutdown();
             }
         }
@@ -75,11 +76,11 @@ public class EmulatorInstanceManager {
 
     public void clearAllInstances() {
         for (EmulatorInstance instance : new ArrayList<>(instances)) {
-            if (instance.state == InstanceState.RUNNING) {
+            if (instance.getState() == InstanceState.RUNNING) {
                 instance.shutdown();
             }
             // Release all IDs back to pool
-            idPool.releaseId(instance.instanceId);
+            idPool.releaseId(instance.getInstanceId());
         }
         instances.clear();
         instancesPanel.removeAll();
@@ -94,7 +95,7 @@ public class EmulatorInstanceManager {
     public List<EmulatorInstance> getRunningInstances() {
         List<EmulatorInstance> running = new ArrayList<>();
         for (EmulatorInstance instance : instances) {
-            if (instance.state == InstanceState.RUNNING) {
+            if (instance.getState() == InstanceState.RUNNING) {
                 running.add(instance);
             }
         }
@@ -113,7 +114,7 @@ public class EmulatorInstanceManager {
 
     public EmulatorInstance findInstance(int instanceId) {
         for (EmulatorInstance instance : instances) {
-            if (instance.instanceId == instanceId) {
+            if (instance.getInstanceId() == instanceId) {
                 return instance;
             }
         }
@@ -140,55 +141,10 @@ public class EmulatorInstanceManager {
     }
 
     /**
-     * ID Pool for managing instance IDs with reuse capability
+     * Get ID pool statistics
+     * @return Statistics string
      */
-    private static class IdPool {
-        // Min heap to keep track of available IDs in sorted order
-        private final PriorityQueue<Integer> availableIds;
-        // Track the next new ID to generate when pool is empty
-        private int nextNewId;
-
-        public IdPool() {
-            this.availableIds = new PriorityQueue<>();
-            this.nextNewId = 1;
-        }
-
-        /**
-         * Acquire an ID from the pool
-         * Returns the smallest available ID, or generates a new one if pool is empty
-         * @return Available instance ID
-         */
-        public int acquireId() {
-            if (!availableIds.isEmpty()) {
-                return availableIds.poll();
-            }
-            return nextNewId++;
-        }
-
-        /**
-         * Release an ID back to the pool for reuse
-         * @param id The ID to release
-         */
-        public void releaseId(int id) {
-            if (id > 0 && !availableIds.contains(id)) {
-                availableIds.offer(id);
-            }
-        }
-
-        /**
-         * Reset the pool to initial state
-         */
-        public void reset() {
-            availableIds.clear();
-            nextNewId = 1;
-        }
-
-        /**
-         * Get the size of available IDs in pool
-         * @return Number of reusable IDs
-         */
-        public int getAvailableCount() {
-            return availableIds.size();
-        }
+    public String getIdPoolStatistics() {
+        return idPool.getStatistics();
     }
 }
