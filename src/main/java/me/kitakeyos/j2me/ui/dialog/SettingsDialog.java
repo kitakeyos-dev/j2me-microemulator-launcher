@@ -2,6 +2,7 @@ package me.kitakeyos.j2me.ui.dialog;
 
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
+import me.kitakeyos.j2me.util.FileChooserHelper;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -122,23 +123,23 @@ public class SettingsDialog extends JDialog {
     }
     
     private void selectMicroemulatorFile(ActionEvent e) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select MicroEmulator File");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("JAR Files (*.jar)", "jar"));
-        
-        // Set default directory
+        JFileChooser fileChooser = FileChooserHelper.createEmulatorFileChooser();
+
+        // If there's a current path, use it as the starting directory
         String currentPath = microemulatorPathField.getText();
         if (currentPath != null && !currentPath.isEmpty()) {
             File currentFile = new File(currentPath);
-            if (currentFile.getParent() != null) {
+            if (currentFile.exists() && currentFile.getParent() != null) {
                 fileChooser.setCurrentDirectory(new File(currentFile.getParent()));
             }
         }
-        
+
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             microemulatorPathField.setText(selectedFile.getAbsolutePath());
+            // Save the directory for next time
+            FileChooserHelper.saveEmulatorDirectory(selectedFile);
         }
     }
     

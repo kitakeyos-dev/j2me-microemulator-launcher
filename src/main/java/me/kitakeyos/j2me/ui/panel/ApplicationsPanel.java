@@ -6,17 +6,22 @@ import me.kitakeyos.j2me.ui.component.StatusBar;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
+import me.kitakeyos.j2me.util.FileChooserHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Panel for managing installed J2ME applications
@@ -25,6 +30,14 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
     private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
     private StatusBar statusBar;
+    private ApplicationActionListener actionListener;
+
+    /**
+     * Listener interface for application actions (e.g., double-click to run)
+     */
+    public interface ApplicationActionListener {
+        void onApplicationRun(J2meApplication app);
+    }
 
     public ApplicationsPanel(J2meApplicationManager applicationManager) {
         this.applicationManager = applicationManager;
@@ -44,6 +57,9 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         // Bottom panel with status
         JPanel bottomPanel = createBottomPanel();
         add(bottomPanel, BorderLayout.SOUTH);
+
+        // Enable drag and drop
+        setupDragAndDrop();
 
         // Load applications
         refreshApplicationsList();
@@ -180,7 +196,7 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
 
         panel.add(buttonsPanel, BorderLayout.EAST);
 
-        // Add hover effect
+        // Add hover effect and double-click handler
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -194,6 +210,14 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
                 panel.setBackground(Color.WHITE);
                 infoPanel.setBackground(Color.WHITE);
                 buttonsPanel.setBackground(Color.WHITE);
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && actionListener != null) {
+                    // Double-click to run
+                    actionListener.onApplicationRun(app);
+                }
             }
         });
 
@@ -219,15 +243,14 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
     }
 
     private void addApplication() {
-        JFileChooser fileChooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "J2ME Files (JAR, JAD)", "jar", "jad"
-        );
-        fileChooser.setFileFilter(filter);
+        JFileChooser fileChooser = FileChooserHelper.createApplicationFileChooser();
 
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
+            // Save the directory for next time
+            FileChooserHelper.saveApplicationDirectory(selectedFile);
+
             try {
                 J2meApplication app = applicationManager.addApplication(selectedFile);
                 statusBar.setSuccessStatus("Application added successfully: " + app.getName());
@@ -285,5 +308,73 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
 
     public J2meApplicationManager getApplicationManager() {
         return applicationManager;
+    }
+
+    /**
+     * Set the listener for application actions
+     */
+    public void setApplicationActionListener(ApplicationActionListener listener) {
+        this.actionListener = listener;
+    }
+
+    /**
+     * Trigger add application dialog (for keyboard shortcut)
+     */
+    public void triggerAddApplication() {
+        addApplication();
+    }
+
+    /**
+     * Setup drag and drop support for JAR/JAD files
+     */
+    private void setupDragAndDrop() {
+        setDropTarget(new DropTarget() {
+            @Override
+            public synchronized void drop(DropTargetDropEvent evt) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_COPY);
+                    Transferable transferable = evt.getTransferable();
+
+                    if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                        @SuppressWarnings("unchecked")
+                        List<File> droppedFiles = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+
+                        for (File file : droppedFiles) {
+                            if (file.isFile() && isValidJ2MEFile(file)) {
+                                addApplicationFromFile(file);
+                            }
+                        }
+                        evt.dropComplete(true);
+                    } else {
+                        evt.rejectDrop();
+                    }
+                } catch (Exception ex) {
+                    statusBar.setErrorStatus("Drag and drop failed: " + ex.getMessage());
+                    evt.rejectDrop();
+                }
+            }
+        });
+    }
+
+    /**
+     * Check if file is a valid J2ME file (JAR or JAD)
+     */
+    private boolean isValidJ2MEFile(File file) {
+        String name = file.getName().toLowerCase();
+        return name.endsWith(".jar") || name.endsWith(".jad");
+    }
+
+    /**
+     * Add application from file (used by drag & drop)
+     */
+    private void addApplicationFromFile(File file) {
+        try {
+            J2meApplication app = applicationManager.addApplication(file);
+            statusBar.setSuccessStatus("Application added: " + app.getName());
+            ToastNotification.showSuccess("Added: " + app.getName());
+        } catch (Exception e) {
+            statusBar.setErrorStatus("Error adding " + file.getName() + ": " + e.getMessage());
+            ToastNotification.showError("Failed to add: " + file.getName());
+        }
     }
 }

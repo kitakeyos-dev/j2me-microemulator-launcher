@@ -31,6 +31,7 @@ public class MainApplication extends JFrame {
     private JSpinner instanceCountSpinner;
     private JPanel emulatorInstancesPanel;
     private JPanel runningInstancesPanel;
+    private ApplicationsPanel applicationsPanel;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
@@ -61,21 +62,18 @@ public class MainApplication extends JFrame {
 
         initializeComponents();
         loadApplicationConfiguration();
+        setupKeyboardShortcuts();
     }
 
     private void initializeComponents() {
-        // Create tabbed pane
+        // Create tabbed pane with 2 tabs instead of 3
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Tab 1: Applications
-        ApplicationsPanel applicationsPanel = new ApplicationsPanel(j2meApplicationManager);
-        tabbedPane.addTab("Applications", applicationsPanel);
+        // Tab 1: Applications & Instances (merged from old Tab 1 + Tab 2)
+        JPanel applicationsAndInstancesPanel = createApplicationsAndInstancesPanel();
+        tabbedPane.addTab("Applications & Instances", applicationsAndInstancesPanel);
 
-        // Tab 2: Instances
-        JPanel instancesPanel = createInstancesPanel();
-        tabbedPane.addTab("Instances", instancesPanel);
-
-        // Tab 3: Running Instances
+        // Tab 2: Running Instances (formerly Tab 3)
         JPanel runningInstancesPanel = createRunningInstancesPanel();
         tabbedPane.addTab("Running Instances", runningInstancesPanel);
 
@@ -93,6 +91,32 @@ public class MainApplication extends JFrame {
                 refreshApplicationComboBox();
             }
         });
+    }
+
+    /**
+     * Create the merged Applications & Instances panel with split layout
+     */
+    private JPanel createApplicationsAndInstancesPanel() {
+        // Create Applications panel (top)
+        applicationsPanel = new ApplicationsPanel(j2meApplicationManager);
+        applicationsPanel.setApplicationActionListener(app -> {
+            // Double-click to create and run instance
+            createAndRunApplication(app);
+        });
+
+        // Create Instances panel (bottom)
+        JPanel instancesPanel = createInstancesPanel();
+
+        // Use JSplitPane to allow user to resize
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, applicationsPanel, instancesPanel);
+        splitPane.setResizeWeight(0.4); // 40% for apps, 60% for instances
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerLocation(280);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+
+        return mainPanel;
     }
 
     private JPanel createRunningInstancesPanel() {
@@ -254,6 +278,33 @@ public class MainApplication extends JFrame {
         emulatorInstancesPanel.repaint();
 
         showToast("Created " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'", ToastNotification.ToastType.SUCCESS);
+    }
+
+    /**
+     * Create and run a single instance of an application (for double-click)
+     */
+    private void createAndRunApplication(J2meApplication app) {
+        if (!applicationConfig.isMicroemulatorPathValid()) {
+            showErrorMessage("MicroEmulator path is invalid. Please check settings.");
+            return;
+        }
+
+        String microemulatorPath = applicationConfig.getMicroemulatorPath();
+        String j2meFilePath = app.getFilePath();
+
+        int instanceId = emulatorInstanceManager.getNextInstanceId();
+        EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath);
+
+        emulatorInstanceManager.addInstance(emulatorInstance);
+        addEmulatorInstanceToPanel(emulatorInstance);
+
+        emulatorInstancesPanel.revalidate();
+        emulatorInstancesPanel.repaint();
+
+        // Run the instance immediately
+        runSingleInstance(emulatorInstance);
+
+        showToast("Running '" + app.getName() + "'", ToastNotification.ToastType.SUCCESS);
     }
 
     /**
@@ -492,6 +543,71 @@ public class MainApplication extends JFrame {
                 ToastNotification.showInfo(message);
                 break;
         }
+    }
+
+    /**
+     * Setup global keyboard shortcuts
+     */
+    private void setupKeyboardShortcuts() {
+        JRootPane rootPane = getRootPane();
+        InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = rootPane.getActionMap();
+
+        // Ctrl+O: Add Application
+        inputMap.put(KeyStroke.getKeyStroke("control O"), "addApplication");
+        actionMap.put("addApplication", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (applicationsPanel != null) {
+                    applicationsPanel.triggerAddApplication();
+                }
+            }
+        });
+
+        // Ctrl+N: Create Instances
+        inputMap.put(KeyStroke.getKeyStroke("control N"), "createInstances");
+        actionMap.put("createInstances", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                createEmulatorInstances();
+            }
+        });
+
+        // Ctrl+R: Run All
+        inputMap.put(KeyStroke.getKeyStroke("control R"), "runAll");
+        actionMap.put("runAll", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                runAllInstances();
+            }
+        });
+
+        // Ctrl+Shift+S: Stop All
+        inputMap.put(KeyStroke.getKeyStroke("control shift S"), "stopAll");
+        actionMap.put("stopAll", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                stopAllInstances();
+            }
+        });
+
+        // Ctrl+Shift+C: Clear All
+        inputMap.put(KeyStroke.getKeyStroke("control shift C"), "clearAll");
+        actionMap.put("clearAll", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                clearAllEmulatorInstances();
+            }
+        });
+
+        // Ctrl+,: Open Settings
+        inputMap.put(KeyStroke.getKeyStroke("control COMMA"), "openSettings");
+        actionMap.put("openSettings", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                openSettingsDialog();
+            }
+        });
     }
 
     public static void main(String[] args) {
