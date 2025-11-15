@@ -1,9 +1,15 @@
 package me.kitakeyos.j2me.model;
 
+import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.core.classloader.InstanceContext;
+import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -11,6 +17,7 @@ import java.util.logging.Logger;
  */
 public class EmulatorInstance {
     private static final Logger logger = Logger.getLogger(EmulatorInstance.class.getName());
+
 
     public enum InstanceState {
         CREATED,    // Instance created but not running
@@ -27,16 +34,22 @@ public class EmulatorInstance {
     public JPanel uiPanel;
     public ActionListener menuExitListener;
     public JPanel emulatorDisplay;
+    private List<Socket> sockets;
 
     public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath) {
         this.instanceId = instanceId;
         this.microemulatorPath = microemulatorPath;
         this.j2meFilePath = j2meFilePath;
         this.state = InstanceState.CREATED;
+        this.sockets = new ArrayList<>();
     }
 
     public boolean canRun() {
         return state == InstanceState.CREATED || state == InstanceState.STOPPED;
+    }
+
+    public void addSocket(Socket socket) {
+        this.sockets.add(socket);
     }
 
     /**
@@ -50,6 +63,20 @@ public class EmulatorInstance {
 
         // Set state to stopped first
         state = InstanceState.STOPPED;
+
+        EmulatorInstanceManager manager = MainApplication.INSTANCE.emulatorInstanceManager;
+        manager.removeInstance(this);
+
+        for (Socket socket : sockets) {
+            if (!socket.isClosed()) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        sockets.clear();
 
         // Trigger emulator exit if running
         if (menuExitListener != null) {

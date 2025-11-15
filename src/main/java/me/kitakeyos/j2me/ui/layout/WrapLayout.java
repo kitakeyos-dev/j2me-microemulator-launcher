@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.util;
+package me.kitakeyos.j2me.ui.layout;
 
 import java.awt.*;
 import javax.swing.JScrollPane;

@@ -26,7 +26,7 @@
  */
 package me.kitakeyos.j2me.core.classloader;
 
-import me.kitakeyos.j2me.core.bytecode.MethodCallInterceptorClassVisitor;
+import me.kitakeyos.j2me.core.bytecode.InstrumentationClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -49,7 +49,7 @@ public class ClassPreprocessor {
 		try {
 			ClassReader cr = new ClassReader(classInputStream);
 			ClassWriter cw = new ClassWriter(0);
-			ClassVisitor cv = new MethodCallInterceptorClassVisitor(cw);
+			ClassVisitor cv = new InstrumentationClassVisitor(cw);
 			cr.accept(cv, 0);
 			return cw.toByteArray();
 		} catch (IOException e) {

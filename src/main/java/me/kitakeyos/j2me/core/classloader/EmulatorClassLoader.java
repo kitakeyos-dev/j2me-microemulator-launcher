@@ -208,7 +208,6 @@ public class EmulatorClassLoader extends URLClassLoader {
     protected Class findClass(final String name) throws ClassNotFoundException {
         // Set the instance ID in ThreadLocal for dynamic instrumentation
         InstanceContext.setInstanceId(instanceId);
-
         try {
             InputStream is;
             is = getResourceAsStream(getClassResourceName(name));

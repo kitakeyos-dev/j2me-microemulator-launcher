@@ -13,7 +13,7 @@ import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
-import me.kitakeyos.j2me.util.WrapLayout;
+import me.kitakeyos.j2me.ui.layout.WrapLayout;
 
 import javax.swing.*;
 import java.awt.*;

@@ -32,7 +32,9 @@ import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.Socket;
 import java.nio.file.Paths;
 
 /**
@@ -73,5 +75,14 @@ public final class SystemCallHandler implements Serializable {
 
     public static File initMEHomePath(int instanceId) {
         return Paths.get(ApplicationConfig.DATA_DIR, ApplicationConfig.RMS_DIR, String.valueOf(instanceId)).toFile();
+    }
+
+    public static Socket createSocket(int instanceId, String host, int port) throws IOException {
+        Socket socket = new Socket(host, port);
+        EmulatorInstance emulatorInstance = MainApplication.INSTANCE.emulatorInstanceManager.findInstance(instanceId);
+        if (emulatorInstance != null) {
+            emulatorInstance.addSocket(socket);
+        }
+        return socket;
     }
 }
