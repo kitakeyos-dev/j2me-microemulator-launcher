@@ -94,7 +94,10 @@ public class MainApplication extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Configuration panel at top
+        // Top panel: Configuration + Action buttons
+        JPanel topPanel = new JPanel(new BorderLayout(0, 10));
+
+        // Configuration panel
         applicationComboBox = new JComboBox<>();
         applicationComboBox.setToolTipText("Select J2ME application to create instances");
         refreshApplicationComboBox();
@@ -109,7 +112,13 @@ public class MainApplication extends JFrame {
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
                 this::openSettingsDialog);
-        mainPanel.add(configurationPanel, BorderLayout.NORTH);
+        topPanel.add(configurationPanel, BorderLayout.NORTH);
+
+        // Action buttons
+        JPanel buttonPanel = createActionButtonsPanel();
+        topPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // Running instances panel in center (using WrapLayout)
         runningInstancesPanel = new JPanel();
@@ -132,10 +141,6 @@ public class MainApplication extends JFrame {
         });
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Action buttons at bottom
-        JPanel buttonPanel = createActionButtonsPanel();
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         return mainPanel;
     }
