@@ -9,7 +9,6 @@ import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.builder.ConfigurationPanelBuilder;
-import me.kitakeyos.j2me.ui.builder.EmulatorInstanceUIBuilder;
 import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
@@ -29,7 +28,6 @@ public class MainApplication extends JFrame {
     private JComboBox<J2meApplication> applicationComboBox;
     private JTextField microemulatorPathField;
     private JSpinner instanceCountSpinner;
-    private JPanel emulatorInstancesPanel;
     private JPanel runningInstancesPanel;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
@@ -71,13 +69,9 @@ public class MainApplication extends JFrame {
         ApplicationsPanel applicationsPanel = new ApplicationsPanel(j2meApplicationManager);
         tabbedPane.addTab("Applications", applicationsPanel);
 
-        // Tab 2: Instances
+        // Tab 2: Instances (merged from Instances and Running Instances)
         JPanel instancesPanel = createInstancesPanel();
         tabbedPane.addTab("Instances", instancesPanel);
-
-        // Tab 3: Running Instances
-        JPanel runningInstancesPanel = createRunningInstancesPanel();
-        tabbedPane.addTab("Running Instances", runningInstancesPanel);
 
         add(tabbedPane);
 
@@ -95,41 +89,12 @@ public class MainApplication extends JFrame {
         });
     }
 
-    private JPanel createRunningInstancesPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-
-        // Create panel to hold all running instances with automatic wrapping
-        runningInstancesPanel = new JPanel();
-        // WrapLayout automatically wraps to next row when horizontal space is full
-        // Unlike FlowLayout, WrapLayout works properly inside JScrollPane
-        runningInstancesPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 10, 10));
-        runningInstancesPanel.setBackground(new Color(240, 240, 240));
-
-        JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-        // Add component listener to handle window resize - revalidate to trigger wrap recalculation
-        mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
-                // WrapLayout automatically handles wrapping, just need to invalidate and revalidate
-                // Invalidate forces the layout manager to recalculate preferred size
-                runningInstancesPanel.invalidate();
-                runningInstancesPanel.revalidate();
-                runningInstancesPanel.repaint();
-            }
-        });
-
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        return mainPanel;
-    }
 
     private JPanel createInstancesPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Application combo box
+        // Configuration panel at top
         applicationComboBox = new JComboBox<>();
         applicationComboBox.setToolTipText("Select J2ME application to create instances");
         refreshApplicationComboBox();
@@ -139,22 +104,36 @@ public class MainApplication extends JFrame {
         microemulatorPathField.setBackground(new Color(240, 240, 240));
         microemulatorPathField.setToolTipText("Path to MicroEmulator JAR (configure in Settings)");
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
-        instanceCountSpinner.setToolTipText("Number of instances to create (1-20)");
+        instanceCountSpinner.setToolTipText("Number of instances to create (1-100)");
 
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
                 this::openSettingsDialog);
         mainPanel.add(configurationPanel, BorderLayout.NORTH);
 
-        emulatorInstancesPanel = new JPanel();
-        emulatorInstancesPanel.setLayout(new BoxLayout(emulatorInstancesPanel, BoxLayout.Y_AXIS));
-        emulatorInstancesPanel.setBackground(new Color(240, 240, 240));
-        emulatorInstanceManager = new EmulatorInstanceManager(emulatorInstancesPanel);
+        // Running instances panel in center (using WrapLayout)
+        runningInstancesPanel = new JPanel();
+        runningInstancesPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 10, 10));
+        runningInstancesPanel.setBackground(new Color(240, 240, 240));
+        emulatorInstanceManager = new EmulatorInstanceManager(runningInstancesPanel);
 
-        JScrollPane scrollPane = new JScrollPane(emulatorInstancesPanel);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Instances"));
+        JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Add component listener to handle window resize
+        mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                runningInstancesPanel.invalidate();
+                runningInstancesPanel.revalidate();
+                runningInstancesPanel.repaint();
+            }
+        });
+
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
+        // Action buttons at bottom
         JPanel buttonPanel = createActionButtonsPanel();
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -171,20 +150,16 @@ public class MainApplication extends JFrame {
     private JPanel createActionButtonsPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
-        JButton createButton = createStyledButton("Create Instances", new Color(70, 130, 180), this::createEmulatorInstances);
-        createButton.setToolTipText("Create instances from selected application (not started yet)");
-
-        JButton runAllButton = createStyledButton("Run All", new Color(34, 139, 34), this::runAllInstances);
-        runAllButton.setToolTipText("Run all created instances");
+        JButton createButton = createStyledButton("Create & Run", new Color(34, 139, 34), this::createEmulatorInstances);
+        createButton.setToolTipText("Create and automatically start instances");
 
         JButton stopAllButton = createStyledButton("Stop All", new Color(220, 20, 60), this::stopAllInstances);
         stopAllButton.setToolTipText("Stop all running instances");
 
         JButton clearAllButton = createStyledButton("Clear All", new Color(169, 169, 169), this::clearAllEmulatorInstances);
-        clearAllButton.setToolTipText("Remove all instances (including running ones)");
+        clearAllButton.setToolTipText("Remove all instances");
 
         panel.add(createButton);
-        panel.add(runAllButton);
         panel.add(stopAllButton);
         panel.add(clearAllButton);
 
@@ -224,7 +199,7 @@ public class MainApplication extends JFrame {
 
 
     /**
-     * Create instances without running them
+     * Create and automatically start instances
      */
     private void createEmulatorInstances() {
         J2meApplication selectedApp = (J2meApplication) applicationComboBox.getSelectedItem();
@@ -247,30 +222,13 @@ public class MainApplication extends JFrame {
             EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath);
 
             emulatorInstanceManager.addInstance(emulatorInstance);
-            addEmulatorInstanceToPanel(emulatorInstance);
+            // Automatically start the instance
+            runSingleInstance(emulatorInstance);
         }
 
-        emulatorInstancesPanel.revalidate();
-        emulatorInstancesPanel.repaint();
-
-        showToast("Created " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'", ToastNotification.ToastType.SUCCESS);
+        showToast("Starting " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'", ToastNotification.ToastType.SUCCESS);
     }
 
-    /**
-     * Run all created instances
-     */
-    private void runAllInstances() {
-        java.util.List<EmulatorInstance> runnableInstances = emulatorInstanceManager.getRunnableInstances();
-
-        if (runnableInstances.isEmpty()) {
-            showInfoMessage("No instances available to run. Create instances first.");
-            return;
-        }
-
-        for (EmulatorInstance instance : runnableInstances) {
-            runSingleInstance(instance);
-        }
-    }
 
     /**
      * Run a single instance
@@ -285,13 +243,12 @@ public class MainApplication extends JFrame {
                 emulatorInstance,
                 // onComplete callback
                 () -> SwingUtilities.invokeLater(() -> {
-                    updateInstanceUI(emulatorInstance);
                     if (emulatorInstance.state == InstanceState.RUNNING) {
                         addEmulatorInstanceTab(emulatorInstance);
                     }
                 }),
                 // onStarted callback
-                () -> SwingUtilities.invokeLater(() -> updateInstanceUI(emulatorInstance))
+                null
         )).start();
     }
 
@@ -309,64 +266,9 @@ public class MainApplication extends JFrame {
         for (EmulatorInstance instance : runningInstances) {
             removeEmulatorInstanceTab(instance);
             instance.shutdown();
-            updateInstanceUI(instance);
         }
 
         showToast("Stopped " + runningInstances.size() + " instance(s)", ToastNotification.ToastType.INFO);
-    }
-
-    public void addEmulatorInstanceToPanel(EmulatorInstance emulatorInstance) {
-        JPanel panel = EmulatorInstanceUIBuilder.buildEmulatorInstancePanel(
-                emulatorInstance,
-                () -> emulatorInstanceManager.moveInstanceUp(emulatorInstance),
-                () -> emulatorInstanceManager.moveInstanceDown(emulatorInstance),
-                () -> runSingleInstance(emulatorInstance),
-                () -> {
-                    removeEmulatorInstanceTab(emulatorInstance);
-                    emulatorInstance.shutdown();
-                    updateInstanceUI(emulatorInstance);
-                },
-                () -> {
-                    // Shutdown if running before removing
-                    if (emulatorInstance.state == InstanceState.RUNNING) {
-                        removeEmulatorInstanceTab(emulatorInstance);
-                        emulatorInstance.shutdown();
-                    }
-                    emulatorInstanceManager.removeInstance(emulatorInstance);
-                    emulatorInstancesPanel.revalidate();
-                    emulatorInstancesPanel.repaint();
-                }
-        );
-
-        emulatorInstance.uiPanel = panel;
-        emulatorInstancesPanel.add(panel);
-    }
-
-    /**
-     * Update UI for an instance
-     */
-    public void updateInstanceUI(EmulatorInstance instance) {
-        EmulatorInstanceUIBuilder.updateInstancePanel(
-                instance,
-                () -> emulatorInstanceManager.moveInstanceUp(instance),
-                () -> emulatorInstanceManager.moveInstanceDown(instance),
-                () -> runSingleInstance(instance),
-                () -> {
-                    removeEmulatorInstanceTab(instance);
-                    instance.shutdown();
-                    updateInstanceUI(instance);
-                },
-                () -> {
-                    // Shutdown if running before removing
-                    if (instance.state == InstanceState.RUNNING) {
-                        removeEmulatorInstanceTab(instance);
-                        instance.shutdown();
-                    }
-                    emulatorInstanceManager.removeInstance(instance);
-                    emulatorInstancesPanel.revalidate();
-                    emulatorInstancesPanel.repaint();
-                }
-        );
     }
 
 
@@ -377,10 +279,39 @@ public class MainApplication extends JFrame {
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.emulatorDisplay != null) {
-            // Add title border to the display panel
+            // Create wrapper panel with BorderLayout
             JPanel wrapperPanel = new JPanel(new BorderLayout());
-            wrapperPanel.setBorder(BorderFactory.createTitledBorder("Instance #" + emulatorInstance.instanceId));
+
+            // Create header panel with title and stop button
+            JPanel headerPanel = new JPanel(new BorderLayout());
+            headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            headerPanel.setBackground(new Color(230, 230, 250));
+
+            // Title label
+            JLabel titleLabel = new JLabel("Instance #" + emulatorInstance.instanceId);
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+            headerPanel.add(titleLabel, BorderLayout.WEST);
+
+            // Stop button
+            JButton stopButton = new JButton("Stop");
+            stopButton.setFont(new Font("Arial", Font.BOLD, 11));
+            stopButton.setPreferredSize(new Dimension(70, 25));
+            stopButton.setBackground(new Color(220, 20, 60));
+            stopButton.setForeground(Color.WHITE);
+            stopButton.setFocusPainted(false);
+            stopButton.setBorderPainted(false);
+            stopButton.setOpaque(true);
+            stopButton.addActionListener(e -> {
+                removeEmulatorInstanceTab(emulatorInstance);
+                emulatorInstance.shutdown();
+                showToast("Stopped Instance #" + emulatorInstance.instanceId, ToastNotification.ToastType.INFO);
+            });
+            headerPanel.add(stopButton, BorderLayout.EAST);
+
+            // Add header and display to wrapper
+            wrapperPanel.add(headerPanel, BorderLayout.NORTH);
             wrapperPanel.add(emulatorInstance.emulatorDisplay, BorderLayout.CENTER);
+            wrapperPanel.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180), 1));
 
             // Store wrapper panel reference for later removal
             emulatorInstance.emulatorDisplay.putClientProperty("wrapperPanel", wrapperPanel);
