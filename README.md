@@ -17,10 +17,11 @@ This project is ideal for developers, enthusiasts, or anyone working with J2ME a
 
 ### Multi-Instance Support
 - **Unlimited Instances**: Create and run unlimited emulator instances from installed J2ME applications
-- **Tabbed Interface**: Three specialized tabs for Applications, Instances, and Running Instances management
-- **Auto-Sorted Display**: Running instances are automatically sorted by instance ID for easy navigation
-- **State Tracking**: Real-time monitoring of instance states (Created, Starting, Running, Stopped) with color-coded UI
-- **Individual Control**: Start, stop, and manage each instance independently
+- **Tabbed Interface**: Two specialized tabs for Applications and Instances management
+- **Configurable Display Size**: Set custom screen dimensions (width: 128-800px, height: 128-1000px) for each instance batch with default 240x320
+- **Auto-Sorted Display**: Running instances are automatically sorted by instance ID in a responsive wrap layout
+- **Input Synchronization**: Optionally sync mouse clicks and keyboard inputs across all running instances for parallel testing
+- **Individual Control**: Start, stop, and manage each instance independently with dedicated controls
 
 ### Performance Optimizations ⚡
 - **Bytecode Caching**: Instrumented classes are cached and shared across instances, eliminating redundant processing
@@ -30,8 +31,9 @@ This project is ideal for developers, enthusiasts, or anyone working with J2ME a
 
 ### User Experience
 - **Portable Data Storage**: All configuration and application data stored in local `./data/` directory
-- **Responsive UI**: Background operations ensure the interface never freezes
+- **Responsive UI**: Background operations ensure the interface never freezes, with wrap layout that adapts to window resizing
 - **Automatic Cleanup**: Instances are properly disposed when stopped, freeing system resources
+- **Toast Notifications**: Non-intrusive notifications for actions like instance creation and synchronization toggle
 - **Cross-Platform**: Runs seamlessly on Windows, macOS, and Linux
 
 ## Requirements
@@ -101,28 +103,31 @@ This structure ensures:
 
 ### Creating and Running Instances
 
-3. **Create Instances** (Instances tab):
+3. **Configure and Create Instances** (Instances tab):
    - Select an installed application from the dropdown menu
-   - Choose the number of instances you want to create
-   - Click "Create Instances"
-   - Instances appear in the list with color-coded status
+   - Choose the number of instances you want to create (1-100)
+   - Set custom display dimensions:
+     - Width: 128-800 pixels (default: 240)
+     - Height: 128-1000 pixels (default: 320)
+   - Click "Create & Run" to create and automatically start instances
+   - Instances appear in the running instances panel below with sorted order
 
-4. **Run Instances**:
-   - Click "Run All" to start all created instances
-   - Or click individual "Run" buttons for specific instances
-   - First instance startup is fast due to pre-warming
-   - Subsequent instances start even faster with cached bytecode
+4. **Enable Input Synchronization** (optional):
+   - Check "Sync Mouse & Keyboard Input" to enable parallel testing
+   - When enabled, any mouse click or keyboard input on one instance will be replicated to all other running instances
+   - Useful for testing the same interaction across multiple device configurations simultaneously
+   - Uncheck to disable synchronization and control instances independently
 
-5. **View Running Instances** (Running Instances tab):
-   - All running instances are displayed in sorted order (1, 2, 3...)
-   - Instances automatically arrange in a responsive grid layout
-   - Window resizing automatically adjusts the layout
+5. **View Running Instances**:
+   - All running instances are displayed in sorted order (1, 2, 3...) in a responsive wrap layout
+   - Each instance shows its ID with a dedicated "Stop" button
+   - Layout automatically adjusts when resizing the window
+   - Instances wrap to fill available horizontal space efficiently
 
 6. **Manage Instances**:
-   - Stop instances individually with the "Stop" button or click "Stop All"
-   - Remove instances you no longer need with the "Remove" button
-   - Move instances up/down to change their order in the Instances tab
-   - When stopped, instances are automatically removed from the Running Instances tab and all resources are freed
+   - Stop instances individually with the "Stop" button on each instance
+   - Click "Stop All" to stop all running instances at once
+   - When stopped, instances are properly disposed and all resources are freed
 
 ## Technical Details
 
@@ -155,6 +160,15 @@ This structure ensures:
 - Each instance has its own RMS (Record Management System) directory
 - System calls (System.exit, Config.initMEHomePath) are intercepted and routed per-instance
 - Static fields are NOT shared between instances (separate class namespaces)
+
+#### Input Synchronization
+- `InputSynchronizer` service manages event broadcasting across all running instances
+- Mouse and keyboard listeners are attached recursively to all components in each instance's display
+- Event dispatching uses `ConcurrentHashMap`-based tracking to prevent infinite loops
+- Coordinate conversion ensures mouse events are dispatched to the correct relative position
+- Component hierarchy matching ensures keyboard events target the corresponding component
+- All events are dispatched asynchronously via `SwingUtilities.invokeLater()` to prevent UI blocking
+- Listeners are automatically attached/detached when instances start/stop
 
 For detailed code structure, refer to the source files in the `src` directory.
 

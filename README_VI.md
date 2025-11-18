@@ -17,10 +17,11 @@ Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bấ
 
 ### Hỗ trợ Đa Instance
 - **Không giới hạn Instance**: Tạo và chạy không giới hạn instances emulator từ các ứng dụng J2ME đã cài
-- **Giao diện Tab**: Ba tab chuyên biệt cho quản lý Applications, Instances và Running Instances
-- **Tự động Sắp xếp**: Instances đang chạy được tự động sắp xếp theo ID để dễ dàng theo dõi
-- **Theo dõi Trạng thái**: Giám sát trạng thái real-time (Created, Starting, Running, Stopped) với giao diện mã màu
-- **Điều khiển Độc lập**: Khởi động, dừng và quản lý từng instance một cách riêng biệt
+- **Giao diện Tab**: Hai tab chuyên biệt cho quản lý Applications và Instances
+- **Cấu hình Kích thước Màn hình**: Đặt kích thước tùy chỉnh (chiều rộng: 128-800px, chiều cao: 128-1000px) cho từng nhóm instance với mặc định 240x320
+- **Tự động Sắp xếp**: Instances đang chạy được tự động sắp xếp theo ID trong layout wrap responsive
+- **Đồng bộ Input**: Tùy chọn đồng bộ click chuột và phím nhấn giữa tất cả instances đang chạy để test song song
+- **Điều khiển Độc lập**: Khởi động, dừng và quản lý từng instance một cách riêng biệt với điều khiển chuyên dụng
 
 ### Tối ưu hóa Hiệu năng ⚡
 - **Cache Bytecode**: Các class đã instrument được cache và chia sẻ giữa các instances, loại bỏ xử lý trùng lặp
@@ -30,8 +31,9 @@ Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bấ
 
 ### Trải nghiệm Người dùng
 - **Lưu trữ Di động**: Tất cả cấu hình và dữ liệu được lưu trong thư mục `./data/` cục bộ
-- **UI Mượt mà**: Các thao tác background đảm bảo giao diện không bao giờ bị đơ
+- **UI Mượt mà**: Các thao tác background đảm bảo giao diện không bao giờ bị đơ, với wrap layout tự động điều chỉnh khi thay đổi kích thước cửa sổ
 - **Tự động Cleanup**: Instances được dispose đúng cách khi dừng, giải phóng tài nguyên hệ thống
+- **Thông báo Toast**: Thông báo không xâm phạm cho các thao tác như tạo instance và bật/tắt đồng bộ
 - **Đa Nền tảng**: Chạy mượt mà trên Windows, macOS và Linux
 
 ## Yêu cầu
@@ -101,28 +103,31 @@ Cấu trúc này đảm bảo:
 
 ### Tạo và Chạy Instances
 
-3. **Tạo Instances** (tab Instances):
+3. **Cấu hình và Tạo Instances** (tab Instances):
    - Chọn một ứng dụng đã cài từ menu dropdown
-   - Chọn số lượng instances muốn tạo
-   - Nhấn "Create Instances"
-   - Instances xuất hiện trong danh sách với trạng thái mã màu
+   - Chọn số lượng instances muốn tạo (1-100)
+   - Đặt kích thước màn hình tùy chỉnh:
+     - Chiều rộng: 128-800 pixels (mặc định: 240)
+     - Chiều cao: 128-1000 pixels (mặc định: 320)
+   - Nhấn "Create & Run" để tạo và tự động khởi động instances
+   - Instances xuất hiện trong panel running instances bên dưới theo thứ tự đã sắp xếp
 
-4. **Chạy Instances**:
-   - Nhấn "Run All" để khởi động tất cả instances đã tạo
-   - Hoặc nhấn nút "Run" riêng lẻ cho từng instance
-   - Instance đầu tiên khởi động nhanh nhờ pre-warming
-   - Các instance tiếp theo khởi động còn nhanh hơn nhờ cached bytecode
+4. **Bật Đồng bộ Input** (tùy chọn):
+   - Check "Sync Mouse & Keyboard Input" để bật test song song
+   - Khi bật, bất kỳ click chuột hoặc phím nhấn nào trên một instance sẽ được nhân bản sang tất cả instances khác đang chạy
+   - Hữu ích để test cùng một tương tác trên nhiều cấu hình thiết bị khác nhau cùng lúc
+   - Bỏ check để tắt đồng bộ và điều khiển instances độc lập
 
-5. **Xem Running Instances** (tab Running Instances):
-   - Tất cả instances đang chạy được hiển thị theo thứ tự đã sắp xếp (1, 2, 3...)
-   - Instances tự động sắp xếp theo layout lưới responsive
-   - Thay đổi kích thước cửa sổ tự động điều chỉnh layout
+5. **Xem Running Instances**:
+   - Tất cả instances đang chạy được hiển thị theo thứ tự đã sắp xếp (1, 2, 3...) trong layout wrap responsive
+   - Mỗi instance hiển thị ID với nút "Stop" chuyên dụng
+   - Layout tự động điều chỉnh khi thay đổi kích thước cửa sổ
+   - Instances tự động wrap để lấp đầy không gian ngang hiệu quả
 
 6. **Quản lý Instances**:
-   - Dừng instances riêng lẻ bằng nút "Stop" hoặc nhấn "Stop All"
-   - Xóa instances không cần thiết bằng nút "Remove"
-   - Di chuyển instances lên/xuống để thay đổi thứ tự trong tab Instances
-   - Khi dừng, instances tự động được xóa khỏi tab Running Instances và tất cả tài nguyên được giải phóng
+   - Dừng instances riêng lẻ bằng nút "Stop" trên mỗi instance
+   - Nhấn "Stop All" để dừng tất cả instances đang chạy cùng lúc
+   - Khi dừng, instances được dispose đúng cách và tất cả tài nguyên được giải phóng
 
 ## Chi tiết Kỹ thuật
 
@@ -155,6 +160,15 @@ Cấu trúc này đảm bảo:
 - Mỗi instance có thư mục RMS (Record Management System) riêng
 - System calls (System.exit, Config.initMEHomePath) được intercept và route theo instance
 - Static fields KHÔNG được chia sẻ giữa các instances (namespace class riêng biệt)
+
+#### Đồng bộ Input
+- Service `InputSynchronizer` quản lý việc broadcast event giữa tất cả instances đang chạy
+- Mouse và keyboard listeners được attach đệ quy vào tất cả components trong display của mỗi instance
+- Event dispatching sử dụng tracking dựa trên `ConcurrentHashMap` để tránh vòng lặp vô hạn
+- Chuyển đổi tọa độ đảm bảo mouse events được dispatch đến vị trí tương đối chính xác
+- Matching component hierarchy đảm bảo keyboard events nhắm đến component tương ứng
+- Tất cả events được dispatch bất đồng bộ qua `SwingUtilities.invokeLater()` để tránh block UI
+- Listeners được tự động attach/detach khi instances start/stop
 
 Để biết cấu trúc code chi tiết, tham khảo các file nguồn trong thư mục `src`.
 
