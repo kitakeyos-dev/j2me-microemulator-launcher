@@ -332,7 +332,7 @@ public class InputSynchronizer {
                 screenPoint.x - displayScreenPoint.x,
                 screenPoint.y - displayScreenPoint.y
             );
-        } catch (IllegalComponentNotShownException e) {
+        } catch (Exception e) {
             return null;
         }
     }
