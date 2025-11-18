@@ -30,6 +30,7 @@ public class MainApplication extends JFrame {
     private JSpinner instanceCountSpinner;
     private JSpinner displayWidthSpinner;
     private JSpinner displayHeightSpinner;
+    private JCheckBox syncInputCheckBox;
     private JPanel runningInstancesPanel;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
@@ -130,6 +131,10 @@ public class MainApplication extends JFrame {
         JPanel buttonPanel = createActionButtonsPanel();
         topPanel.add(buttonPanel, BorderLayout.SOUTH);
 
+        // Sync options panel
+        JPanel syncPanel = createSyncOptionsPanel();
+        topPanel.add(syncPanel, BorderLayout.CENTER);
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // Running instances panel in center (using WrapLayout)
@@ -175,6 +180,26 @@ public class MainApplication extends JFrame {
 
         panel.add(createButton);
         panel.add(stopAllButton);
+
+        return panel;
+    }
+
+    private JPanel createSyncOptionsPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Synchronization Options"));
+
+        syncInputCheckBox = new JCheckBox("Sync Mouse & Keyboard Input");
+        syncInputCheckBox.setToolTipText("Synchronize mouse clicks and keyboard input across all running instances");
+        syncInputCheckBox.addActionListener(e -> {
+            boolean enabled = syncInputCheckBox.isSelected();
+            if (emulatorInstanceManager != null) {
+                emulatorInstanceManager.setInputSynchronizationEnabled(enabled);
+                String message = enabled ? "Input synchronization enabled" : "Input synchronization disabled";
+                showToast(message, ToastNotification.ToastType.INFO);
+            }
+        });
+
+        panel.add(syncInputCheckBox);
 
         return panel;
     }
@@ -278,6 +303,7 @@ public class MainApplication extends JFrame {
             return;
         }
 
+        // Note: removeEmulatorInstanceTab already calls notifyInstanceStopping
         for (EmulatorInstance instance : runningInstances) {
             removeEmulatorInstanceTab(instance);
             instance.shutdown();
@@ -341,6 +367,9 @@ public class MainApplication extends JFrame {
             runningInstancesPanel.invalidate();
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
+
+            // Notify instance manager that instance has been started (for input sync)
+            emulatorInstanceManager.notifyInstanceStarted(emulatorInstance);
         }
     }
 
@@ -367,6 +396,9 @@ public class MainApplication extends JFrame {
      */
     public void removeEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.getEmulatorDisplay() != null) {
+            // Notify instance manager that instance is stopping (for input sync)
+            emulatorInstanceManager.notifyInstanceStopping(emulatorInstance);
+
             // Get wrapper panel and remove it
             JPanel wrapperPanel = (JPanel) emulatorInstance.getEmulatorDisplay().getClientProperty("wrapperPanel");
             if (wrapperPanel != null) {

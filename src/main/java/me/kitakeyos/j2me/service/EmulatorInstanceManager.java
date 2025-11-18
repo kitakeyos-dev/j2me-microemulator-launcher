@@ -17,11 +17,13 @@ public class EmulatorInstanceManager {
     private final List<EmulatorInstance> instances;
     private final JPanel instancesPanel;
     private final InstanceIdPool idPool;
+    private final InputSynchronizer inputSynchronizer;
 
     public EmulatorInstanceManager(JPanel instancesPanel) {
         this.instances = new ArrayList<>();
         this.instancesPanel = instancesPanel;
         this.idPool = new InstanceIdPool();
+        this.inputSynchronizer = new InputSynchronizer(this);
     }
 
     public void addInstance(EmulatorInstance instance) {
@@ -111,5 +113,49 @@ public class EmulatorInstanceManager {
      */
     public String getIdPoolStatistics() {
         return idPool.getStatistics();
+    }
+
+    /**
+     * Get the input synchronizer
+     * @return InputSynchronizer instance
+     */
+    public InputSynchronizer getInputSynchronizer() {
+        return inputSynchronizer;
+    }
+
+    /**
+     * Enable or disable input synchronization across all instances
+     * @param enabled true to enable, false to disable
+     */
+    public void setInputSynchronizationEnabled(boolean enabled) {
+        inputSynchronizer.setEnabled(enabled);
+    }
+
+    /**
+     * Check if input synchronization is enabled
+     * @return true if enabled, false otherwise
+     */
+    public boolean isInputSynchronizationEnabled() {
+        return inputSynchronizer.isEnabled();
+    }
+
+    /**
+     * Notify the input synchronizer that an instance has been started
+     * Should be called after instance display is ready
+     */
+    public void notifyInstanceStarted(EmulatorInstance instance) {
+        if (inputSynchronizer.isEnabled()) {
+            inputSynchronizer.attachListenersToInstance(instance);
+        }
+    }
+
+    /**
+     * Notify the input synchronizer that an instance is being removed
+     * Should be called before instance is removed
+     */
+    public void notifyInstanceStopping(EmulatorInstance instance) {
+        if (inputSynchronizer.isEnabled()) {
+            inputSynchronizer.detachListenersFromInstance(instance);
+        }
     }
 }
