@@ -172,8 +172,8 @@ public class EmulatorLauncher {
         List<String> params = new ArrayList<>();
         params.add(instance.getJ2meFilePath());
         params.add("--resizableDevice");
-        params.add("240");//Width
-        params.add("320");//Height
+        params.add(String.valueOf(instance.getDisplayWidth()));//Width
+        params.add(String.valueOf(instance.getDisplayHeight()));//Height
         return params;
     }
 

@@ -28,6 +28,8 @@ public class EmulatorInstance {
     private final int instanceId;
     private final String microemulatorPath;
     private final String j2meFilePath;
+    private final int displayWidth;
+    private final int displayHeight;
 
     // State management
     private InstanceState state;
@@ -42,9 +44,15 @@ public class EmulatorInstance {
     private final ResourceManager resourceManager;
 
     public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath) {
+        this(instanceId, microemulatorPath, j2meFilePath, 240, 320);
+    }
+
+    public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath, int displayWidth, int displayHeight) {
         this.instanceId = instanceId;
         this.microemulatorPath = microemulatorPath;
         this.j2meFilePath = j2meFilePath;
+        this.displayWidth = displayWidth;
+        this.displayHeight = displayHeight;
         this.state = InstanceState.CREATED;
         this.resourceManager = new ResourceManager(instanceId);
     }
@@ -61,6 +69,14 @@ public class EmulatorInstance {
 
     public String getJ2meFilePath() {
         return j2meFilePath;
+    }
+
+    public int getDisplayWidth() {
+        return displayWidth;
+    }
+
+    public int getDisplayHeight() {
+        return displayHeight;
     }
 
     public InstanceState getState() {

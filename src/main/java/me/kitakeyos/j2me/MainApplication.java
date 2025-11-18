@@ -28,6 +28,8 @@ public class MainApplication extends JFrame {
     private JComboBox<J2meApplication> applicationComboBox;
     private JTextField microemulatorPathField;
     private JSpinner instanceCountSpinner;
+    private JSpinner displayWidthSpinner;
+    private JSpinner displayHeightSpinner;
     private JPanel runningInstancesPanel;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
@@ -109,8 +111,18 @@ public class MainApplication extends JFrame {
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         instanceCountSpinner.setToolTipText("Number of instances to create (1-100)");
 
+        // Display size spinners (default 240x320)
+        displayWidthSpinner = new JSpinner(new SpinnerNumberModel(240, 128, 800, 1));
+        displayWidthSpinner.setToolTipText("Display width in pixels (128-800)");
+        displayWidthSpinner.setPreferredSize(new Dimension(80, displayWidthSpinner.getPreferredSize().height));
+
+        displayHeightSpinner = new JSpinner(new SpinnerNumberModel(320, 128, 1000, 1));
+        displayHeightSpinner.setToolTipText("Display height in pixels (128-1000)");
+        displayHeightSpinner.setPreferredSize(new Dimension(80, displayHeightSpinner.getPreferredSize().height));
+
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
+                displayWidthSpinner, displayHeightSpinner,
                 this::openSettingsDialog);
         topPanel.add(configurationPanel, BorderLayout.NORTH);
 
@@ -217,10 +229,12 @@ public class MainApplication extends JFrame {
         int numberOfInstances = (Integer) instanceCountSpinner.getValue();
         String microemulatorPath = applicationConfig.getMicroemulatorPath();
         String j2meFilePath = selectedApp.getFilePath();
+        int displayWidth = (Integer) displayWidthSpinner.getValue();
+        int displayHeight = (Integer) displayHeightSpinner.getValue();
 
         for (int i = 0; i < numberOfInstances; i++) {
             int instanceId = emulatorInstanceManager.getNextInstanceId();
-            EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath);
+            EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath, displayWidth, displayHeight);
 
             emulatorInstanceManager.addInstance(emulatorInstance);
             // Automatically start the instance
