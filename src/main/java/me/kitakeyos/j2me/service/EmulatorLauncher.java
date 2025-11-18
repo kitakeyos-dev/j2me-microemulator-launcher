@@ -26,16 +26,16 @@ public class EmulatorLauncher {
 
     // Common classes to pre-load for better performance
     private static final String[] PRELOAD_CLASSES = {
-        "org.microemu.app.Main",
-        "org.microemu.app.Config",
-        "org.microemu.app.Common",
-        "org.microemu.device.DeviceFactory",
-        "org.microemu.device.j2se.J2SEDevice",
-        "org.microemu.device.j2se.J2SEDeviceDisplay",
-        "org.microemu.device.j2se.J2SEInputMethod",
-        "org.microemu.MIDletBridge",
-        "org.microemu.DisplayAccess",
-        "org.microemu.MicroEmulator"
+            "org.microemu.app.Main",
+            "org.microemu.app.Config",
+            "org.microemu.app.Common",
+            "org.microemu.device.DeviceFactory",
+            "org.microemu.device.j2se.J2SEDevice",
+            "org.microemu.device.j2se.J2SEDeviceDisplay",
+            "org.microemu.device.j2se.J2SEInputMethod",
+            "org.microemu.MIDletBridge",
+            "org.microemu.DisplayAccess",
+            "org.microemu.MicroEmulator"
     };
 
     /**
@@ -78,8 +78,8 @@ public class EmulatorLauncher {
 
                 long duration = System.currentTimeMillis() - startTime;
                 logger.info(String.format(
-                    "Classloader pre-warming completed in %d ms. Loaded: %d, Failed: %d. %s",
-                    duration, successCount, failCount, InstrumentedClassCache.getStatistics()
+                        "Classloader pre-warming completed in %d ms. Loaded: %d, Failed: %d. %s",
+                        duration, successCount, failCount, InstrumentedClassCache.getStatistics()
                 ));
 
             } catch (Exception e) {
@@ -91,7 +91,7 @@ public class EmulatorLauncher {
     /**
      * Initialize an emulator classloader for the given instance
      *
-     * @param instanceId Instance ID
+     * @param instanceId           Instance ID
      * @param microemulatorJarPath Path to microemulator JAR
      * @return Initialized classloader
      */
@@ -114,9 +114,9 @@ public class EmulatorLauncher {
     /**
      * Start an emulator instance
      *
-     * @param instance The instance to start
+     * @param instance   The instance to start
      * @param onComplete Callback when instance startup completes (success or failure)
-     * @param onStarted Callback when instance startup begins
+     * @param onStarted  Callback when instance startup begins
      */
     public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete, Runnable onStarted) {
         // Set state to STARTING
@@ -172,8 +172,8 @@ public class EmulatorLauncher {
         List<String> params = new ArrayList<>();
         params.add(instance.getJ2meFilePath());
         params.add("--resizableDevice");
-        params.add("240");
-        params.add("320");
+        params.add("240");//Width
+        params.add("320");//Height
         return params;
     }
 
@@ -196,7 +196,7 @@ public class EmulatorLauncher {
      * Launch MicroEmulator using reflection
      * Refactored to use EmulatorReflectionHelper for cleaner code
      *
-     * @param params Launch parameters
+     * @param params      Launch parameters
      * @param classLoader ClassLoader to use
      * @return Configured JFrame
      */
