@@ -6,10 +6,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
  * Synchronizes mouse and keyboard input across multiple emulator instances
+ * Simplified version that only attaches to root display components
  */
 public class InputSynchronizer {
 
@@ -17,78 +21,14 @@ public class InputSynchronizer {
 
     private final EmulatorInstanceManager instanceManager;
     private boolean enabled = false;
-    private MouseAdapter sharedMouseListener;
-    private KeyAdapter sharedKeyListener;
+    private final Set<Component> isDispatching = ConcurrentHashMap.newKeySet();
+
+    // Store listeners per instance for cleanup
+    private final Map<EmulatorInstance, MouseAdapter> mouseListeners = new ConcurrentHashMap<>();
+    private final Map<EmulatorInstance, KeyAdapter> keyListeners = new ConcurrentHashMap<>();
 
     public InputSynchronizer(EmulatorInstanceManager instanceManager) {
         this.instanceManager = instanceManager;
-        initializeListeners();
-    }
-
-    private void initializeListeners() {
-        // Shared mouse listener that broadcasts events to all instances
-        sharedMouseListener = new MouseAdapter() {
-            private boolean isDispatching = false;
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (!isDispatching) {
-                    isDispatching = true;
-                    broadcastMouseEvent(e);
-                    isDispatching = false;
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (!isDispatching) {
-                    isDispatching = true;
-                    broadcastMouseEvent(e);
-                    isDispatching = false;
-                }
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (!isDispatching) {
-                    isDispatching = true;
-                    broadcastMouseEvent(e);
-                    isDispatching = false;
-                }
-            }
-        };
-
-        // Shared key listener that broadcasts events to all instances
-        sharedKeyListener = new KeyAdapter() {
-            private boolean isDispatching = false;
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (!isDispatching) {
-                    isDispatching = true;
-                    broadcastKeyEvent(e);
-                    isDispatching = false;
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                if (!isDispatching) {
-                    isDispatching = true;
-                    broadcastKeyEvent(e);
-                    isDispatching = false;
-                }
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-                if (!isDispatching) {
-                    isDispatching = true;
-                    broadcastKeyEvent(e);
-                    isDispatching = false;
-                }
-            }
-        };
     }
 
     /**
@@ -127,8 +67,15 @@ public class InputSynchronizer {
 
         JPanel display = instance.getEmulatorDisplay();
         if (display != null) {
-            attachListenersToComponent(display);
-            logger.fine("Attached listeners to instance #" + instance.getInstanceId());
+            MouseAdapter mouseListener = createMouseListener();
+            KeyAdapter keyListener = createKeyListener();
+
+            attachListenersRecursively(display, mouseListener, keyListener);
+
+            mouseListeners.put(instance, mouseListener);
+            keyListeners.put(instance, keyListener);
+
+            logger.info("Attached listeners to instance #" + instance.getInstanceId());
         }
     }
 
@@ -138,8 +85,13 @@ public class InputSynchronizer {
     public void detachListenersFromInstance(EmulatorInstance instance) {
         JPanel display = instance.getEmulatorDisplay();
         if (display != null) {
-            detachListenersFromComponent(display);
-            logger.fine("Detached listeners from instance #" + instance.getInstanceId());
+            MouseAdapter mouseListener = mouseListeners.remove(instance);
+            KeyAdapter keyListener = keyListeners.remove(instance);
+
+            if (mouseListener != null && keyListener != null) {
+                detachListenersRecursively(display, mouseListener, keyListener);
+                logger.info("Detached listeners from instance #" + instance.getInstanceId());
+            }
         }
     }
 
@@ -149,11 +101,9 @@ public class InputSynchronizer {
     private void attachListenersToAllInstances() {
         List<EmulatorInstance> instances = instanceManager.getRunningInstances();
         for (EmulatorInstance instance : instances) {
-            JPanel display = instance.getEmulatorDisplay();
-            if (display != null) {
-                attachListenersToComponent(display);
-            }
+            attachListenersToInstance(instance);
         }
+        logger.info("Attached listeners to " + instances.size() + " instance(s)");
     }
 
     /**
@@ -162,25 +112,30 @@ public class InputSynchronizer {
     private void detachListenersFromAllInstances() {
         List<EmulatorInstance> instances = instanceManager.getRunningInstances();
         for (EmulatorInstance instance : instances) {
-            JPanel display = instance.getEmulatorDisplay();
-            if (display != null) {
-                detachListenersFromComponent(display);
-            }
+            detachListenersFromInstance(instance);
         }
+        mouseListeners.clear();
+        keyListeners.clear();
+        logger.info("Detached listeners from " + instances.size() + " instance(s)");
     }
 
     /**
      * Attach listeners to a component and all its children recursively
      */
-    private void attachListenersToComponent(Component component) {
-        component.addMouseListener(sharedMouseListener);
-        component.addKeyListener(sharedKeyListener);
+    private void attachListenersRecursively(Component component, MouseAdapter mouseListener, KeyAdapter keyListener) {
+        component.addMouseListener(mouseListener);
+        component.addKeyListener(keyListener);
 
-        // Also attach to all child components recursively
+        // Make component focusable for keyboard events
+        if (component instanceof JComponent) {
+            ((JComponent) component).setFocusable(true);
+        }
+
+        // Recursively attach to all child components
         if (component instanceof Container) {
             Container container = (Container) component;
             for (Component child : container.getComponents()) {
-                attachListenersToComponent(child);
+                attachListenersRecursively(child, mouseListener, keyListener);
             }
         }
     }
@@ -188,55 +143,159 @@ public class InputSynchronizer {
     /**
      * Detach listeners from a component and all its children recursively
      */
-    private void detachListenersFromComponent(Component component) {
-        component.removeMouseListener(sharedMouseListener);
-        component.removeKeyListener(sharedKeyListener);
+    private void detachListenersRecursively(Component component, MouseAdapter mouseListener, KeyAdapter keyListener) {
+        component.removeMouseListener(mouseListener);
+        component.removeKeyListener(keyListener);
 
-        // Also detach from all child components recursively
+        // Recursively detach from all child components
         if (component instanceof Container) {
             Container container = (Container) component;
             for (Component child : container.getComponents()) {
-                detachListenersFromComponent(child);
+                detachListenersRecursively(child, mouseListener, keyListener);
             }
         }
     }
 
     /**
-     * Broadcast a mouse event to all instances except the source
+     * Create mouse listener for a specific instance
+     */
+    private MouseAdapter createMouseListener() {
+        return new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                Component source = e.getComponent();
+                if (!isDispatching.contains(source)) {
+                    broadcastMouseEvent(e);
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                Component source = e.getComponent();
+                if (!isDispatching.contains(source)) {
+                    broadcastMouseEvent(e);
+                }
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Component source = e.getComponent();
+                if (!isDispatching.contains(source)) {
+                    broadcastMouseEvent(e);
+                }
+            }
+        };
+    }
+
+    /**
+     * Create key listener for a specific instance
+     */
+    private KeyAdapter createKeyListener() {
+        return new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                Component source = e.getComponent();
+                if (!isDispatching.contains(source)) {
+                    broadcastKeyEvent(e);
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                Component source = e.getComponent();
+                if (!isDispatching.contains(source)) {
+                    broadcastKeyEvent(e);
+                }
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                Component source = e.getComponent();
+                if (!isDispatching.contains(source)) {
+                    broadcastKeyEvent(e);
+                }
+            }
+        };
+    }
+
+    /**
+     * Broadcast a mouse event to all instances
      */
     private void broadcastMouseEvent(MouseEvent sourceEvent) {
         Component sourceComponent = sourceEvent.getComponent();
         List<EmulatorInstance> instances = instanceManager.getRunningInstances();
 
-        for (EmulatorInstance instance : instances) {
-            JPanel display = instance.getEmulatorDisplay();
-            if (display != null && !isComponentInHierarchy(sourceComponent, display)) {
-                // Find the corresponding component in this instance
-                Component targetComponent = findCorrespondingComponent(sourceComponent, display);
+        // Find which instance the source belongs to
+        EmulatorInstance sourceInstance = findInstanceForComponent(sourceComponent);
+        if (sourceInstance == null) {
+            return;
+        }
+
+        // Get the relative position within the source display
+        Point relativePoint = getRelativePointInDisplay(sourceComponent, sourceEvent.getPoint(), sourceInstance);
+        if (relativePoint == null) {
+            return;
+        }
+
+        // Broadcast to all other instances
+        for (EmulatorInstance targetInstance : instances) {
+            if (targetInstance == sourceInstance) {
+                continue; // Skip source instance
+            }
+
+            JPanel targetDisplay = targetInstance.getEmulatorDisplay();
+            if (targetDisplay != null) {
+                // Find the corresponding component in target display
+                Component targetComponent = findComponentAtPoint(targetDisplay, relativePoint);
                 if (targetComponent != null) {
-                    dispatchMouseEventToComponent(sourceEvent, targetComponent);
+                    dispatchMouseEventToComponent(sourceEvent, targetComponent, relativePoint);
                 }
             }
         }
     }
 
     /**
-     * Broadcast a key event to all instances except the source
+     * Broadcast a key event to all instances
      */
     private void broadcastKeyEvent(KeyEvent sourceEvent) {
         Component sourceComponent = sourceEvent.getComponent();
         List<EmulatorInstance> instances = instanceManager.getRunningInstances();
 
-        for (EmulatorInstance instance : instances) {
-            JPanel display = instance.getEmulatorDisplay();
-            if (display != null && !isComponentInHierarchy(sourceComponent, display)) {
-                // Find the corresponding component in this instance
-                Component targetComponent = findCorrespondingComponent(sourceComponent, display);
+        // Find which instance the source belongs to
+        EmulatorInstance sourceInstance = findInstanceForComponent(sourceComponent);
+        if (sourceInstance == null) {
+            return;
+        }
+
+        // Broadcast to all other instances
+        for (EmulatorInstance targetInstance : instances) {
+            if (targetInstance == sourceInstance) {
+                continue; // Skip source instance
+            }
+
+            JPanel targetDisplay = targetInstance.getEmulatorDisplay();
+            if (targetDisplay != null) {
+                // Find the corresponding component
+                Component targetComponent = findCorrespondingComponent(sourceComponent, sourceInstance, targetDisplay);
                 if (targetComponent != null) {
                     dispatchKeyEventToComponent(sourceEvent, targetComponent);
                 }
             }
         }
+    }
+
+    /**
+     * Find which instance a component belongs to
+     */
+    private EmulatorInstance findInstanceForComponent(Component component) {
+        List<EmulatorInstance> instances = instanceManager.getRunningInstances();
+        for (EmulatorInstance instance : instances) {
+            JPanel display = instance.getEmulatorDisplay();
+            if (display != null && isComponentInHierarchy(component, display)) {
+                return instance;
+            }
+        }
+        return null;
     }
 
     /**
@@ -254,20 +313,56 @@ public class InputSynchronizer {
     }
 
     /**
-     * Find the corresponding component in another instance's display
-     * This tries to find a component at the same relative position in the hierarchy
+     * Get the relative position of a point within the display
      */
-    private Component findCorrespondingComponent(Component sourceComponent, JPanel targetDisplay) {
-        // Build path from source component to its root
+    private Point getRelativePointInDisplay(Component component, Point point, EmulatorInstance instance) {
+        JPanel display = instance.getEmulatorDisplay();
+        if (display == null) {
+            return null;
+        }
+
+        try {
+            // Convert point to display's coordinate system
+            Point screenPoint = component.getLocationOnScreen();
+            screenPoint.translate(point.x, point.y);
+
+            Point displayScreenPoint = display.getLocationOnScreen();
+
+            return new Point(
+                screenPoint.x - displayScreenPoint.x,
+                screenPoint.y - displayScreenPoint.y
+            );
+        } catch (IllegalComponentNotShownException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Find component at a specific point in the display
+     */
+    private Component findComponentAtPoint(Container container, Point point) {
+        Component deepest = SwingUtilities.getDeepestComponentAt(container, point.x, point.y);
+        return deepest != null ? deepest : container;
+    }
+
+    /**
+     * Find the corresponding component in another instance's display
+     */
+    private Component findCorrespondingComponent(Component sourceComponent, EmulatorInstance sourceInstance, JPanel targetDisplay) {
+        // Build path from source component to its display root
         java.util.List<Integer> path = new java.util.ArrayList<>();
         Component current = sourceComponent;
-        while (current != null && current.getParent() != null) {
+        JPanel sourceDisplay = sourceInstance.getEmulatorDisplay();
+
+        while (current != null && current != sourceDisplay) {
             Container parent = current.getParent();
-            // Find index of current in parent
-            for (int i = 0; i < parent.getComponentCount(); i++) {
-                if (parent.getComponent(i) == current) {
-                    path.add(0, i); // Add to beginning
-                    break;
+            if (parent != null) {
+                // Find index of current in parent
+                for (int i = 0; i < parent.getComponentCount(); i++) {
+                    if (parent.getComponent(i) == current) {
+                        path.add(0, i);
+                        break;
+                    }
                 }
             }
             current = parent;
@@ -281,11 +376,11 @@ public class InputSynchronizer {
                 if (index < container.getComponentCount()) {
                     target = container.getComponent(index);
                 } else {
-                    // Path doesn't match, fall back to root display
+                    // Path doesn't match, use root display
                     return targetDisplay;
                 }
             } else {
-                // Path doesn't match, fall back to root display
+                // Path doesn't match, use root display
                 return targetDisplay;
             }
         }
@@ -296,24 +391,49 @@ public class InputSynchronizer {
     /**
      * Dispatch a mouse event to a target component
      */
-    private void dispatchMouseEventToComponent(MouseEvent sourceEvent, Component targetComponent) {
-        // Create a new mouse event for the target component
-        MouseEvent newEvent = new MouseEvent(
-                targetComponent,
-                sourceEvent.getID(),
-                sourceEvent.getWhen(),
-                sourceEvent.getModifiersEx(),
-                sourceEvent.getX(),
-                sourceEvent.getY(),
-                sourceEvent.getClickCount(),
-                sourceEvent.isPopupTrigger(),
-                sourceEvent.getButton()
-        );
+    private void dispatchMouseEventToComponent(MouseEvent sourceEvent, Component targetComponent, Point relativePoint) {
+        // Convert relative point to target component's coordinate system
+        try {
+            Point targetScreenPoint = targetComponent.getLocationOnScreen();
+            JPanel targetDisplay = (JPanel) targetComponent.getParent();
+            while (targetDisplay != null && !(targetDisplay.getParent() == null || targetDisplay.getClientProperty("wrapperPanel") != null)) {
+                targetDisplay = (JPanel) targetDisplay.getParent();
+            }
 
-        // Dispatch the event to the target component
-        SwingUtilities.invokeLater(() -> {
-            targetComponent.dispatchEvent(newEvent);
-        });
+            Point displayScreenPoint = targetDisplay.getLocationOnScreen();
+            Point targetPoint = new Point(
+                relativePoint.x + displayScreenPoint.x - targetScreenPoint.x,
+                relativePoint.y + displayScreenPoint.y - targetScreenPoint.y
+            );
+
+            // Create a new mouse event for the target component
+            MouseEvent newEvent = new MouseEvent(
+                    targetComponent,
+                    sourceEvent.getID(),
+                    System.currentTimeMillis(),
+                    sourceEvent.getModifiersEx(),
+                    targetPoint.x,
+                    targetPoint.y,
+                    sourceEvent.getClickCount(),
+                    sourceEvent.isPopupTrigger(),
+                    sourceEvent.getButton()
+            );
+
+            // Mark as dispatching to prevent infinite loop
+            isDispatching.add(targetComponent);
+
+            // Dispatch the event
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    targetComponent.dispatchEvent(newEvent);
+                } finally {
+                    isDispatching.remove(targetComponent);
+                }
+            });
+        } catch (Exception e) {
+            // Ignore errors in coordinate conversion
+            isDispatching.remove(targetComponent);
+        }
     }
 
     /**
@@ -324,16 +444,23 @@ public class InputSynchronizer {
         KeyEvent newEvent = new KeyEvent(
                 targetComponent,
                 sourceEvent.getID(),
-                sourceEvent.getWhen(),
+                System.currentTimeMillis(),
                 sourceEvent.getModifiersEx(),
                 sourceEvent.getKeyCode(),
                 sourceEvent.getKeyChar(),
                 sourceEvent.getKeyLocation()
         );
 
-        // Dispatch the event to the target component
+        // Mark as dispatching to prevent infinite loop
+        isDispatching.add(targetComponent);
+
+        // Dispatch the event
         SwingUtilities.invokeLater(() -> {
-            targetComponent.dispatchEvent(newEvent);
+            try {
+                targetComponent.dispatchEvent(newEvent);
+            } finally {
+                isDispatching.remove(targetComponent);
+            }
         });
     }
 }
