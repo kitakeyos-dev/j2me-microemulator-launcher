@@ -35,8 +35,8 @@ public class ConfigurationPanelBuilder {
         panel.add(new JLabel("J2ME Application:"), gbc);
         gbc.gridx = 1;
         gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        applicationComboBox.setPreferredSize(new Dimension(300, applicationComboBox.getPreferredSize().height));
+        gbc.weightx = 0.0;
+        applicationComboBox.setPreferredSize(new Dimension(200, applicationComboBox.getPreferredSize().height));
         panel.add(applicationComboBox, gbc);
 
         // Number of Instances
@@ -76,8 +76,9 @@ public class ConfigurationPanelBuilder {
         gbc.weightx = 0.0;
         panel.add(new JLabel("MicroEmulator Path:"), gbc);
         microemulatorPathField.setText("microemulator.jar");
+        microemulatorPathField.setPreferredSize(new Dimension(200, microemulatorPathField.getPreferredSize().height));
         gbc.gridx = 1;
-        gbc.weightx = 0.7;
+        gbc.weightx = 0.0;
         panel.add(microemulatorPathField, gbc);
         JButton settingsButton = new JButton("Settings");
         settingsButton.setToolTipText("Open settings to configure MicroEmulator path");

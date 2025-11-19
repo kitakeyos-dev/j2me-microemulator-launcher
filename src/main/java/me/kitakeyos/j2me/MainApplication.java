@@ -115,7 +115,7 @@ public class MainApplication extends JFrame {
 
         // Right side panel: Options + Action buttons (vertically stacked)
         JPanel rightPanel = new JPanel(new BorderLayout(0, 5));
-        rightPanel.setPreferredSize(new Dimension(160, 0));
+        rightPanel.setPreferredSize(new Dimension(200, 0));
 
         // Options on top
         JPanel optionsPanel = createOptionsPanel();
@@ -166,13 +166,13 @@ public class MainApplication extends JFrame {
         JButton createButton = new JButton("Create & Run");
         createButton.setToolTipText("Create and automatically start instances");
         createButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        createButton.setMaximumSize(new Dimension(140, 30));
+        createButton.setMaximumSize(new Dimension(180, 30));
         createButton.addActionListener(e -> createEmulatorInstances());
 
         JButton stopAllButton = new JButton("Stop All");
         stopAllButton.setToolTipText("Stop all running instances");
         stopAllButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        stopAllButton.setMaximumSize(new Dimension(140, 30));
+        stopAllButton.setMaximumSize(new Dimension(180, 30));
         stopAllButton.addActionListener(e -> stopAllInstances());
 
         panel.add(createButton);
