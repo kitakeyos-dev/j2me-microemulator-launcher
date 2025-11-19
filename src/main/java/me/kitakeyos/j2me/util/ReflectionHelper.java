@@ -168,4 +168,16 @@ public class ReflectionHelper {
         return clazz.getDeclaredConstructor().newInstance();
     }
 
+    public static Object getStaticFieldValue(Class<?> clazz, String fieldName) throws Exception {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(null);
+    }
+
+    public static void setStaticFieldValue(Class<?> clazz, String fieldName, Object value) throws Exception {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(null, value);
+    }
+
 }

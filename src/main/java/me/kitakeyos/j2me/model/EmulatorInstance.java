@@ -39,6 +39,7 @@ public class EmulatorInstance {
     private JPanel uiPanel;
     private JPanel emulatorDisplay;
     private ActionListener menuExitListener;
+    private ClassLoader classLoader;
 
     // Resource management
     private final ResourceManager resourceManager;
@@ -99,6 +100,10 @@ public class EmulatorInstance {
         return menuExitListener;
     }
 
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
     public ResourceManager getResourceManager() {
         return resourceManager;
     }
@@ -123,6 +128,10 @@ public class EmulatorInstance {
 
     public void setMenuExitListener(ActionListener menuExitListener) {
         this.menuExitListener = menuExitListener;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 
     // === Business Logic ===

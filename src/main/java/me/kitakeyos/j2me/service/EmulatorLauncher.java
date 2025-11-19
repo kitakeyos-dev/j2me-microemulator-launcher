@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -143,7 +144,7 @@ public class EmulatorLauncher {
             JFrame frame = launchMicroEmulator(params, emulatorClassLoader);
 
             // Extract and store UI components
-            configureInstanceComponents(instance, frame);
+            configureInstanceComponents(instance, frame, emulatorClassLoader);
 
             // Set state to RUNNING after successful configuration
             instance.setState(InstanceState.RUNNING);
@@ -180,13 +181,16 @@ public class EmulatorLauncher {
     /**
      * Configure instance components after successful launch
      */
-    private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame)
-            throws NoSuchFieldException, IllegalAccessException {
+    private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame, EmulatorClassLoader emulatorClassLoader) throws Exception {
         ActionListener exitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
         JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
 
         instance.setMenuExitListener(exitListener);
         instance.setEmulatorDisplay(devicePanel);
+
+        Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader, "org.microemu.app.util.MIDletResourceLoader");
+        ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader, "classLoader");
+        instance.setClassLoader(classLoader);
 
         frame.setResizable(false);
         frame.setTitle("Instance " + instance.getInstanceId());

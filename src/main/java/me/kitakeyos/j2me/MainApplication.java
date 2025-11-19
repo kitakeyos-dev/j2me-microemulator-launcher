@@ -4,6 +4,7 @@ import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
 import me.kitakeyos.j2me.model.J2meApplication;
+import me.kitakeyos.j2me.script.ui.LuaScriptManager;
 import me.kitakeyos.j2me.service.EmulatorLauncher;
 import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
@@ -57,9 +58,13 @@ public class MainApplication extends JFrame {
         ApplicationsPanel applicationsPanel = new ApplicationsPanel(j2meApplicationManager);
         tabbedPane.addTab("Applications", applicationsPanel);
 
-        // Tab 2: Instances (merged from Instances and Running Instances)
+        // Tab 2: Instances
         JPanel instancesPanel = createInstancesPanel();
         tabbedPane.addTab("Instances", instancesPanel);
+
+        // Tab 3: Scripts
+        JPanel scriptsPanel = new LuaScriptManager();
+        tabbedPane.addTab("Scripts", scriptsPanel);
 
         add(tabbedPane);
 
