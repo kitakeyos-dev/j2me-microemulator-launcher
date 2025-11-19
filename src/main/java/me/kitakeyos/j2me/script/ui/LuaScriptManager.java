@@ -129,7 +129,6 @@ public class LuaScriptManager extends JPanel
         add(statusBar, BorderLayout.SOUTH);
 
         updateTheme();
-        //refreshInstanceList();
     }
 
     private void updateTheme() {
@@ -269,7 +268,7 @@ public class LuaScriptManager extends JPanel
     /**
      * Refresh the list of running instances
      */
-    private void refreshInstanceList() {
+    public void refreshInstanceList() {
         instanceSelector.removeAllItems();
         instanceSelector.addItem("None (default ClassLoader)");
 
