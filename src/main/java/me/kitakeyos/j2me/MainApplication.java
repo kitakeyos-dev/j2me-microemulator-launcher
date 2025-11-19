@@ -299,6 +299,7 @@ public class MainApplication extends JFrame {
     /**
      * Add emulator display to running instances panel
      * Instances are arranged using SimpleFlowLayout with auto-wrapping
+     * Instances are sorted by instanceId in ascending order
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.getEmulatorDisplay() != null) {
@@ -328,11 +329,13 @@ public class MainApplication extends JFrame {
             wrapperPanel.add(emulatorInstance.getEmulatorDisplay(), BorderLayout.CENTER);
             wrapperPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
-            // Store wrapper panel reference for later removal
+            // Store wrapper panel reference and instanceId for later removal and sorting
             emulatorInstance.getEmulatorDisplay().putClientProperty("wrapperPanel", wrapperPanel);
+            wrapperPanel.putClientProperty("instanceId", emulatorInstance.getInstanceId());
 
-            // Add to panel - SimpleFlowLayout will automatically wrap based on available width
-            runningInstancesPanel.add(wrapperPanel);
+            // Find correct position to insert based on instanceId (sorted in ascending order)
+            int insertIndex = findInsertPosition(emulatorInstance.getInstanceId());
+            runningInstancesPanel.add(wrapperPanel, insertIndex);
 
             // Revalidate to trigger layout recalculation
             runningInstancesPanel.revalidate();
@@ -341,6 +344,24 @@ public class MainApplication extends JFrame {
             // Notify instance manager that instance has been started (for input sync)
             emulatorInstanceManager.notifyInstanceStarted(emulatorInstance);
         }
+    }
+
+    /**
+     * Find the correct position to insert an instance based on instanceId
+     * Instances are sorted in ascending order by instanceId
+     */
+    private int findInsertPosition(int instanceId) {
+        Component[] components = runningInstancesPanel.getComponents();
+        for (int i = 0; i < components.length; i++) {
+            if (components[i] instanceof JPanel) {
+                JPanel panel = (JPanel) components[i];
+                Integer existingId = (Integer) panel.getClientProperty("instanceId");
+                if (existingId != null && existingId > instanceId) {
+                    return i; // Insert before this component
+                }
+            }
+        }
+        return components.length; // Insert at the end if not found
     }
 
 
