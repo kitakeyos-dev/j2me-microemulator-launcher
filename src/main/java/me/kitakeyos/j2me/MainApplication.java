@@ -109,11 +109,16 @@ public class MainApplication extends JFrame {
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
                 displayWidthSpinner, displayHeightSpinner,
                 this::openSettingsDialog);
-        topPanel.add(configurationPanel, BorderLayout.NORTH);
 
-        // Action buttons
+        // Create a panel to hold configuration and action buttons in same row
+        JPanel configWithButtonsPanel = new JPanel(new BorderLayout(10, 0));
+        configWithButtonsPanel.add(configurationPanel, BorderLayout.CENTER);
+
+        // Action buttons on the right side
         JPanel buttonPanel = createActionButtonsPanel();
-        topPanel.add(buttonPanel, BorderLayout.SOUTH);
+        configWithButtonsPanel.add(buttonPanel, BorderLayout.EAST);
+
+        topPanel.add(configWithButtonsPanel, BorderLayout.NORTH);
 
         // Sync options panel
         JPanel syncPanel = createSyncOptionsPanel();
@@ -151,17 +156,24 @@ public class MainApplication extends JFrame {
     }
 
     private JPanel createActionButtonsPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JButton createButton = new JButton("Create & Run");
         createButton.setToolTipText("Create and automatically start instances");
+        createButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        createButton.setMaximumSize(new Dimension(120, 30));
         createButton.addActionListener(e -> createEmulatorInstances());
 
         JButton stopAllButton = new JButton("Stop All");
         stopAllButton.setToolTipText("Stop all running instances");
+        stopAllButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        stopAllButton.setMaximumSize(new Dimension(120, 30));
         stopAllButton.addActionListener(e -> stopAllInstances());
 
         panel.add(createButton);
+        panel.add(Box.createVerticalStrut(5));
         panel.add(stopAllButton);
 
         return panel;
