@@ -7,7 +7,17 @@ import org.luaj.vm2.lib.jse.LuajavaLib;
 
 public class DynamicJavaLib extends LuajavaLib {
 
+    private ClassLoader instanceClassLoader;
+
     public DynamicJavaLib() {
+    }
+
+    public DynamicJavaLib(ClassLoader classLoader) {
+        this.instanceClassLoader = classLoader;
+    }
+
+    public void setInstanceClassLoader(ClassLoader classLoader) {
+        this.instanceClassLoader = classLoader;
     }
 
     @Override
@@ -105,15 +115,18 @@ public class DynamicJavaLib extends LuajavaLib {
     }
 
     private Class<?> loadClass(String className) throws ClassNotFoundException {
-//        try {
-//            return MIDletResourceLoader.classLoader.loadClass(className);
-//        } catch (ClassNotFoundException e) {
-//            try {
-//                return Thread.currentThread().getContextClassLoader().loadClass(className);
-//            } catch (ClassNotFoundException e2) {
-//                return Class.forName(className);
-//            }
-//        }
-        return null;
+        if (instanceClassLoader != null) {
+            try {
+                return instanceClassLoader.loadClass(className);
+            } catch (ClassNotFoundException e) {
+                // Fall through to other loaders
+            }
+        }
+
+        try {
+            return Thread.currentThread().getContextClassLoader().loadClass(className);
+        } catch (ClassNotFoundException e) {
+            return Class.forName(className);
+        }
     }
 }

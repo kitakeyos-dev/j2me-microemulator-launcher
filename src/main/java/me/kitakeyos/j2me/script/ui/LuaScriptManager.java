@@ -1,5 +1,7 @@
 package me.kitakeyos.j2me.script.ui;
 
+import me.kitakeyos.j2me.MainApplication;
+import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.script.core.LuaScriptExecutor;
 import me.kitakeyos.j2me.script.model.LuaScript;
 import me.kitakeyos.j2me.script.storage.ScriptFileManager;
@@ -30,6 +32,7 @@ public class LuaScriptManager extends JPanel
     private LuaCodeEditor codeEditor;
     private OutputPanelComponent outputPanel;
     private StatusBarComponent statusBar;
+    private JComboBox<String> instanceSelector;
 
     // Data and services
     private Map<String, LuaScript> scripts;
@@ -88,7 +91,27 @@ public class LuaScriptManager extends JPanel
 
     private void layoutComponents() {
         setLayout(new BorderLayout());
-        add(toolbar, BorderLayout.NORTH);
+
+        // Top panel with toolbar and instance selector
+        JPanel topPanel = new JPanel(new BorderLayout(10, 0));
+        topPanel.add(toolbar, BorderLayout.CENTER);
+
+        // Instance selector panel
+        JPanel instancePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        instancePanel.add(new JLabel("Target Instance:"));
+        instanceSelector = new JComboBox<>();
+        instanceSelector.setPreferredSize(new Dimension(150, 25));
+        instanceSelector.setToolTipText("Select running instance for script execution");
+        instanceSelector.addActionListener(e -> onInstanceSelected());
+        instancePanel.add(instanceSelector);
+
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.setToolTipText("Refresh instance list");
+        refreshButton.addActionListener(e -> refreshInstanceList());
+        instancePanel.add(refreshButton);
+
+        topPanel.add(instancePanel, BorderLayout.EAST);
+        add(topPanel, BorderLayout.NORTH);
 
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setDividerLocation(300);
@@ -106,6 +129,7 @@ public class LuaScriptManager extends JPanel
         add(statusBar, BorderLayout.SOUTH);
 
         updateTheme();
+        refreshInstanceList();
     }
 
     private void updateTheme() {
@@ -240,6 +264,75 @@ public class LuaScriptManager extends JPanel
 
     private String generateTemplate(String name) {
         return "-- " + name + "\nprint(\"Hello from " + name + "!\")\n";
+    }
+
+    /**
+     * Refresh the list of running instances
+     */
+    private void refreshInstanceList() {
+        instanceSelector.removeAllItems();
+        instanceSelector.addItem("None (default ClassLoader)");
+
+        if (MainApplication.INSTANCE.emulatorInstanceManager != null) {
+            java.util.List<EmulatorInstance> runningInstances =
+                MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
+
+            for (EmulatorInstance instance : runningInstances) {
+                instanceSelector.addItem("Instance #" + instance.getInstanceId());
+            }
+
+            if (!runningInstances.isEmpty()) {
+                statusBar.setInfo("Found " + runningInstances.size() + " running instance(s)");
+            } else {
+                statusBar.setWarning("No running instances found");
+            }
+        }
+    }
+
+    /**
+     * Handle instance selection change
+     */
+    private void onInstanceSelected() {
+        String selected = (String) instanceSelector.getSelectedItem();
+        if (selected == null || selected.equals("None (default ClassLoader)")) {
+            scriptExecutor.setInstanceClassLoader(null);
+            statusBar.setInfo("Using default ClassLoader");
+            return;
+        }
+
+        // Extract instance ID from "Instance #X"
+        try {
+            int instanceId = Integer.parseInt(selected.replace("Instance #", ""));
+            EmulatorInstance instance = findInstanceById(instanceId);
+
+            if (instance != null && instance.getClassLoader() != null) {
+                scriptExecutor.setInstanceClassLoader(instance.getClassLoader());
+                statusBar.setSuccess("Using ClassLoader from Instance #" + instanceId);
+            } else {
+                statusBar.setWarning("Instance #" + instanceId + " has no ClassLoader");
+                scriptExecutor.setInstanceClassLoader(null);
+            }
+        } catch (NumberFormatException e) {
+            statusBar.setError("Invalid instance selection");
+            scriptExecutor.setInstanceClassLoader(null);
+        }
+    }
+
+    /**
+     * Find instance by ID
+     */
+    private EmulatorInstance findInstanceById(int instanceId) {
+        if (MainApplication.INSTANCE.emulatorInstanceManager != null) {
+            java.util.List<EmulatorInstance> runningInstances =
+                MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
+
+            for (EmulatorInstance instance : runningInstances) {
+                if (instance.getInstanceId() == instanceId) {
+                    return instance;
+                }
+            }
+        }
+        return null;
     }
 
     // Public API

@@ -21,6 +21,7 @@ public class LuaScriptExecutor {
     private final Consumer<String> errorConsumer;
     private final Consumer<String> successConsumer;
     private final Consumer<String> infoConsumer;
+    private final DynamicJavaLib dynamicJavaLib;
 
     public LuaScriptExecutor(Consumer<String> outputConsumer, Consumer<String> errorConsumer,
                              Consumer<String> successConsumer, Consumer<String> infoConsumer) {
@@ -28,6 +29,14 @@ public class LuaScriptExecutor {
         this.errorConsumer = errorConsumer;
         this.successConsumer = successConsumer;
         this.infoConsumer = infoConsumer;
+        this.dynamicJavaLib = new DynamicJavaLib();
+    }
+
+    /**
+     * Set ClassLoader from selected emulator instance
+     */
+    public void setInstanceClassLoader(ClassLoader classLoader) {
+        dynamicJavaLib.setInstanceClassLoader(classLoader);
     }
 
     public void executeScript(String scriptName) {
@@ -50,7 +59,7 @@ public class LuaScriptExecutor {
             globals.load(new JseMathLib());
             globals.load(new JseIoLib());
             globals.load(new JseOsLib());
-            globals.load(new DynamicJavaLib());
+            globals.load(dynamicJavaLib);
 
             String currentPath = globals.get("package").get("path").tojstring();
 
