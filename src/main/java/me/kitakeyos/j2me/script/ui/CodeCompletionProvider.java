@@ -78,26 +78,20 @@ public class CodeCompletionProvider {
         String lastLine = getLastLine(prefix);
         String partialWord = getPartialWord(prefix);
 
-        System.out.println("Getting suggestions for partialWord: '" + partialWord + "'"); // Debug
-
         // Handle specific completion contexts
         if (handleImportCompletion(lastLine, suggestions)) {
-            System.out.println("Found import completions: " + suggestions.size()); // Debug
             return suggestions;
         }
 
         if (handleLibraryMethodCompletion(lastLine, suggestions)) {
-            System.out.println("Found library method completions: " + suggestions.size()); // Debug
             return suggestions;
         }
 
         if (handleDotNotation(lastLine, suggestions)) {
-            System.out.println("Found dot notation completions: " + suggestions.size()); // Debug
             return suggestions;
         }
 
         if (handleColonNotation(lastLine, suggestions)) {
-            System.out.println("Found colon notation completions: " + suggestions.size()); // Debug
             return suggestions;
         }
 
@@ -121,7 +115,6 @@ public class CodeCompletionProvider {
         // Simple alphabetical sort
         Collections.sort(suggestions);
 
-        System.out.println("Final suggestions count: " + suggestions.size()); // Debug
         return suggestions;
     }
 

@@ -90,7 +90,6 @@ public class LuaScriptExecutor {
         } catch (Exception e) {
             outputConsumer.accept(separator);
             errorConsumer.accept("Error: " + e.getMessage());
-            e.printStackTrace(); // For debugging
         }
     }
 }

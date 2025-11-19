@@ -5,10 +5,10 @@ import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.script.core.LuaScriptExecutor;
 import me.kitakeyos.j2me.script.model.LuaScript;
 import me.kitakeyos.j2me.script.storage.ScriptFileManager;
-import me.kitakeyos.j2me.script.ui.components.OutputPanelComponent;
-import me.kitakeyos.j2me.script.ui.components.ScriptListComponent;
-import me.kitakeyos.j2me.script.ui.components.StatusBarComponent;
-import me.kitakeyos.j2me.script.ui.components.ToolbarComponent;
+import me.kitakeyos.j2me.script.ui.component.OutputPanel;
+import me.kitakeyos.j2me.script.ui.component.ScriptList;
+import me.kitakeyos.j2me.script.ui.component.ScriptStatusBar;
+import me.kitakeyos.j2me.script.ui.component.ScriptToolbar;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -24,14 +24,14 @@ import java.util.Map;
  * Clean, organized Lua Script Manager using component architecture
  */
 public class LuaScriptManager extends JPanel
-        implements ToolbarComponent.ToolbarActions, ScriptListComponent.ScriptSelectionListener {
+        implements ScriptToolbar.ToolbarActions, ScriptList.ScriptSelectionListener {
 
     // UI Components
-    private ToolbarComponent toolbar;
-    private ScriptListComponent scriptList;
+    private ScriptToolbar toolbar;
+    private ScriptList scriptList;
     private LuaCodeEditor codeEditor;
-    private OutputPanelComponent outputPanel;
-    private StatusBarComponent statusBar;
+    private OutputPanel outputPanel;
+    private ScriptStatusBar statusBar;
     private JComboBox<String> instanceSelector;
 
     // Data and services
@@ -55,10 +55,10 @@ public class LuaScriptManager extends JPanel
 
     private void initializeComponents() {
         // Create all UI components
-        toolbar = new ToolbarComponent(this);
-        scriptList = new ScriptListComponent(this);
-        outputPanel = new OutputPanelComponent();
-        statusBar = new StatusBarComponent();
+        toolbar = new ScriptToolbar(this);
+        scriptList = new ScriptList(this);
+        outputPanel = new OutputPanel();
+        statusBar = new ScriptStatusBar();
 
         // Create code editor with document listener
         codeEditor = new LuaCodeEditor(isDarkMode, syntaxHighlightEnabled,

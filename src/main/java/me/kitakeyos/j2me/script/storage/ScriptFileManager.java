@@ -44,7 +44,7 @@ public class ScriptFileManager {
                     }
                     code = codeBuilder.toString();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.err.println("Failed to load script file " + luaFile.getName() + ": " + e.getMessage());
                 }
 
                 LuaScript script = new LuaScript(scriptName, code);
@@ -65,7 +65,7 @@ public class ScriptFileManager {
         try (PrintWriter writer = new PrintWriter(new FileWriter(luaFile))) {
             writer.print(script.getCode());
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to save script file " + script.getName() + ": " + e.getMessage());
         }
     }
 

@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.script.ui.components;
+package me.kitakeyos.j2me.script.ui.component;
 
 import me.kitakeyos.j2me.script.model.LuaScript;
 
@@ -7,7 +7,11 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Map;
 
-public class ScriptListComponent extends JPanel {
+/**
+ * Script list component for displaying and managing the list of Lua scripts.
+ * Provides script selection functionality through a listener interface.
+ */
+public class ScriptList extends JPanel {
 
     public interface ScriptSelectionListener {
         void onScriptSelected(String scriptName);
@@ -16,7 +20,7 @@ public class ScriptListComponent extends JPanel {
     private DefaultTableModel scriptTableModel;
     private JTable scriptTable;
 
-    public ScriptListComponent(ScriptSelectionListener listener) {
+    public ScriptList(ScriptSelectionListener listener) {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Scripts"));
 

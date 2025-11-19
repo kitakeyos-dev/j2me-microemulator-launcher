@@ -170,7 +170,6 @@ public class LuaCodeEditor {
             public void keyPressed(KeyEvent e) {
                 if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
                     e.consume();
-                    System.out.println("Ctrl+Space pressed - showing completion popup"); // Debug
                     showCompletionPopup();
                 } else if (completionPopup.isVisible()) {
                     if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP) {
@@ -256,9 +255,7 @@ public class LuaCodeEditor {
         try {
             String text = textPane.getText();
             int caretOffset = textPane.getCaretPosition();
-            System.out.println("Getting suggestions for text at offset: " + caretOffset); // Debug
             List<String> suggestions = completionProvider.getSuggestions(text, caretOffset);
-            System.out.println("Found " + suggestions.size() + " suggestions"); // Debug
 
             if (!suggestions.isEmpty()) {
                 completionList.setListData(suggestions.toArray(new String[0]));
@@ -279,16 +276,13 @@ public class LuaCodeEditor {
 
                 completionPopup.setLocation(popupLocation);
                 completionPopup.setVisible(true);
-                System.out.println("Completion popup shown at: " + popupLocation); // Debug
 
                 SwingUtilities.invokeLater(() -> completionList.requestFocus());
             } else {
-                System.out.println("No suggestions found, hiding popup"); // Debug
                 hideCompletionPopup();
             }
         } catch (BadLocationException e) {
-            System.out.println("BadLocationException in showCompletionPopup: " + e.getMessage()); // Debug
-            e.printStackTrace();
+            System.err.println("Failed to show completion popup: " + e.getMessage());
         }
     }
 
@@ -328,7 +322,7 @@ public class LuaCodeEditor {
 
                 hideCompletionPopup();
             } catch (BadLocationException e) {
-                e.printStackTrace();
+                System.err.println("Failed to insert completion: " + e.getMessage());
             }
         }
     }
@@ -377,85 +371,6 @@ public class LuaCodeEditor {
         }
     }
 
-    /**
-     * Basic line number panel
-     */
-    private class LineNumberPanel extends JPanel {
-        private JTextPane textPane;
-        private int lineCount = 1;
-
-        public LineNumberPanel(JTextPane textPane) {
-            this.textPane = textPane;
-            setPreferredSize(new Dimension(40, Integer.MAX_VALUE));
-            setBackground(new Color(240, 240, 240));
-            updateLineNumbers();
-        }
-
-        public void updateLineNumbers() {
-            Document doc = textPane.getDocument();
-            Element root = doc.getDefaultRootElement();
-            lineCount = root.getElementCount();
-
-            String maxLineStr = String.valueOf(lineCount);
-            FontMetrics fm = getFontMetrics(textPane.getFont());
-            if (fm != null) {
-                int width = fm.stringWidth(maxLineStr) + 15;
-                setPreferredSize(new Dimension(Math.max(40, width), Integer.MAX_VALUE));
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            g.setFont(textPane.getFont());
-            g.setColor(Color.GRAY);
-
-            FontMetrics fm = g.getFontMetrics();
-            int lineHeight = fm.getHeight();
-
-            Rectangle visibleRect = textPane.getVisibleRect();
-
-            try {
-                int startOffset = textPane.viewToModel(new Point(0, visibleRect.y));
-                int endOffset = textPane.viewToModel(new Point(0, visibleRect.y + visibleRect.height));
-
-                Document doc = textPane.getDocument();
-                Element root = doc.getDefaultRootElement();
-
-                int startLine = root.getElementIndex(startOffset);
-                int endLine = root.getElementIndex(endOffset);
-
-                for (int line = startLine; line <= endLine && line < lineCount; line++) {
-                    try {
-                        Element lineElement = root.getElement(line);
-                        int lineStartOffset = lineElement.getStartOffset();
-                        Rectangle lineRect = textPane.modelToView(lineStartOffset);
-
-                        if (lineRect != null) {
-                            int y = lineRect.y - visibleRect.y + fm.getAscent();
-                            String lineNumber = String.valueOf(line + 1);
-                            int x = getWidth() - fm.stringWidth(lineNumber) - 5;
-                            g.drawString(lineNumber, x, y);
-                        }
-                    } catch (BadLocationException e) {
-                        continue;
-                    }
-                }
-            } catch (Exception e) {
-                // Fallback to simple numbering
-                for (int i = 0; i < lineCount; i++) {
-                    String lineNumber = String.valueOf(i + 1);
-                    int x = getWidth() - fm.stringWidth(lineNumber) - 5;
-                    int y = (i + 1) * lineHeight;
-                    if (y > visibleRect.y && y < visibleRect.y + visibleRect.height) {
-                        g.drawString(lineNumber, x, y);
-                    }
-                }
-            }
-        }
-    }
-
     // Public methods
     public JPanel getEditorPanel() {
         return editorPanel;
@@ -495,7 +410,7 @@ public class LuaCodeEditor {
                         0, textPane.getText().length(),
                         syntaxHighlighter.getNormalStyle(), true);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Failed to reset syntax highlighting: " + e.getMessage());
             }
         }
     }

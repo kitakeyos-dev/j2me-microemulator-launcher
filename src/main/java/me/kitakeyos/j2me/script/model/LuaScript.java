@@ -1,5 +1,9 @@
 package me.kitakeyos.j2me.script.model;
 
+/**
+ * Represents a Lua script with its name and code content.
+ * This is a simple data model class for managing Lua scripts in the application.
+ */
 public class LuaScript {
     private String name;
     private String code;

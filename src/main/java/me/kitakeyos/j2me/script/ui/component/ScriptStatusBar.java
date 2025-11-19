@@ -1,16 +1,20 @@
-package me.kitakeyos.j2me.script.ui.components;
+package me.kitakeyos.j2me.script.ui.component;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class StatusBarComponent extends JPanel {
+/**
+ * Status bar component for the Lua Script Manager.
+ * Displays current status, script count, and mode information.
+ */
+public class ScriptStatusBar extends JPanel {
 
     private JLabel statusLabel;
     private JLabel scriptCountLabel;
     private JLabel modeLabel;
 
-    public StatusBarComponent() {
+    public ScriptStatusBar() {
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(5, 10, 5, 10));
 

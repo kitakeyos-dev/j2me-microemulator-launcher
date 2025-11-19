@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.script.ui.components;
+package me.kitakeyos.j2me.script.ui.component;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -7,7 +7,7 @@ import java.awt.*;
 /**
  * Reusable toolbar component for script manager
  */
-public class ToolbarComponent extends JPanel {
+public class ScriptToolbar extends JPanel {
 
     public interface ToolbarActions {
         void onNewScript();
@@ -21,7 +21,7 @@ public class ToolbarComponent extends JPanel {
     private JButton deleteBtn;
     private JButton runBtn;
 
-    public ToolbarComponent(ToolbarActions actions) {
+    public ScriptToolbar(ToolbarActions actions) {
         initializeUI();
         setupActions(actions);
     }

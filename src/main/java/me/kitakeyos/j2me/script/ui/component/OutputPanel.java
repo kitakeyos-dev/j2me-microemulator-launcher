@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.script.ui.components;
+package me.kitakeyos.j2me.script.ui.component;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -7,11 +7,15 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 
-public class OutputPanelComponent extends JPanel {
+/**
+ * Output panel component for displaying script execution results.
+ * Supports color-coded output for info, error, success, and normal messages.
+ */
+public class OutputPanel extends JPanel {
 
     private JTextPane outputArea;
 
-    public OutputPanelComponent() {
+    public OutputPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Output"));
 
@@ -39,7 +43,7 @@ public class OutputPanelComponent extends JPanel {
                 doc.insertString(doc.getLength(), text, style);
                 outputArea.setCaretPosition(doc.getLength());
             } catch (BadLocationException e) {
-                e.printStackTrace();
+                System.err.println("Failed to append text to output panel: " + e.getMessage());
             }
         });
     }
