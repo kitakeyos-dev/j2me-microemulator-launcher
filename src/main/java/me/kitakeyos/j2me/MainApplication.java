@@ -82,12 +82,12 @@ public class MainApplication extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Top panel: Contains 2 configuration sections
-        // Section 1: Main configuration (app, size, path) with action buttons
-        // Section 2: Options (sync, etc.)
-        JPanel topPanel = new JPanel(new BorderLayout(0, 10));
+        // Top panel: All configuration in a single row
+        // LEFT: Main configuration (app, size, path)
+        // RIGHT: Options + Action buttons (vertically stacked)
+        JPanel topPanel = new JPanel(new BorderLayout(10, 0));
 
-        // Section 1: Main Configuration
+        // Main Configuration (left side)
         applicationComboBox = new JComboBox<>();
         applicationComboBox.setToolTipText("Select J2ME application to create instances");
         refreshApplicationComboBox();
@@ -111,20 +111,21 @@ public class MainApplication extends JFrame {
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
                 displayWidthSpinner, displayHeightSpinner,
                 this::openSettingsDialog);
+        topPanel.add(configurationPanel, BorderLayout.CENTER);
 
-        // Create a panel to hold configuration and action buttons in same row
-        JPanel configWithButtonsPanel = new JPanel(new BorderLayout(10, 0));
-        configWithButtonsPanel.add(configurationPanel, BorderLayout.CENTER);
+        // Right side panel: Options + Action buttons (vertically stacked)
+        JPanel rightPanel = new JPanel(new BorderLayout(0, 5));
+        rightPanel.setPreferredSize(new Dimension(160, 0));
 
-        // Action buttons on the right side
-        JPanel buttonPanel = createActionButtonsPanel();
-        configWithButtonsPanel.add(buttonPanel, BorderLayout.EAST);
-
-        topPanel.add(configWithButtonsPanel, BorderLayout.NORTH);
-
-        // Section 2: Options
+        // Options on top
         JPanel optionsPanel = createOptionsPanel();
-        topPanel.add(optionsPanel, BorderLayout.CENTER);
+        rightPanel.add(optionsPanel, BorderLayout.NORTH);
+
+        // Action buttons below options
+        JPanel buttonPanel = createActionButtonsPanel();
+        rightPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        topPanel.add(rightPanel, BorderLayout.EAST);
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
@@ -165,13 +166,13 @@ public class MainApplication extends JFrame {
         JButton createButton = new JButton("Create & Run");
         createButton.setToolTipText("Create and automatically start instances");
         createButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        createButton.setMaximumSize(new Dimension(120, 30));
+        createButton.setMaximumSize(new Dimension(140, 30));
         createButton.addActionListener(e -> createEmulatorInstances());
 
         JButton stopAllButton = new JButton("Stop All");
         stopAllButton.setToolTipText("Stop all running instances");
         stopAllButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        stopAllButton.setMaximumSize(new Dimension(120, 30));
+        stopAllButton.setMaximumSize(new Dimension(140, 30));
         stopAllButton.addActionListener(e -> stopAllInstances());
 
         panel.add(createButton);
@@ -182,16 +183,21 @@ public class MainApplication extends JFrame {
     }
 
     /**
-     * Create options panel (Section 2 of configuration)
+     * Create options panel
      * Contains various runtime options like input synchronization
      */
     private JPanel createOptionsPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("Options"));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Options"),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
 
         // Input synchronization option
-        syncInputCheckBox = new JCheckBox("Sync Mouse & Keyboard Input");
+        syncInputCheckBox = new JCheckBox("Sync Input");
         syncInputCheckBox.setToolTipText("Synchronize mouse clicks and keyboard input across all running instances");
+        syncInputCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         syncInputCheckBox.addActionListener(e -> {
             boolean enabled = syncInputCheckBox.isSelected();
             if (emulatorInstanceManager != null) {
