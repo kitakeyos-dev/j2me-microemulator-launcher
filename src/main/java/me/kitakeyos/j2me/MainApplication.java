@@ -192,9 +192,9 @@ public class MainApplication extends JFrame {
         ));
 
         // Input synchronization option
-        syncInputCheckBox = new JCheckBox("Sync Input");
+        syncInputCheckBox = new JCheckBox("Sync Mouse & Keyboard Input");
         syncInputCheckBox.setToolTipText("Synchronize mouse clicks and keyboard input across all running instances");
-        syncInputCheckBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+        syncInputCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         syncInputCheckBox.addActionListener(e -> {
             boolean enabled = syncInputCheckBox.isSelected();
             if (emulatorInstanceManager != null) {
