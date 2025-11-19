@@ -24,13 +24,13 @@ public class DynamicJavaLib extends LuajavaLib {
     public LuaValue call(LuaValue modname, LuaValue env) {
         LuaTable luajava = new LuaTable();
 
-        // Implement các function cơ bản của luajava
+        // Implement basic luajava functions
         luajava.set("bindClass", new BindClassFunction());
         luajava.set("new", new NewFunction());
         luajava.set("createProxy", new CreateProxyFunction());
         luajava.set("loadLib", new LoadLibFunction());
 
-        // Set vào environment
+        // Set into environment
         env.set("luajava", luajava);
         env.get("package").get("loaded").set("luajava", luajava);
 
@@ -58,7 +58,7 @@ public class DynamicJavaLib extends LuajavaLib {
                     throw new LuaError("luajava.new requires at least 1 argument");
                 }
 
-                // Nếu arg đầu tiên là class
+                // If the first arg is a class
                 if (args.arg1() instanceof LuaUserdata) {
                     Object obj = args.arg1().touserdata();
                     if (obj instanceof Class) {
@@ -72,7 +72,7 @@ public class DynamicJavaLib extends LuajavaLib {
                     }
                 }
 
-                // Nếu arg đầu tiên là string (class name)
+                // If the first arg is a string (class name)
                 String className = args.checkjstring(1);
                 Class<?> clazz = loadClass(className);
 
@@ -91,7 +91,7 @@ public class DynamicJavaLib extends LuajavaLib {
     class CreateProxyFunction extends VarArgFunction {
         @Override
         public Varargs invoke(Varargs args) {
-            // Simplified proxy creation - có thể implement sau
+            // Simplified proxy creation - can be implemented later
             return LuaValue.NIL;
         }
     }
