@@ -82,10 +82,12 @@ public class MainApplication extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Top panel: Configuration + Action buttons
+        // Top panel: Contains 2 configuration sections
+        // Section 1: Main configuration (app, size, path) with action buttons
+        // Section 2: Options (sync, etc.)
         JPanel topPanel = new JPanel(new BorderLayout(0, 10));
 
-        // Configuration panel
+        // Section 1: Main Configuration
         applicationComboBox = new JComboBox<>();
         applicationComboBox.setToolTipText("Select J2ME application to create instances");
         refreshApplicationComboBox();
@@ -120,9 +122,9 @@ public class MainApplication extends JFrame {
 
         topPanel.add(configWithButtonsPanel, BorderLayout.NORTH);
 
-        // Sync options panel
-        JPanel syncPanel = createSyncOptionsPanel();
-        topPanel.add(syncPanel, BorderLayout.CENTER);
+        // Section 2: Options
+        JPanel optionsPanel = createOptionsPanel();
+        topPanel.add(optionsPanel, BorderLayout.CENTER);
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
@@ -179,10 +181,15 @@ public class MainApplication extends JFrame {
         return panel;
     }
 
-    private JPanel createSyncOptionsPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("Synchronization Options"));
+    /**
+     * Create options panel (Section 2 of configuration)
+     * Contains various runtime options like input synchronization
+     */
+    private JPanel createOptionsPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Options"));
 
+        // Input synchronization option
         syncInputCheckBox = new JCheckBox("Sync Mouse & Keyboard Input");
         syncInputCheckBox.setToolTipText("Synchronize mouse clicks and keyboard input across all running instances");
         syncInputCheckBox.addActionListener(e -> {
