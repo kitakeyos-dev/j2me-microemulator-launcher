@@ -13,6 +13,7 @@ import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
+import me.kitakeyos.j2me.ui.layout.SimpleFlowLayout;
 import javax.swing.*;
 import java.awt.*;
 
@@ -120,14 +121,22 @@ public class MainApplication extends JFrame {
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
-        // Running instances panel in center (using GridBagLayout for variable-sized instances)
+        // Running instances panel in center (using SimpleFlowLayout for auto-wrapping)
         runningInstancesPanel = new JPanel();
-        runningInstancesPanel.setLayout(new GridBagLayout());
+        runningInstancesPanel.setLayout(new SimpleFlowLayout(FlowLayout.LEFT, 10, 10));
         emulatorInstanceManager = new EmulatorInstanceManager(runningInstancesPanel);
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Add component listener to handle window resize
+        mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                runningInstancesPanel.revalidate();
+            }
+        });
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -277,7 +286,7 @@ public class MainApplication extends JFrame {
 
     /**
      * Add emulator display to running instances panel
-     * Instances are arranged using GridBagLayout for flexible sizing
+     * Instances are arranged using SimpleFlowLayout with auto-wrapping
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.getEmulatorDisplay() != null) {
@@ -310,17 +319,10 @@ public class MainApplication extends JFrame {
             // Store wrapper panel reference for later removal
             emulatorInstance.getEmulatorDisplay().putClientProperty("wrapperPanel", wrapperPanel);
 
-            // Add to panel using GridBagLayout
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = runningInstancesPanel.getComponentCount() % 3; // 3 columns max
-            gbc.gridy = runningInstancesPanel.getComponentCount() / 3;
-            gbc.insets = new Insets(5, 5, 5, 5);
-            gbc.anchor = GridBagConstraints.NORTHWEST;
+            // Add to panel - SimpleFlowLayout will automatically wrap based on available width
+            runningInstancesPanel.add(wrapperPanel);
 
-            runningInstancesPanel.add(wrapperPanel, gbc);
-
-            // Invalidate and revalidate to trigger layout recalculation
-            runningInstancesPanel.invalidate();
+            // Revalidate to trigger layout recalculation
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
 
@@ -342,8 +344,7 @@ public class MainApplication extends JFrame {
             JPanel wrapperPanel = (JPanel) emulatorInstance.getEmulatorDisplay().getClientProperty("wrapperPanel");
             if (wrapperPanel != null) {
                 runningInstancesPanel.remove(wrapperPanel);
-                // Invalidate and revalidate to trigger layout recalculation
-                runningInstancesPanel.invalidate();
+                // Revalidate to trigger layout recalculation
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
             }
