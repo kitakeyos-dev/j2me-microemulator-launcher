@@ -2,11 +2,9 @@ package me.kitakeyos.j2me.ui.component;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
- * Modern status bar with icons and smooth color transitions
+ * Basic status bar for displaying status messages
  */
 public class StatusBar extends JPanel {
 
@@ -17,47 +15,25 @@ public class StatusBar extends JPanel {
         ERROR
     }
 
-    private final JLabel iconLabel;
     private final JLabel messageLabel;
-    private StatusType currentType = StatusType.INFO;
-    private Color targetColor;
-    private Timer colorTransitionTimer;
-    private int transitionStep = 0;
-    private static final int TRANSITION_STEPS = 10;
 
     public StatusBar() {
-        setLayout(new BorderLayout(10, 0));
+        setLayout(new BorderLayout());
         setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(200, 200, 200)),
-            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+            BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
-        setBackground(new Color(245, 245, 245));
-
-        // Icon label
-        iconLabel = new JLabel();
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
-        add(iconLabel, BorderLayout.WEST);
 
         // Message label
-        messageLabel = new JLabel(" ");
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        messageLabel.setForeground(new Color(100, 100, 100));
+        messageLabel = new JLabel("Ready");
         add(messageLabel, BorderLayout.CENTER);
-
-        setStatus("Ready", StatusType.INFO);
     }
 
     /**
      * Set status message with type
      */
     public void setStatus(String message, StatusType type) {
-        currentType = type;
         messageLabel.setText(message);
-        iconLabel.setText(getIconForType(type));
-
-        // Animate color transition
-        targetColor = getColorForType(type);
-        animateColorTransition();
     }
 
     /**
@@ -93,62 +69,5 @@ public class StatusBar extends JPanel {
      */
     public void clearStatus() {
         setStatus("Ready", StatusType.INFO);
-    }
-
-    private void animateColorTransition() {
-        if (colorTransitionTimer != null && colorTransitionTimer.isRunning()) {
-            colorTransitionTimer.stop();
-        }
-
-        transitionStep = 0;
-        final Color startColor = messageLabel.getForeground();
-
-        colorTransitionTimer = new Timer(30, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                transitionStep++;
-                float ratio = (float) transitionStep / TRANSITION_STEPS;
-
-                int red = (int) (startColor.getRed() + (targetColor.getRed() - startColor.getRed()) * ratio);
-                int green = (int) (startColor.getGreen() + (targetColor.getGreen() - startColor.getGreen()) * ratio);
-                int blue = (int) (startColor.getBlue() + (targetColor.getBlue() - startColor.getBlue()) * ratio);
-
-                messageLabel.setForeground(new Color(red, green, blue));
-                iconLabel.setForeground(new Color(red, green, blue));
-
-                if (transitionStep >= TRANSITION_STEPS) {
-                    ((Timer) e.getSource()).stop();
-                }
-            }
-        });
-        colorTransitionTimer.start();
-    }
-
-    private String getIconForType(StatusType type) {
-        switch (type) {
-            case SUCCESS:
-                return "✓";
-            case ERROR:
-                return "✕";
-            case WARNING:
-                return "⚠";
-            case INFO:
-            default:
-                return "ℹ";
-        }
-    }
-
-    private Color getColorForType(StatusType type) {
-        switch (type) {
-            case SUCCESS:
-                return new Color(34, 139, 34);
-            case ERROR:
-                return new Color(220, 53, 69);
-            case WARNING:
-                return new Color(255, 140, 0);
-            case INFO:
-            default:
-                return new Color(59, 130, 246);
-        }
     }
 }

@@ -12,8 +12,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -180,23 +178,6 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
 
         panel.add(buttonsPanel, BorderLayout.EAST);
 
-        // Add hover effect
-        panel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                panel.setBackground(new Color(240, 240, 255));
-                infoPanel.setBackground(new Color(240, 240, 255));
-                buttonsPanel.setBackground(new Color(240, 240, 255));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                panel.setBackground(Color.WHITE);
-                infoPanel.setBackground(Color.WHITE);
-                buttonsPanel.setBackground(Color.WHITE);
-            }
-        });
-
         return panel;
     }
 
@@ -207,11 +188,11 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         Graphics2D g2d = image.createGraphics();
 
         // Draw a simple phone icon
-        g2d.setColor(new Color(100, 100, 200));
+        g2d.setColor(Color.GRAY);
         g2d.fillRoundRect(10, 5, size - 20, size - 10, 10, 10);
         g2d.setColor(Color.WHITE);
         g2d.fillRect(15, 10, size - 30, size - 25);
-        g2d.setColor(new Color(100, 100, 200));
+        g2d.setColor(Color.GRAY);
         g2d.fillOval(size / 2 - 3, size - 10, 6, 6);
 
         g2d.dispose();

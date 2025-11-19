@@ -13,8 +13,6 @@ import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
-import me.kitakeyos.j2me.ui.layout.WrapLayout;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -45,20 +43,6 @@ public class MainApplication extends JFrame {
         // Initialize managers
         applicationConfig = new ApplicationConfig();
         j2meApplicationManager = new J2meApplicationManager();
-
-        // Add window state listener to detect full screen changes
-        addWindowStateListener(e -> {
-            // Revalidate layout when window state changes (e.g., maximized/restored)
-            // WrapLayout will automatically rewrap instances to fill available width
-            SwingUtilities.invokeLater(() -> {
-                if (runningInstancesPanel != null) {
-                    // Invalidate to force layout recalculation
-                    runningInstancesPanel.invalidate();
-                    runningInstancesPanel.revalidate();
-                    runningInstancesPanel.repaint();
-                }
-            });
-        });
 
         initializeComponents();
         loadApplicationConfiguration();
@@ -107,7 +91,6 @@ public class MainApplication extends JFrame {
 
         microemulatorPathField = new JTextField();
         microemulatorPathField.setEditable(false);
-        microemulatorPathField.setBackground(new Color(240, 240, 240));
         microemulatorPathField.setToolTipText("Path to MicroEmulator JAR (configure in Settings)");
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         instanceCountSpinner.setToolTipText("Number of instances to create (1-100)");
@@ -137,25 +120,14 @@ public class MainApplication extends JFrame {
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
-        // Running instances panel in center (using WrapLayout)
+        // Running instances panel in center (using GridBagLayout for variable-sized instances)
         runningInstancesPanel = new JPanel();
-        runningInstancesPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 10, 10));
-        runningInstancesPanel.setBackground(new Color(240, 240, 240));
+        runningInstancesPanel.setLayout(new GridBagLayout());
         emulatorInstanceManager = new EmulatorInstanceManager(runningInstancesPanel);
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-        // Add component listener to handle window resize
-        mainPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
-                runningInstancesPanel.invalidate();
-                runningInstancesPanel.revalidate();
-                runningInstancesPanel.repaint();
-            }
-        });
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -172,11 +144,13 @@ public class MainApplication extends JFrame {
     private JPanel createActionButtonsPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
-        JButton createButton = createStyledButton("Create & Run", new Color(34, 139, 34), this::createEmulatorInstances);
+        JButton createButton = new JButton("Create & Run");
         createButton.setToolTipText("Create and automatically start instances");
+        createButton.addActionListener(e -> createEmulatorInstances());
 
-        JButton stopAllButton = createStyledButton("Stop All", new Color(220, 20, 60), this::stopAllInstances);
+        JButton stopAllButton = new JButton("Stop All");
         stopAllButton.setToolTipText("Stop all running instances");
+        stopAllButton.addActionListener(e -> stopAllInstances());
 
         panel.add(createButton);
         panel.add(stopAllButton);
@@ -204,18 +178,6 @@ public class MainApplication extends JFrame {
         return panel;
     }
 
-    private JButton createStyledButton(String text, Color bgColor, Runnable action) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Arial", Font.BOLD, 13));
-        btn.setPreferredSize(new Dimension(140, 40));
-        btn.setBackground(bgColor);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setOpaque(true);
-        btn.addActionListener(e -> action.run());
-        return btn;
-    }
 
     private void loadApplicationConfiguration() {
         microemulatorPathField.setText(applicationConfig.getMicroemulatorPath());
@@ -315,8 +277,7 @@ public class MainApplication extends JFrame {
 
     /**
      * Add emulator display to running instances panel
-     * Instances are automatically sorted by instanceId
-     * WrapLayout automatically wraps instances to fill horizontal space
+     * Instances are arranged using GridBagLayout for flexible sizing
      */
     public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
         if (emulatorInstance.getEmulatorDisplay() != null) {
@@ -325,23 +286,15 @@ public class MainApplication extends JFrame {
 
             // Create header panel with title and stop button
             JPanel headerPanel = new JPanel(new BorderLayout());
-            headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-            headerPanel.setBackground(new Color(230, 230, 250));
+            headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
             // Title label
             JLabel titleLabel = new JLabel("Instance #" + emulatorInstance.getInstanceId());
-            titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
             headerPanel.add(titleLabel, BorderLayout.WEST);
 
             // Stop button
             JButton stopButton = new JButton("Stop");
-            stopButton.setFont(new Font("Arial", Font.BOLD, 11));
             stopButton.setPreferredSize(new Dimension(70, 25));
-            stopButton.setBackground(new Color(220, 20, 60));
-            stopButton.setForeground(Color.WHITE);
-            stopButton.setFocusPainted(false);
-            stopButton.setBorderPainted(false);
-            stopButton.setOpaque(true);
             stopButton.addActionListener(e -> {
                 removeEmulatorInstanceTab(emulatorInstance);
                 emulatorInstance.shutdown();
@@ -352,16 +305,19 @@ public class MainApplication extends JFrame {
             // Add header and display to wrapper
             wrapperPanel.add(headerPanel, BorderLayout.NORTH);
             wrapperPanel.add(emulatorInstance.getEmulatorDisplay(), BorderLayout.CENTER);
-            wrapperPanel.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180), 1));
+            wrapperPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
             // Store wrapper panel reference for later removal
             emulatorInstance.getEmulatorDisplay().putClientProperty("wrapperPanel", wrapperPanel);
-            // Store instanceId for sorting
-            wrapperPanel.putClientProperty("instanceId", emulatorInstance.getInstanceId());
 
-            // Find the correct position to insert based on instanceId
-            int insertIndex = findInsertPosition(emulatorInstance.getInstanceId());
-            runningInstancesPanel.add(wrapperPanel, insertIndex);
+            // Add to panel using GridBagLayout
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = runningInstancesPanel.getComponentCount() % 3; // 3 columns max
+            gbc.gridy = runningInstancesPanel.getComponentCount() / 3;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+
+            runningInstancesPanel.add(wrapperPanel, gbc);
 
             // Invalidate and revalidate to trigger layout recalculation
             runningInstancesPanel.invalidate();
@@ -373,23 +329,6 @@ public class MainApplication extends JFrame {
         }
     }
 
-    /**
-     * Find the correct position to insert an instance based on instanceId
-     * Instances are sorted in ascending order by instanceId
-     */
-    private int findInsertPosition(int instanceId) {
-        Component[] components = runningInstancesPanel.getComponents();
-        for (int i = 0; i < components.length; i++) {
-            if (components[i] instanceof JPanel) {
-                JPanel panel = (JPanel) components[i];
-                Integer existingId = (Integer) panel.getClientProperty("instanceId");
-                if (existingId != null && existingId > instanceId) {
-                    return i; // Insert before this component
-                }
-            }
-        }
-        return components.length; // Insert at the end if not found
-    }
 
     /**
      * Remove emulator display from running instances panel
