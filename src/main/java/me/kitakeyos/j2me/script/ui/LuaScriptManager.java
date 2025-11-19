@@ -129,7 +129,7 @@ public class LuaScriptManager extends JPanel
         add(statusBar, BorderLayout.SOUTH);
 
         updateTheme();
-        refreshInstanceList();
+        //refreshInstanceList();
     }
 
     private void updateTheme() {

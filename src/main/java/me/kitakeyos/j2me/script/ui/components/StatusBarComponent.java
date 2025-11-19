@@ -60,6 +60,12 @@ public class StatusBarComponent extends JPanel {
         statusLabel.setForeground(Color.RED);
     }
 
+
+    public void setInfo(String error) {
+        setStatus("Info: " + error);
+        statusLabel.setForeground(Color.BLUE);
+    }
+
     public void setWarning(String warning) {
         setStatus("Warning: " + warning);
         statusLabel.setForeground(new Color(255, 140, 0));
