@@ -1,7 +1,5 @@
 package me.kitakeyos.j2me.ui.panel;
 
-import me.kitakeyos.j2me.ui.component.StatusBar;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -13,16 +11,14 @@ import java.awt.*;
  * Layout structure:
  * - NORTH: Header/toolbar area (implemented by subclasses)
  * - CENTER: Main content area (implemented by subclasses)
- * - SOUTH: Status bar (standardized)
+ * - SOUTH: Status bar (optional, implemented by subclasses)
  *
  * All tabs have:
  * - BorderLayout(10, 10) with 10px horizontal and vertical gaps
  * - EmptyBorder(10, 10, 10, 10) for consistent margins
- * - Status bar with top border line
+ * - Optional status bar with top border line
  */
 public abstract class BaseTabPanel extends JPanel {
-
-    protected StatusBar statusBar;
 
     public BaseTabPanel() {
         // Standardized layout: BorderLayout with 10px gaps
@@ -52,12 +48,13 @@ public abstract class BaseTabPanel extends JPanel {
             add(content, BorderLayout.CENTER);
         }
 
-        // Create standardized status bar
-        statusBar = new StatusBar();
-        statusBar.setInfoStatus("Ready");
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(statusBar, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        // Create status bar (can be overridden by subclass)
+        JComponent statusBar = createStatusBar();
+        if (statusBar != null) {
+            JPanel bottomPanel = new JPanel(new BorderLayout());
+            bottomPanel.add(statusBar, BorderLayout.CENTER);
+            add(bottomPanel, BorderLayout.SOUTH);
+        }
 
         // Post-initialization hook for subclasses
         onInitialized();
@@ -80,62 +77,21 @@ public abstract class BaseTabPanel extends JPanel {
     protected abstract JComponent createContent();
 
     /**
+     * Create the status bar component for the SOUTH section.
+     * Subclasses can override this to provide their custom status bar.
+     * Default implementation returns null (no status bar).
+     *
+     * @return The status bar component, or null if no status bar is needed
+     */
+    protected JComponent createStatusBar() {
+        return null;
+    }
+
+    /**
      * Called after all components are initialized.
      * Subclasses can override this to perform additional initialization.
      */
     protected void onInitialized() {
         // Default: do nothing
-    }
-
-    /**
-     * Get the status bar instance for updating status messages.
-     *
-     * @return The status bar instance
-     */
-    public StatusBar getStatusBar() {
-        return statusBar;
-    }
-
-    /**
-     * Convenience method to update status bar with info message.
-     *
-     * @param message The message to display
-     */
-    protected void setStatusInfo(String message) {
-        statusBar.setInfoStatus(message);
-    }
-
-    /**
-     * Convenience method to update status bar with success message.
-     *
-     * @param message The message to display
-     */
-    protected void setStatusSuccess(String message) {
-        statusBar.setSuccessStatus(message);
-    }
-
-    /**
-     * Convenience method to update status bar with warning message.
-     *
-     * @param message The message to display
-     */
-    protected void setStatusWarning(String message) {
-        statusBar.setWarningStatus(message);
-    }
-
-    /**
-     * Convenience method to update status bar with error message.
-     *
-     * @param message The message to display
-     */
-    protected void setStatusError(String message) {
-        statusBar.setErrorStatus(message);
-    }
-
-    /**
-     * Convenience method to clear status bar to default "Ready" state.
-     */
-    protected void clearStatus() {
-        statusBar.clearStatus();
     }
 }

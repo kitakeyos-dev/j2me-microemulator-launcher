@@ -8,6 +8,7 @@ import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.EmulatorLauncher;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.builder.ConfigurationPanelBuilder;
+import me.kitakeyos.j2me.ui.component.StatusBar;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.layout.SimpleFlowLayout;
@@ -30,6 +31,7 @@ public class InstancesPanel extends BaseTabPanel {
     private JCheckBox syncInputCheckBox;
     private JPanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
+    private StatusBar statusBar;
 
     // Services and managers
     private final ApplicationConfig applicationConfig;
@@ -132,6 +134,13 @@ public class InstancesPanel extends BaseTabPanel {
     }
 
     @Override
+    protected JComponent createStatusBar() {
+        statusBar = new StatusBar();
+        statusBar.setInfoStatus("Ready");
+        return statusBar;
+    }
+
+    @Override
     protected void onInitialized() {
         // Load configuration
         loadApplicationConfiguration();
@@ -185,7 +194,7 @@ public class InstancesPanel extends BaseTabPanel {
                 emulatorInstanceManager.setInputSynchronizationEnabled(enabled);
                 String message = enabled ? "Input synchronization enabled" : "Input synchronization disabled";
                 showToast(message, ToastNotification.ToastType.INFO);
-                setStatusInfo(message);
+                statusBar.setInfoStatus(message);
             }
         });
 
@@ -253,7 +262,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         String message = "Starting " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'";
         showToast(message, ToastNotification.ToastType.SUCCESS);
-        setStatusSuccess(message);
+        statusBar.setSuccessStatus(message);
     }
 
     /**

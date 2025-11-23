@@ -22,6 +22,7 @@ import java.util.Date;
 public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationManager.ApplicationChangeListener {
     private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
+    private StatusBar statusBar;
 
     public ApplicationsPanel(J2meApplicationManager applicationManager) {
         super();
@@ -61,6 +62,12 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         return scrollPane;
+    }
+
+    @Override
+    protected JComponent createStatusBar() {
+        statusBar = new StatusBar();
+        return statusBar;
     }
 
     @Override
@@ -194,10 +201,10 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 J2meApplication app = applicationManager.addApplication(selectedFile);
-                setStatusSuccess("Application added successfully: " + app.getName());
+                statusBar.setSuccessStatus("Application added successfully: " + app.getName());
                 ToastNotification.showSuccess("Added: " + app.getName());
             } catch (Exception e) {
-                setStatusError("Error: " + e.getMessage());
+                statusBar.setErrorStatus("Error: " + e.getMessage());
                 MessageDialog.showError(
                     SwingUtilities.getWindowAncestor(this) instanceof Frame
                         ? (Frame) SwingUtilities.getWindowAncestor(this)
@@ -220,10 +227,10 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
         if (confirm) {
             boolean success = applicationManager.removeApplication(app.getId());
             if (success) {
-                setStatusSuccess("Application removed: " + app.getName());
+                statusBar.setSuccessStatus("Application removed: " + app.getName());
                 ToastNotification.showSuccess("Removed: " + app.getName());
             } else {
-                setStatusError("Failed to remove application");
+                statusBar.setErrorStatus("Failed to remove application");
             }
         }
     }
@@ -231,9 +238,9 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
     private void updateStatus() {
         int count = applicationManager.getApplicationCount();
         if (count == 0) {
-            setStatusInfo("No applications installed");
+            statusBar.setInfoStatus("No applications installed");
         } else {
-            setStatusInfo(count + " application(s) installed");
+            statusBar.setInfoStatus(count + " application(s) installed");
         }
     }
 
