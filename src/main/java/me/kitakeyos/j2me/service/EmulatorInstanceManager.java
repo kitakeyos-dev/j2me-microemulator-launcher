@@ -140,6 +140,22 @@ public class EmulatorInstanceManager {
     }
 
     /**
+     * Enable or disable input scaling by device panel size
+     * @param scaleBySize true to enable, false to disable
+     */
+    public void setInputScaleBySize(boolean scaleBySize) {
+        inputSynchronizer.setScaleBySize(scaleBySize);
+    }
+
+    /**
+     * Check if input scaling by size is enabled
+     * @return true if enabled, false otherwise
+     */
+    public boolean isInputScaleBySize() {
+        return inputSynchronizer.isScaleBySize();
+    }
+
+    /**
      * Notify the input synchronizer that an instance has been started
      * Should be called after instance display is ready
      */

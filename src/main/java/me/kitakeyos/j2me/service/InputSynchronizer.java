@@ -21,6 +21,7 @@ public class InputSynchronizer {
 
     private final EmulatorInstanceManager instanceManager;
     private boolean enabled = false;
+    private boolean scaleBySize = false;
     private final Set<Component> isDispatching = ConcurrentHashMap.newKeySet();
 
     // Store listeners per instance for cleanup
@@ -55,6 +56,21 @@ public class InputSynchronizer {
      */
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /**
+     * Enable or disable scaling by device panel size
+     */
+    public void setScaleBySize(boolean scaleBySize) {
+        this.scaleBySize = scaleBySize;
+        logger.info("Input scaling by size " + (scaleBySize ? "enabled" : "disabled"));
+    }
+
+    /**
+     * Check if scaling by size is enabled
+     */
+    public boolean isScaleBySize() {
+        return scaleBySize;
     }
 
     /**
@@ -237,6 +253,12 @@ public class InputSynchronizer {
             return;
         }
 
+        // Get source device panel for size calculation
+        JPanel sourceDevicePanel = sourceInstance.getDevicePanel();
+        if (sourceDevicePanel == null) {
+            return;
+        }
+
         // Broadcast to all other instances
         for (EmulatorInstance targetInstance : instances) {
             if (targetInstance == sourceInstance) {
@@ -245,10 +267,16 @@ public class InputSynchronizer {
 
             JPanel targetDevicePanel = targetInstance.getDevicePanel();
             if (targetDevicePanel != null) {
+                // Calculate scaled point if scaling is enabled
+                Point targetPoint = relativePoint;
+                if (scaleBySize) {
+                    targetPoint = scalePointBySize(relativePoint, sourceDevicePanel, targetDevicePanel);
+                }
+
                 // Find the corresponding component in target display
-                Component targetComponent = findComponentAtPoint(targetDevicePanel, relativePoint);
+                Component targetComponent = findComponentAtPoint(targetDevicePanel, targetPoint);
                 if (targetComponent != null) {
-                    dispatchMouseEventToComponent(sourceEvent, targetComponent, relativePoint, targetDevicePanel);
+                    dispatchMouseEventToComponent(sourceEvent, targetComponent, targetPoint, targetDevicePanel);
                 }
             }
         }
@@ -343,6 +371,31 @@ public class InputSynchronizer {
     private Component findComponentAtPoint(Container container, Point point) {
         Component deepest = SwingUtilities.getDeepestComponentAt(container, point.x, point.y);
         return deepest != null ? deepest : container;
+    }
+
+    /**
+     * Scale a point from source device panel size to target device panel size
+     */
+    private Point scalePointBySize(Point sourcePoint, JPanel sourceDevicePanel, JPanel targetDevicePanel) {
+        int sourceWidth = sourceDevicePanel.getWidth();
+        int sourceHeight = sourceDevicePanel.getHeight();
+        int targetWidth = targetDevicePanel.getWidth();
+        int targetHeight = targetDevicePanel.getHeight();
+
+        // Avoid division by zero
+        if (sourceWidth == 0 || sourceHeight == 0) {
+            return sourcePoint;
+        }
+
+        // Calculate scale ratios
+        double scaleX = (double) targetWidth / sourceWidth;
+        double scaleY = (double) targetHeight / sourceHeight;
+
+        // Scale the point
+        int scaledX = (int) Math.round(sourcePoint.x * scaleX);
+        int scaledY = (int) Math.round(sourcePoint.y * scaleY);
+
+        return new Point(scaledX, scaledY);
     }
 
     /**
