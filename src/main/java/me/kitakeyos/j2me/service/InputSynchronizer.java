@@ -65,7 +65,7 @@ public class InputSynchronizer {
             return;
         }
 
-        JPanel display = instance.getEmulatorDisplay();
+        JComponent display = instance.getEmulatorDisplay();
         if (display != null) {
             MouseAdapter mouseListener = createMouseListener();
             KeyAdapter keyListener = createKeyListener();
@@ -83,7 +83,7 @@ public class InputSynchronizer {
      * Detach listeners from an instance (called when instance is removed)
      */
     public void detachListenersFromInstance(EmulatorInstance instance) {
-        JPanel display = instance.getEmulatorDisplay();
+        JComponent display = instance.getEmulatorDisplay();
         if (display != null) {
             MouseAdapter mouseListener = mouseListeners.remove(instance);
             KeyAdapter keyListener = keyListeners.remove(instance);
@@ -243,7 +243,7 @@ public class InputSynchronizer {
                 continue; // Skip source instance
             }
 
-            JPanel targetDisplay = targetInstance.getEmulatorDisplay();
+            JComponent targetDisplay = targetInstance.getEmulatorDisplay();
             if (targetDisplay != null) {
                 // Find the corresponding component in target display
                 Component targetComponent = findComponentAtPoint(targetDisplay, relativePoint);
@@ -273,7 +273,7 @@ public class InputSynchronizer {
                 continue; // Skip source instance
             }
 
-            JPanel targetDisplay = targetInstance.getEmulatorDisplay();
+            JComponent targetDisplay = targetInstance.getEmulatorDisplay();
             if (targetDisplay != null) {
                 // Find the corresponding component
                 Component targetComponent = findCorrespondingComponent(sourceComponent, sourceInstance, targetDisplay);
@@ -290,7 +290,7 @@ public class InputSynchronizer {
     private EmulatorInstance findInstanceForComponent(Component component) {
         List<EmulatorInstance> instances = instanceManager.getRunningInstances();
         for (EmulatorInstance instance : instances) {
-            JPanel display = instance.getEmulatorDisplay();
+            JComponent display = instance.getEmulatorDisplay();
             if (display != null && isComponentInHierarchy(component, display)) {
                 return instance;
             }
@@ -316,7 +316,7 @@ public class InputSynchronizer {
      * Get the relative position of a point within the display
      */
     private Point getRelativePointInDisplay(Component component, Point point, EmulatorInstance instance) {
-        JPanel display = instance.getEmulatorDisplay();
+        JComponent display = instance.getEmulatorDisplay();
         if (display == null) {
             return null;
         }
@@ -348,11 +348,11 @@ public class InputSynchronizer {
     /**
      * Find the corresponding component in another instance's display
      */
-    private Component findCorrespondingComponent(Component sourceComponent, EmulatorInstance sourceInstance, JPanel targetDisplay) {
+    private Component findCorrespondingComponent(Component sourceComponent, EmulatorInstance sourceInstance, JComponent targetDisplay) {
         // Build path from source component to its display root
         java.util.List<Integer> path = new java.util.ArrayList<>();
         Component current = sourceComponent;
-        JPanel sourceDisplay = sourceInstance.getEmulatorDisplay();
+        JComponent sourceDisplay = sourceInstance.getEmulatorDisplay();
 
         while (current != null && current != sourceDisplay) {
             Container parent = current.getParent();

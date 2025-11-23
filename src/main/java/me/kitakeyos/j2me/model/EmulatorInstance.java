@@ -37,16 +37,12 @@ public class EmulatorInstance {
 
     // UI components
     private JPanel uiPanel;
-    private JPanel emulatorDisplay;
+    private JComponent emulatorDisplay;
     private ActionListener menuExitListener;
     private ClassLoader classLoader;
 
     // Resource management
     private final ResourceManager resourceManager;
-
-    public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath) {
-        this(instanceId, microemulatorPath, j2meFilePath, 240, 320);
-    }
 
     public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath, int displayWidth, int displayHeight) {
         this.instanceId = instanceId;
@@ -92,7 +88,7 @@ public class EmulatorInstance {
         return uiPanel;
     }
 
-    public JPanel getEmulatorDisplay() {
+    public JComponent getEmulatorDisplay() {
         return emulatorDisplay;
     }
 
@@ -122,7 +118,7 @@ public class EmulatorInstance {
         this.uiPanel = uiPanel;
     }
 
-    public void setEmulatorDisplay(JPanel emulatorDisplay) {
+    public void setEmulatorDisplay(JComponent emulatorDisplay) {
         this.emulatorDisplay = emulatorDisplay;
     }
 

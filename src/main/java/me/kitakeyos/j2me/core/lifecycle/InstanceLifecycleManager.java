@@ -6,6 +6,7 @@ import me.kitakeyos.j2me.core.resource.ResourceManager;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.logging.Logger;
 
@@ -86,7 +87,7 @@ public class InstanceLifecycleManager {
      * Clean up UI components and their references
      */
     private static void cleanupUIComponents(EmulatorInstance instance) {
-        JPanel emulatorDisplay = instance.getEmulatorDisplay();
+        JComponent emulatorDisplay = instance.getEmulatorDisplay();
         if (emulatorDisplay != null) {
             try {
                 // Remove wrapper panel reference
