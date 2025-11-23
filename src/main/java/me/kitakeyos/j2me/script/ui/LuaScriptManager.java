@@ -43,7 +43,7 @@ public class LuaScriptManager extends BaseTabPanel
     private boolean syntaxHighlightEnabled = true;
 
     public LuaScriptManager() {
-        super();
+        super(null, null); // LuaScriptManager doesn't need applicationConfig or applicationManager
         this.scripts = new HashMap<>();
         this.fileManager = new ScriptFileManager();
     }
