@@ -30,6 +30,7 @@ public class EmulatorInstance {
     private final String j2meFilePath;
     private final int displayWidth;
     private final int displayHeight;
+    private final boolean fullDisplayMode;
 
     // State management
     private InstanceState state;
@@ -44,12 +45,13 @@ public class EmulatorInstance {
     // Resource management
     private final ResourceManager resourceManager;
 
-    public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath, int displayWidth, int displayHeight) {
+    public EmulatorInstance(int instanceId, String microemulatorPath, String j2meFilePath, int displayWidth, int displayHeight, boolean fullDisplayMode) {
         this.instanceId = instanceId;
         this.microemulatorPath = microemulatorPath;
         this.j2meFilePath = j2meFilePath;
         this.displayWidth = displayWidth;
         this.displayHeight = displayHeight;
+        this.fullDisplayMode = fullDisplayMode;
         this.state = InstanceState.CREATED;
         this.resourceManager = new ResourceManager(instanceId);
     }
@@ -74,6 +76,10 @@ public class EmulatorInstance {
 
     public int getDisplayHeight() {
         return displayHeight;
+    }
+
+    public boolean isFullDisplayMode() {
+        return fullDisplayMode;
     }
 
     public InstanceState getState() {

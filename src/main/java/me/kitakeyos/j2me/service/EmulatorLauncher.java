@@ -186,7 +186,13 @@ public class EmulatorLauncher {
         JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
 
         instance.setMenuExitListener(exitListener);
-        instance.setEmulatorDisplay(devicePanel);
+
+        // Set emulator display based on display mode
+        if (instance.isFullDisplayMode()) {
+            instance.setEmulatorDisplay(frame.getRootPane()); // Giao diện hoàn chỉnh của emulator
+        } else {
+            instance.setEmulatorDisplay(devicePanel); // Giao diện đơn giản
+        }
 
         Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader, "org.microemu.app.util.MIDletResourceLoader");
         ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader, "classLoader");

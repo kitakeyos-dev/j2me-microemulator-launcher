@@ -29,6 +29,7 @@ public class InstancesPanel extends BaseTabPanel {
     private JSpinner displayWidthSpinner;
     private JSpinner displayHeightSpinner;
     private JCheckBox syncInputCheckBox;
+    private JCheckBox fullDisplayModeCheckBox;
     private JPanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
     private StatusBar statusBar;
@@ -194,7 +195,14 @@ public class InstancesPanel extends BaseTabPanel {
             }
         });
 
+        // Full display mode option
+        fullDisplayModeCheckBox = new JCheckBox("Full Display Mode");
+        fullDisplayModeCheckBox.setToolTipText("Show emulator with full interface (menubar, toolbar) instead of simple device panel only");
+        fullDisplayModeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         panel.add(syncInputCheckBox);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(fullDisplayModeCheckBox);
 
         return panel;
     }
@@ -246,10 +254,11 @@ public class InstancesPanel extends BaseTabPanel {
         String j2meFilePath = selectedApp.getFilePath();
         int displayWidth = (Integer) displayWidthSpinner.getValue();
         int displayHeight = (Integer) displayHeightSpinner.getValue();
+        boolean fullDisplayMode = fullDisplayModeCheckBox.isSelected();
 
         for (int i = 0; i < numberOfInstances; i++) {
             int instanceId = emulatorInstanceManager.getNextInstanceId();
-            EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath, displayWidth, displayHeight);
+            EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath, displayWidth, displayHeight, fullDisplayMode);
 
             emulatorInstanceManager.addInstance(emulatorInstance);
             // Automatically start the instance
