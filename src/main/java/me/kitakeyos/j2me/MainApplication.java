@@ -41,7 +41,7 @@ public class MainApplication extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         // Tab 1: Applications
-        ApplicationsPanel applicationsPanel = new ApplicationsPanel(j2meApplicationManager);
+        ApplicationsPanel applicationsPanel = new ApplicationsPanel(applicationConfig, j2meApplicationManager);
         tabbedPane.addTab("Applications", applicationsPanel);
 
         // Tab 2: Instances

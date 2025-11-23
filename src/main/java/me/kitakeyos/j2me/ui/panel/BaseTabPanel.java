@@ -1,5 +1,7 @@
 package me.kitakeyos.j2me.ui.panel;
 
+import me.kitakeyos.j2me.config.ApplicationConfig;
+import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.component.StatusBar;
 
 import javax.swing.*;
@@ -23,8 +25,12 @@ import java.awt.*;
 public abstract class BaseTabPanel extends JPanel {
 
     protected StatusBar statusBar;
+    protected final ApplicationConfig applicationConfig;
+    protected final J2meApplicationManager applicationManager;
 
-    public BaseTabPanel() {
+    public BaseTabPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
+        this.applicationConfig = applicationConfig;
+        this.applicationManager = applicationManager;
         // Standardized layout: BorderLayout with 10px gaps
         setLayout(new BorderLayout(10, 10));
 
