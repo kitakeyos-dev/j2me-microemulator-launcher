@@ -15,18 +15,14 @@ public class StatusBar extends JPanel {
         ERROR
     }
 
-    private final JLabel messageLabel;
+    protected final JLabel messageLabel;
 
     public StatusBar() {
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY),
-            BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
 
         // Message label
-        messageLabel = new JLabel("Ready");
-        add(messageLabel, BorderLayout.CENTER);
+        messageLabel = new JLabel();
+        add(messageLabel, BorderLayout.WEST);
     }
 
     /**
@@ -34,40 +30,47 @@ public class StatusBar extends JPanel {
      */
     public void setStatus(String message, StatusType type) {
         messageLabel.setText(message);
+        switch (type) {
+            case INFO:
+                messageLabel.setForeground(Color.BLUE);
+                break;
+            case SUCCESS:
+                messageLabel.setForeground(new Color(0, 128, 0));
+                break;
+            case ERROR:
+                messageLabel.setForeground(Color.RED);
+                break;
+            case WARNING:
+                messageLabel.setForeground(new Color(255, 140, 0));
+                break;
+        }
     }
 
     /**
      * Set info status
      */
-    public void setInfoStatus(String message) {
+    public void setInfo(String message) {
         setStatus(message, StatusType.INFO);
     }
 
     /**
      * Set success status
      */
-    public void setSuccessStatus(String message) {
+    public void setSuccess(String message) {
         setStatus(message, StatusType.SUCCESS);
     }
 
     /**
      * Set warning status
      */
-    public void setWarningStatus(String message) {
+    public void setWarning(String message) {
         setStatus(message, StatusType.WARNING);
     }
 
     /**
      * Set error status
      */
-    public void setErrorStatus(String message) {
+    public void setError(String message) {
         setStatus(message, StatusType.ERROR);
-    }
-
-    /**
-     * Clear status to default
-     */
-    public void clearStatus() {
-        setStatus("Ready", StatusType.INFO);
     }
 }

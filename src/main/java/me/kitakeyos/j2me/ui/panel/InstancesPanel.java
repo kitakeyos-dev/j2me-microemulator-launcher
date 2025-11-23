@@ -8,7 +8,6 @@ import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.EmulatorLauncher;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.builder.ConfigurationPanelBuilder;
-import me.kitakeyos.j2me.ui.component.StatusBar;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.layout.SimpleFlowLayout;
@@ -33,7 +32,6 @@ public class InstancesPanel extends BaseTabPanel {
     private JCheckBox fullDisplayModeCheckBox;
     private JPanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
-    private StatusBar statusBar;
 
     // Services and managers
     public EmulatorInstanceManager emulatorInstanceManager;
@@ -124,16 +122,10 @@ public class InstancesPanel extends BaseTabPanel {
     }
 
     @Override
-    protected JComponent createStatusBar() {
-        statusBar = new StatusBar();
-        statusBar.setInfoStatus("Ready");
-        return statusBar;
-    }
-
-    @Override
     protected void onInitialized() {
         // Load configuration
         loadApplicationConfiguration();
+        updateInstancesEmptyState();
     }
 
     private JPanel createActionButtonsPanel() {
@@ -184,7 +176,7 @@ public class InstancesPanel extends BaseTabPanel {
                 emulatorInstanceManager.setInputSynchronizationEnabled(enabled);
                 String message = enabled ? "Input synchronization enabled" : "Input synchronization disabled";
                 showToast(message, ToastNotification.ToastType.INFO);
-                statusBar.setInfoStatus(message);
+                statusBar.setInfo(message);
             }
         });
 
@@ -198,7 +190,7 @@ public class InstancesPanel extends BaseTabPanel {
                 emulatorInstanceManager.setInputScaleBySize(enabled);
                 String message = enabled ? "Input scaling by size enabled" : "Input scaling by size disabled";
                 showToast(message, ToastNotification.ToastType.INFO);
-                statusBar.setInfoStatus(message);
+                statusBar.setInfo(message);
             }
         });
 
@@ -278,7 +270,7 @@ public class InstancesPanel extends BaseTabPanel {
 
             // Show success message
             showToast("MicroEmulator path updated successfully", ToastNotification.ToastType.SUCCESS);
-            statusBar.setSuccessStatus("MicroEmulator path saved: " + selectedFile.getName());
+            statusBar.setSuccess("MicroEmulator path saved: " + selectedFile.getName());
         }
     }
 
@@ -325,7 +317,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         String message = "Starting " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'";
         showToast(message, ToastNotification.ToastType.SUCCESS);
-        statusBar.setSuccessStatus(message);
+        statusBar.setSuccess(message);
     }
 
     /**
@@ -357,7 +349,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         if (runningInstances.isEmpty()) {
             showInfoMessage("No running instances to stop.");
-            statusBar.setInfoStatus("No running instances to stop");
+            statusBar.setInfo("No running instances to stop");
             return;
         }
 
@@ -369,7 +361,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         String message = "Stopped " + runningInstances.size() + " instance(s)";
         showToast(message, ToastNotification.ToastType.INFO);
-        statusBar.setInfoStatus(message);
+        statusBar.setInfo(message);
     }
 
     /**
@@ -380,9 +372,9 @@ public class InstancesPanel extends BaseTabPanel {
         instancesEmptyLabel.setVisible(!hasInstances);
         if (hasInstances) {
             int count = runningInstancesPanel.getComponentCount() - 1; // Exclude empty label
-            statusBar.setInfoStatus(count + " instance(s) running");
+            statusBar.setInfo(count + " instance(s) running");
         } else {
-            statusBar.setInfoStatus("No instances running");
+            statusBar.setInfo("No instances running");
         }
     }
 

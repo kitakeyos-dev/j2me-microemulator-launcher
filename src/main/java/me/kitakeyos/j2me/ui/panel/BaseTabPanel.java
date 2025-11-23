@@ -2,6 +2,7 @@ package me.kitakeyos.j2me.ui.panel;
 
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
+import me.kitakeyos.j2me.ui.component.StatusBar;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,6 +26,7 @@ public abstract class BaseTabPanel extends JPanel {
 
     protected final ApplicationConfig applicationConfig;
     protected final J2meApplicationManager applicationManager;
+    protected StatusBar statusBar;
 
     public BaseTabPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
         this.applicationConfig = applicationConfig;
@@ -92,8 +94,9 @@ public abstract class BaseTabPanel extends JPanel {
      *
      * @return The status bar component, or null if no status bar is needed
      */
-    protected JComponent createStatusBar() {
-        return null;
+    protected StatusBar createStatusBar() {
+        statusBar = new StatusBar();
+        return statusBar;
     }
 
     /**

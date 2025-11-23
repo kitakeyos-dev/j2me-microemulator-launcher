@@ -11,6 +11,7 @@ import me.kitakeyos.j2me.script.ui.component.ScriptList;
 import me.kitakeyos.j2me.script.ui.component.ScriptStatusBar;
 import me.kitakeyos.j2me.script.ui.component.ScriptToolbar;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
+import me.kitakeyos.j2me.ui.component.StatusBar;
 import me.kitakeyos.j2me.ui.panel.BaseTabPanel;
 
 import javax.swing.*;
@@ -119,7 +120,7 @@ public class LuaScriptManager extends BaseTabPanel
     }
 
     @Override
-    protected JComponent createStatusBar() {
+    protected StatusBar createStatusBar() {
         statusBar = new ScriptStatusBar();
         return statusBar;
     }

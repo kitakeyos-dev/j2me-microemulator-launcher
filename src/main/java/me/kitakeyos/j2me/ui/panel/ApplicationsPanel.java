@@ -3,7 +3,6 @@ package me.kitakeyos.j2me.ui.panel;
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.J2meApplication;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
-import me.kitakeyos.j2me.ui.component.StatusBar;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
@@ -22,7 +21,6 @@ import java.util.Date;
  */
 public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationManager.ApplicationChangeListener {
     private JPanel applicationsListPanel;
-    private StatusBar statusBar;
 
     public ApplicationsPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
         super(applicationConfig, applicationManager);
@@ -57,12 +55,6 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         return scrollPane;
-    }
-
-    @Override
-    protected JComponent createStatusBar() {
-        statusBar = new StatusBar();
-        return statusBar;
     }
 
     @Override
@@ -196,10 +188,10 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 J2meApplication app = applicationManager.addApplication(selectedFile);
-                statusBar.setSuccessStatus("Application added successfully: " + app.getName());
+                statusBar.setSuccess("Application added successfully: " + app.getName());
                 ToastNotification.showSuccess("Added: " + app.getName());
             } catch (Exception e) {
-                statusBar.setErrorStatus("Error: " + e.getMessage());
+                statusBar.setError("Error: " + e.getMessage());
                 MessageDialog.showError(
                     SwingUtilities.getWindowAncestor(this) instanceof Frame
                         ? (Frame) SwingUtilities.getWindowAncestor(this)
@@ -222,10 +214,10 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
         if (confirm) {
             boolean success = applicationManager.removeApplication(app.getId());
             if (success) {
-                statusBar.setSuccessStatus("Application removed: " + app.getName());
+                statusBar.setSuccess("Application removed: " + app.getName());
                 ToastNotification.showSuccess("Removed: " + app.getName());
             } else {
-                statusBar.setErrorStatus("Failed to remove application");
+                statusBar.setError("Failed to remove application");
             }
         }
     }
@@ -233,9 +225,9 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
     private void updateStatus() {
         int count = applicationManager.getApplicationCount();
         if (count == 0) {
-            statusBar.setInfoStatus("No applications installed");
+            statusBar.setInfo("No applications installed");
         } else {
-            statusBar.setInfoStatus(count + " application(s) installed");
+            statusBar.setInfo(count + " application(s) installed");
         }
     }
 
