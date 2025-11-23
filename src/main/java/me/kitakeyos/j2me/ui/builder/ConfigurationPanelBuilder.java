@@ -80,12 +80,12 @@ public class ConfigurationPanelBuilder {
         gbc.gridx = 1;
         gbc.weightx = 0.0;
         panel.add(microemulatorPathField, gbc);
-        JButton settingsButton = new JButton("Settings");
-        settingsButton.setToolTipText("Open settings to configure MicroEmulator path");
-        settingsButton.addActionListener(e -> onOpenSettings.run());
+        JButton browseButton = new JButton("Browse");
+        browseButton.setToolTipText("Browse to select MicroEmulator JAR file");
+        browseButton.addActionListener(e -> onOpenSettings.run());
         gbc.gridx = 2;
         gbc.weightx = 0.0;
-        panel.add(settingsButton, gbc);
+        panel.add(browseButton, gbc);
 
         return panel;
     }

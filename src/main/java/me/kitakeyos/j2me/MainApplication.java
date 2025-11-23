@@ -8,7 +8,6 @@ import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.panel.InstancesPanel;
-import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import javax.swing.*;
 
 /**
@@ -46,7 +45,6 @@ public class MainApplication extends JFrame {
 
         // Tab 2: Instances
         instancesPanel = new InstancesPanel(applicationConfig, j2meApplicationManager);
-        instancesPanel.setSettingsDialogOpener(this::openSettingsDialog);
         emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
         tabbedPane.addTab("Instances", instancesPanel);
 
@@ -68,12 +66,6 @@ public class MainApplication extends JFrame {
                 instancesPanel.refreshApplicationComboBox();
             }
         });
-    }
-
-    private void openSettingsDialog() {
-        SettingsDialog settingsDialog = new SettingsDialog(this, applicationConfig);
-        settingsDialog.setVisible(true);
-        // Note: InstancesPanel will reload configuration after this returns
     }
 
     /**

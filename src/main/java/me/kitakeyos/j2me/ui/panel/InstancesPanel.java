@@ -37,18 +37,8 @@ public class InstancesPanel extends BaseTabPanel {
     // Services and managers
     public EmulatorInstanceManager emulatorInstanceManager;
 
-    // Callback for opening settings dialog
-    private Runnable settingsDialogOpener;
-
     public InstancesPanel(ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
         super(applicationConfig, j2meApplicationManager);
-    }
-
-    /**
-     * Set the callback for opening settings dialog
-     */
-    public void setSettingsDialogOpener(Runnable opener) {
-        this.settingsDialogOpener = opener;
     }
 
     @Override
@@ -82,7 +72,7 @@ public class InstancesPanel extends BaseTabPanel {
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
                 displayWidthSpinner, displayHeightSpinner,
-                this::openSettingsDialog);
+                this::browseMicroemulatorJar);
         topPanel.add(configurationPanel, BorderLayout.WEST);
 
         // Options panel in center
@@ -216,11 +206,60 @@ public class InstancesPanel extends BaseTabPanel {
         }
     }
 
-    private void openSettingsDialog() {
-        if (settingsDialogOpener != null) {
-            settingsDialogOpener.run();
-            // Reload configuration after settings dialog closes
-            loadApplicationConfiguration();
+    /**
+     * Browse for MicroEmulator JAR file
+     */
+    private void browseMicroemulatorJar() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select MicroEmulator JAR File");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        // Set file filter for JAR files
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(java.io.File f) {
+                return f.isDirectory() || f.getName().toLowerCase().endsWith(".jar");
+            }
+
+            @Override
+            public String getDescription() {
+                return "JAR Files (*.jar)";
+            }
+        });
+
+        // Set current directory based on existing path if valid
+        String currentPath = applicationConfig.getMicroemulatorPath();
+        if (currentPath != null && !currentPath.isEmpty()) {
+            java.io.File currentFile = new java.io.File(currentPath);
+            if (currentFile.getParentFile() != null && currentFile.getParentFile().exists()) {
+                fileChooser.setCurrentDirectory(currentFile.getParentFile());
+            }
+        }
+
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            java.io.File selectedFile = fileChooser.getSelectedFile();
+            String selectedPath = selectedFile.getAbsolutePath();
+
+            // Validate that it's a JAR file
+            if (!selectedPath.toLowerCase().endsWith(".jar")) {
+                showErrorMessage("Please select a valid JAR file.");
+                return;
+            }
+
+            // Save to configuration
+            applicationConfig.setMicroemulatorPath(selectedPath);
+            applicationConfig.saveConfiguration();
+
+            // Update UI
+            microemulatorPathField.setText(selectedPath);
+
+            // Pre-warm classloader in background
+            EmulatorLauncher.prewarmClassLoader(selectedPath);
+
+            // Show success message
+            showToast("MicroEmulator path updated successfully", ToastNotification.ToastType.SUCCESS);
+            statusBar.setSuccessStatus("MicroEmulator path saved: " + selectedFile.getName());
         }
     }
 
