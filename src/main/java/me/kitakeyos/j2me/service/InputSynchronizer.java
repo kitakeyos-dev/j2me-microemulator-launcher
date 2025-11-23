@@ -65,12 +65,12 @@ public class InputSynchronizer {
             return;
         }
 
-        JComponent display = instance.getEmulatorDisplay();
-        if (display != null) {
+        JPanel devicePanel = instance.getDevicePanel();
+        if (devicePanel != null) {
             MouseAdapter mouseListener = createMouseListener();
             KeyAdapter keyListener = createKeyListener();
 
-            attachListenersRecursively(display, mouseListener, keyListener);
+            attachListenersRecursively(devicePanel, mouseListener, keyListener);
 
             mouseListeners.put(instance, mouseListener);
             keyListeners.put(instance, keyListener);
@@ -83,13 +83,13 @@ public class InputSynchronizer {
      * Detach listeners from an instance (called when instance is removed)
      */
     public void detachListenersFromInstance(EmulatorInstance instance) {
-        JComponent display = instance.getEmulatorDisplay();
-        if (display != null) {
+        JPanel devicePanel = instance.getDevicePanel();
+        if (devicePanel != null) {
             MouseAdapter mouseListener = mouseListeners.remove(instance);
             KeyAdapter keyListener = keyListeners.remove(instance);
 
             if (mouseListener != null && keyListener != null) {
-                detachListenersRecursively(display, mouseListener, keyListener);
+                detachListenersRecursively(devicePanel, mouseListener, keyListener);
                 logger.info("Detached listeners from instance #" + instance.getInstanceId());
             }
         }
@@ -243,10 +243,10 @@ public class InputSynchronizer {
                 continue; // Skip source instance
             }
 
-            JComponent targetDisplay = targetInstance.getEmulatorDisplay();
-            if (targetDisplay != null) {
+            JPanel targetDevicePanel = targetInstance.getDevicePanel();
+            if (targetDevicePanel != null) {
                 // Find the corresponding component in target display
-                Component targetComponent = findComponentAtPoint(targetDisplay, relativePoint);
+                Component targetComponent = findComponentAtPoint(targetDevicePanel, relativePoint);
                 if (targetComponent != null) {
                     dispatchMouseEventToComponent(sourceEvent, targetComponent, relativePoint);
                 }
@@ -273,10 +273,10 @@ public class InputSynchronizer {
                 continue; // Skip source instance
             }
 
-            JComponent targetDisplay = targetInstance.getEmulatorDisplay();
-            if (targetDisplay != null) {
+            JPanel targetDevicePanel = targetInstance.getDevicePanel();
+            if (targetDevicePanel != null) {
                 // Find the corresponding component
-                Component targetComponent = findCorrespondingComponent(sourceComponent, sourceInstance, targetDisplay);
+                Component targetComponent = findCorrespondingComponent(sourceComponent, sourceInstance, targetDevicePanel);
                 if (targetComponent != null) {
                     dispatchKeyEventToComponent(sourceEvent, targetComponent);
                 }
@@ -290,8 +290,8 @@ public class InputSynchronizer {
     private EmulatorInstance findInstanceForComponent(Component component) {
         List<EmulatorInstance> instances = instanceManager.getRunningInstances();
         for (EmulatorInstance instance : instances) {
-            JComponent display = instance.getEmulatorDisplay();
-            if (display != null && isComponentInHierarchy(component, display)) {
+            JPanel devicePanel = instance.getDevicePanel();
+            if (devicePanel != null && isComponentInHierarchy(component, devicePanel)) {
                 return instance;
             }
         }
@@ -316,8 +316,8 @@ public class InputSynchronizer {
      * Get the relative position of a point within the display
      */
     private Point getRelativePointInDisplay(Component component, Point point, EmulatorInstance instance) {
-        JComponent display = instance.getEmulatorDisplay();
-        if (display == null) {
+        JPanel devicePanel = instance.getDevicePanel();
+        if (devicePanel == null) {
             return null;
         }
 
@@ -326,7 +326,7 @@ public class InputSynchronizer {
             Point screenPoint = component.getLocationOnScreen();
             screenPoint.translate(point.x, point.y);
 
-            Point displayScreenPoint = display.getLocationOnScreen();
+            Point displayScreenPoint = devicePanel.getLocationOnScreen();
 
             return new Point(
                 screenPoint.x - displayScreenPoint.x,
@@ -348,13 +348,13 @@ public class InputSynchronizer {
     /**
      * Find the corresponding component in another instance's display
      */
-    private Component findCorrespondingComponent(Component sourceComponent, EmulatorInstance sourceInstance, JComponent targetDisplay) {
+    private Component findCorrespondingComponent(Component sourceComponent, EmulatorInstance sourceInstance, JPanel targetDevicePanel) {
         // Build path from source component to its display root
         java.util.List<Integer> path = new java.util.ArrayList<>();
         Component current = sourceComponent;
-        JComponent sourceDisplay = sourceInstance.getEmulatorDisplay();
+        JPanel sourceDevicePanel = sourceInstance.getDevicePanel();
 
-        while (current != null && current != sourceDisplay) {
+        while (current != null && current != sourceDevicePanel) {
             Container parent = current.getParent();
             if (parent != null) {
                 // Find index of current in parent
@@ -369,7 +369,7 @@ public class InputSynchronizer {
         }
 
         // Navigate the same path in target display
-        Component target = targetDisplay;
+        Component target = targetDevicePanel;
         for (Integer index : path) {
             if (target instanceof Container) {
                 Container container = (Container) target;
@@ -377,11 +377,11 @@ public class InputSynchronizer {
                     target = container.getComponent(index);
                 } else {
                     // Path doesn't match, use root display
-                    return targetDisplay;
+                    return targetDevicePanel;
                 }
             } else {
                 // Path doesn't match, use root display
-                return targetDisplay;
+                return targetDevicePanel;
             }
         }
 
