@@ -183,14 +183,13 @@ public class EmulatorLauncher {
      */
     private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame, EmulatorClassLoader emulatorClassLoader) throws Exception {
         ActionListener exitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
-        JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
-
         instance.setMenuExitListener(exitListener);
 
         // Set emulator display based on display mode
         if (instance.isFullDisplayMode()) {
             instance.setEmulatorDisplay(frame.getRootPane()); // Giao diện hoàn chỉnh của emulator
         } else {
+            JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
             instance.setEmulatorDisplay(devicePanel); // Giao diện đơn giản
         }
 
