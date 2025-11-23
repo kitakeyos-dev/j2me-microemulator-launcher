@@ -183,15 +183,17 @@ public class EmulatorLauncher {
      */
     private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame, EmulatorClassLoader emulatorClassLoader) throws Exception {
         ActionListener exitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
+        JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
+
         instance.setMenuExitListener(exitListener);
 
         // Set emulator display based on display mode
         if (instance.isFullDisplayMode()) {
             instance.setEmulatorDisplay(frame.getRootPane());
         } else {
-            JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
             instance.setEmulatorDisplay(devicePanel);
         }
+        instance.setDevicePanel(devicePanel);
 
         Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader, "org.microemu.app.util.MIDletResourceLoader");
         ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader, "classLoader");

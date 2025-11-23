@@ -38,6 +38,7 @@ public class EmulatorInstance {
 
     // UI components
     private JPanel uiPanel;
+    private JPanel devicePanel;
     private JComponent emulatorDisplay;
     private ActionListener menuExitListener;
     private ClassLoader classLoader;
@@ -94,6 +95,10 @@ public class EmulatorInstance {
         return uiPanel;
     }
 
+    public JPanel getDevicePanel() {
+        return devicePanel;
+    }
+
     public JComponent getEmulatorDisplay() {
         return emulatorDisplay;
     }
@@ -122,6 +127,10 @@ public class EmulatorInstance {
 
     public void setUIPanel(JPanel uiPanel) {
         this.uiPanel = uiPanel;
+    }
+
+    public void setDevicePanel(JPanel devicePanel) {
+        this.devicePanel = devicePanel;
     }
 
     public void setEmulatorDisplay(JComponent emulatorDisplay) {
