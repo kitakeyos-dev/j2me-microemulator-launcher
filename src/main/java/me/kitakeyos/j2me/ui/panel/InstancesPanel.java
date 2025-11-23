@@ -291,7 +291,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         if (runningInstances.isEmpty()) {
             showInfoMessage("No running instances to stop.");
-            setStatusInfo("No running instances to stop");
+            statusBar.setInfoStatus("No running instances to stop");
             return;
         }
 
@@ -303,7 +303,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         String message = "Stopped " + runningInstances.size() + " instance(s)";
         showToast(message, ToastNotification.ToastType.INFO);
-        setStatusInfo(message);
+        statusBar.setInfoStatus(message);
     }
 
     /**
@@ -314,9 +314,9 @@ public class InstancesPanel extends BaseTabPanel {
         instancesEmptyLabel.setVisible(!hasInstances);
         if (hasInstances) {
             int count = runningInstancesPanel.getComponentCount() - 1; // Exclude empty label
-            setStatusInfo(count + " instance(s) running");
+            statusBar.setInfoStatus(count + " instance(s) running");
         } else {
-            setStatusInfo("No instances running");
+            statusBar.setInfoStatus("No instances running");
         }
     }
 
