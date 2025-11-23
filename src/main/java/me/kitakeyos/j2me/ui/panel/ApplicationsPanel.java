@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.ui.panel;
 
+import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.J2meApplication;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.component.StatusBar;
@@ -20,13 +21,11 @@ import java.util.Date;
  * Panel for managing installed J2ME applications
  */
 public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationManager.ApplicationChangeListener {
-    private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
     private StatusBar statusBar;
 
-    public ApplicationsPanel(J2meApplicationManager applicationManager) {
-        super();
-        this.applicationManager = applicationManager;
+    public ApplicationsPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
+        super(applicationConfig, applicationManager);
         this.applicationManager.addApplicationChangeListener(this);
     }
 

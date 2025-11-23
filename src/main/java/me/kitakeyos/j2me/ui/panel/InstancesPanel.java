@@ -34,17 +34,13 @@ public class InstancesPanel extends BaseTabPanel {
     private StatusBar statusBar;
 
     // Services and managers
-    private final ApplicationConfig applicationConfig;
-    private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
 
     // Callback for opening settings dialog
     private Runnable settingsDialogOpener;
 
     public InstancesPanel(ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
-        super();
-        this.applicationConfig = applicationConfig;
-        this.j2meApplicationManager = j2meApplicationManager;
+        super(applicationConfig, j2meApplicationManager);
     }
 
     /**
@@ -225,7 +221,7 @@ public class InstancesPanel extends BaseTabPanel {
      */
     public void refreshApplicationComboBox() {
         applicationComboBox.removeAllItems();
-        for (J2meApplication app : j2meApplicationManager.getApplications()) {
+        for (J2meApplication app : applicationManager.getApplications()) {
             applicationComboBox.addItem(app);
         }
     }

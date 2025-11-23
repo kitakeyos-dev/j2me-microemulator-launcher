@@ -1,5 +1,8 @@
 package me.kitakeyos.j2me.ui.panel;
 
+import me.kitakeyos.j2me.config.ApplicationConfig;
+import me.kitakeyos.j2me.service.J2meApplicationManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -20,7 +23,13 @@ import java.awt.*;
  */
 public abstract class BaseTabPanel extends JPanel {
 
-    public BaseTabPanel() {
+    protected final ApplicationConfig applicationConfig;
+    protected final J2meApplicationManager applicationManager;
+
+    public BaseTabPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
+        this.applicationConfig = applicationConfig;
+        this.applicationManager = applicationManager;
+
         // Standardized layout: BorderLayout with 10px gaps
         setLayout(new BorderLayout(10, 10));
 
