@@ -22,10 +22,12 @@ public class ToastNotification extends JWindow {
     private static final int DISPLAY_TIME = 2000; // 2 seconds
 
     private Window owner;
+    private ToastType toastType;
 
     public ToastNotification(Window owner, String message, ToastType toastType) {
         super(owner);
         this.owner = owner;
+        this.toastType = toastType;
         initComponents(message);
         positionToast();
         scheduleAutoClose();
@@ -35,18 +37,71 @@ public class ToastNotification extends JWindow {
         setSize(TOAST_WIDTH, TOAST_HEIGHT);
         setAlwaysOnTop(true);
 
+        // Get colors based on toast type
+        Color borderColor = getBorderColor();
+        Color backgroundColor = getBackgroundColor();
+        Color textColor = getTextColor();
+
         // Create main panel
         JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(backgroundColor);
         mainPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.GRAY, 1),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            BorderFactory.createLineBorder(borderColor, 2),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
 
         // Message label
         JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(textColor);
+        messageLabel.setFont(messageLabel.getFont().deriveFont(12f));
         mainPanel.add(messageLabel, BorderLayout.CENTER);
 
         setContentPane(mainPanel);
+    }
+
+    private Color getBorderColor() {
+        switch (toastType) {
+            case SUCCESS:
+                return new Color(40, 167, 69); // Green
+            case ERROR:
+                return new Color(220, 53, 69); // Red
+            case WARNING:
+                return new Color(255, 193, 7); // Yellow/Amber
+            case INFO:
+                return new Color(23, 162, 184); // Blue
+            default:
+                return Color.GRAY;
+        }
+    }
+
+    private Color getBackgroundColor() {
+        switch (toastType) {
+            case SUCCESS:
+                return new Color(212, 237, 218); // Light green
+            case ERROR:
+                return new Color(248, 215, 218); // Light red
+            case WARNING:
+                return new Color(255, 243, 205); // Light yellow
+            case INFO:
+                return new Color(209, 236, 241); // Light blue
+            default:
+                return Color.WHITE;
+        }
+    }
+
+    private Color getTextColor() {
+        switch (toastType) {
+            case SUCCESS:
+                return new Color(21, 87, 36); // Dark green
+            case ERROR:
+                return new Color(114, 28, 36); // Dark red
+            case WARNING:
+                return new Color(133, 100, 4); // Dark yellow/brown
+            case INFO:
+                return new Color(12, 84, 96); // Dark blue
+            default:
+                return Color.BLACK;
+        }
     }
 
     private void positionToast() {
