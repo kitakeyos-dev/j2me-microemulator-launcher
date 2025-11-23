@@ -18,28 +18,28 @@ public class MessageDialog {
     /**
      * Show a success message dialog
      */
-    public static void showSuccess(Frame parent, String title, String message) {
+    public static void showSuccess(Component parent, String title, String message) {
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
      * Show an error message dialog
      */
-    public static void showError(Frame parent, String title, String message) {
+    public static void showError(Component parent, String title, String message) {
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
     /**
      * Show a warning message dialog
      */
-    public static void showWarning(Frame parent, String title, String message) {
+    public static void showWarning(Component parent, String title, String message) {
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.WARNING_MESSAGE);
     }
 
     /**
      * Show an info message dialog
      */
-    public static void showInfo(Frame parent, String title, String message) {
+    public static void showInfo(Component parent, String title, String message) {
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 }
