@@ -113,8 +113,8 @@ public class ToastNotification extends JWindow {
             int ownerHeight = owner.getHeight();
 
             // Position at bottom-right corner of the owner window with some padding
-            int x = ownerX + ownerWidth - TOAST_WIDTH - 20;
-            int y = ownerY + ownerHeight - TOAST_HEIGHT - 60;
+            int x = ownerX + ownerWidth - TOAST_WIDTH - 30;
+            int y = ownerY + ownerHeight - TOAST_HEIGHT - 30;
 
             setLocation(x, y);
         } else {
@@ -127,8 +127,8 @@ public class ToastNotification extends JWindow {
             int screenHeight = mode.getHeight();
 
             // Position at bottom-right corner with some padding
-            int x = screenWidth - TOAST_WIDTH - 20;
-            int y = screenHeight - TOAST_HEIGHT - 60;
+            int x = screenWidth - TOAST_WIDTH - 30;
+            int y = screenHeight - TOAST_HEIGHT - 30;
 
             setLocation(x, y);
         }
