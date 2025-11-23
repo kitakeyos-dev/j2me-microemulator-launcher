@@ -81,7 +81,7 @@ public class ResourceManager {
         logger.info("Cleaning up " + sockets.size() + " sockets for instance " + instanceId);
 
         for (Socket socket : sockets) {
-            if (!socket.isClosed()) {
+            if (socket.isConnected() && !socket.isClosed()) {
                 try {
                     socket.close();
                     logger.fine("Closed socket: " + socket);
