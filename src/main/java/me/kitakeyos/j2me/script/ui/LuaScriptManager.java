@@ -90,7 +90,8 @@ public class LuaScriptManager extends JPanel
     }
 
     private void layoutComponents() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
 
         // Top panel with toolbar and instance selector
         JPanel topPanel = new JPanel(new BorderLayout(10, 0));
@@ -115,7 +116,6 @@ public class LuaScriptManager extends JPanel
 
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setDividerLocation(300);
-        mainSplit.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         mainSplit.setLeftComponent(scriptList);
 
@@ -194,10 +194,17 @@ public class LuaScriptManager extends JPanel
         if (confirm == JOptionPane.YES_OPTION) {
             scripts.remove(selected);
             scriptList.removeScript(selected);
-            codeEditor.setText("");
             fileManager.deleteScriptFiles(selected);
             statusBar.setScriptCount(scripts.size());
-            statusBar.setSuccess("Deleted script");
+
+            if (scripts.isEmpty()) {
+                // Show empty state when last script is deleted
+                codeEditor.setText("-- No scripts available. Click 'New' to create one.");
+                statusBar.setInfo("No scripts available");
+            } else {
+                codeEditor.setText("");
+                statusBar.setSuccess("Deleted script");
+            }
         }
     }
 
@@ -257,6 +264,10 @@ public class LuaScriptManager extends JPanel
 
         if (!scripts.isEmpty()) {
             scriptList.selectFirstScript();
+        } else {
+            // Show empty state message in editor
+            codeEditor.setText("-- No scripts available. Click 'New' to create one.");
+            statusBar.setInfo("No scripts available");
         }
         statusBar.setReady();
     }

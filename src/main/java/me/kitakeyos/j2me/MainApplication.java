@@ -32,6 +32,8 @@ public class MainApplication extends JFrame {
     private JSpinner displayHeightSpinner;
     private JCheckBox syncInputCheckBox;
     private JPanel runningInstancesPanel;
+    private JLabel instancesEmptyLabel;
+    private me.kitakeyos.j2me.ui.component.StatusBar instancesStatusBar;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
@@ -91,7 +93,7 @@ public class MainApplication extends JFrame {
         // WEST: Configuration (compact, no stretch)
         // CENTER: Options panel
         // EAST: Action buttons
-        JPanel topPanel = new JPanel(new BorderLayout(15, 0));
+        JPanel topPanel = new JPanel(new BorderLayout(10, 0));
 
         // Main Configuration (left side - compact)
         applicationComboBox = new JComboBox<>();
@@ -134,8 +136,20 @@ public class MainApplication extends JFrame {
         runningInstancesPanel.setLayout(new SimpleFlowLayout(FlowLayout.LEFT, 10, 10));
         emulatorInstanceManager = new EmulatorInstanceManager(runningInstancesPanel);
 
+        // Create empty state label
+        instancesEmptyLabel = new JLabel("No instances running. Click 'Create & Run' to start instances.");
+        instancesEmptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        instancesEmptyLabel.setForeground(Color.GRAY);
+        instancesEmptyLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        runningInstancesPanel.add(instancesEmptyLabel);
+
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Running Instances"));
+        scrollPane.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+            "Running Instances",
+            javax.swing.border.TitledBorder.LEFT,
+            javax.swing.border.TitledBorder.TOP
+        ));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         // Add component listener to handle window resize
@@ -147,6 +161,13 @@ public class MainApplication extends JFrame {
         });
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Bottom panel with status bar
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        instancesStatusBar = new me.kitakeyos.j2me.ui.component.StatusBar();
+        instancesStatusBar.setInfoStatus("Ready");
+        bottomPanel.add(instancesStatusBar, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         return mainPanel;
     }
@@ -206,6 +227,7 @@ public class MainApplication extends JFrame {
                 emulatorInstanceManager.setInputSynchronizationEnabled(enabled);
                 String message = enabled ? "Input synchronization enabled" : "Input synchronization disabled";
                 showToast(message, ToastNotification.ToastType.INFO);
+                instancesStatusBar.setInfoStatus(message);
             }
         });
 
@@ -264,7 +286,9 @@ public class MainApplication extends JFrame {
             runSingleInstance(emulatorInstance);
         }
 
-        showToast("Starting " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'", ToastNotification.ToastType.SUCCESS);
+        String message = "Starting " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'";
+        showToast(message, ToastNotification.ToastType.SUCCESS);
+        instancesStatusBar.setSuccessStatus(message);
     }
 
 
@@ -298,6 +322,7 @@ public class MainApplication extends JFrame {
 
         if (runningInstances.isEmpty()) {
             showInfoMessage("No running instances to stop.");
+            instancesStatusBar.setInfoStatus("No running instances to stop");
             return;
         }
 
@@ -307,9 +332,25 @@ public class MainApplication extends JFrame {
             instance.shutdown();
         }
 
-        showToast("Stopped " + runningInstances.size() + " instance(s)", ToastNotification.ToastType.INFO);
+        String message = "Stopped " + runningInstances.size() + " instance(s)";
+        showToast(message, ToastNotification.ToastType.INFO);
+        instancesStatusBar.setInfoStatus(message);
     }
 
+
+    /**
+     * Update empty state visibility based on number of running instances
+     */
+    private void updateInstancesEmptyState() {
+        boolean hasInstances = runningInstancesPanel.getComponentCount() > 1; // More than just the empty label
+        instancesEmptyLabel.setVisible(!hasInstances);
+        if (hasInstances) {
+            int count = runningInstancesPanel.getComponentCount() - 1; // Exclude empty label
+            instancesStatusBar.setInfoStatus(count + " instance(s) running");
+        } else {
+            instancesStatusBar.setInfoStatus("No instances running");
+        }
+    }
 
     /**
      * Add emulator display to running instances panel
@@ -356,6 +397,9 @@ public class MainApplication extends JFrame {
             runningInstancesPanel.revalidate();
             runningInstancesPanel.repaint();
 
+            // Update empty state visibility
+            updateInstancesEmptyState();
+
             // Notify instance manager that instance has been started (for input sync)
             emulatorInstanceManager.notifyInstanceStarted(emulatorInstance);
         }
@@ -395,6 +439,8 @@ public class MainApplication extends JFrame {
                 // Revalidate to trigger layout recalculation
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
+                // Update empty state visibility
+                updateInstancesEmptyState();
             }
         }
     }
