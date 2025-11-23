@@ -19,35 +19,18 @@ import java.util.Date;
 /**
  * Panel for managing installed J2ME applications
  */
-public class ApplicationsPanel extends JPanel implements J2meApplicationManager.ApplicationChangeListener {
+public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationManager.ApplicationChangeListener {
     private final J2meApplicationManager applicationManager;
     private JPanel applicationsListPanel;
-    private StatusBar statusBar;
 
     public ApplicationsPanel(J2meApplicationManager applicationManager) {
+        super();
         this.applicationManager = applicationManager;
         this.applicationManager.addApplicationChangeListener(this);
-
-        setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        // Top panel with title and add button
-        JPanel topPanel = createTopPanel();
-        add(topPanel, BorderLayout.NORTH);
-
-        // Center panel with applications list (scrollable)
-        JScrollPane scrollPane = createApplicationsListScrollPane();
-        add(scrollPane, BorderLayout.CENTER);
-
-        // Bottom panel with status
-        JPanel bottomPanel = createBottomPanel();
-        add(bottomPanel, BorderLayout.SOUTH);
-
-        // Load applications
-        refreshApplicationsList();
     }
 
-    private JPanel createTopPanel() {
+    @Override
+    protected JComponent createHeader() {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
 
         JLabel titleLabel = new JLabel("Installed J2ME Applications");
@@ -62,7 +45,8 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         return panel;
     }
 
-    private JScrollPane createApplicationsListScrollPane() {
+    @Override
+    protected JComponent createContent() {
         applicationsListPanel = new JPanel();
         applicationsListPanel.setLayout(new BoxLayout(applicationsListPanel, BoxLayout.Y_AXIS));
         applicationsListPanel.setBackground(Color.WHITE);
@@ -79,11 +63,10 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         return scrollPane;
     }
 
-    private JPanel createBottomPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        statusBar = new StatusBar();
-        panel.add(statusBar, BorderLayout.CENTER);
-        return panel;
+    @Override
+    protected void onInitialized() {
+        // Load applications after UI is initialized
+        refreshApplicationsList();
     }
 
     private void refreshApplicationsList() {
@@ -211,10 +194,10 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 J2meApplication app = applicationManager.addApplication(selectedFile);
-                statusBar.setSuccessStatus("Application added successfully: " + app.getName());
+                setStatusSuccess("Application added successfully: " + app.getName());
                 ToastNotification.showSuccess("Added: " + app.getName());
             } catch (Exception e) {
-                statusBar.setErrorStatus("Error: " + e.getMessage());
+                setStatusError("Error: " + e.getMessage());
                 MessageDialog.showError(
                     SwingUtilities.getWindowAncestor(this) instanceof Frame
                         ? (Frame) SwingUtilities.getWindowAncestor(this)
@@ -237,10 +220,10 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
         if (confirm) {
             boolean success = applicationManager.removeApplication(app.getId());
             if (success) {
-                statusBar.setSuccessStatus("Application removed: " + app.getName());
+                setStatusSuccess("Application removed: " + app.getName());
                 ToastNotification.showSuccess("Removed: " + app.getName());
             } else {
-                statusBar.setErrorStatus("Failed to remove application");
+                setStatusError("Failed to remove application");
             }
         }
     }
@@ -248,9 +231,9 @@ public class ApplicationsPanel extends JPanel implements J2meApplicationManager.
     private void updateStatus() {
         int count = applicationManager.getApplicationCount();
         if (count == 0) {
-            statusBar.setInfoStatus("No applications installed");
+            setStatusInfo("No applications installed");
         } else {
-            statusBar.setInfoStatus(count + " application(s) installed");
+            setStatusInfo(count + " application(s) installed");
         }
     }
 
