@@ -9,21 +9,20 @@ import me.kitakeyos.j2me.script.ui.component.OutputPanel;
 import me.kitakeyos.j2me.script.ui.component.ScriptList;
 import me.kitakeyos.j2me.script.ui.component.ScriptStatusBar;
 import me.kitakeyos.j2me.script.ui.component.ScriptToolbar;
+import me.kitakeyos.j2me.ui.panel.BaseTabPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Clean, organized Lua Script Manager using component architecture
+ * Lua Script Manager tab panel for managing and executing Lua scripts.
+ * Extends BaseTabPanel for consistent layout and styling.
  */
-public class LuaScriptManager extends JPanel
+public class LuaScriptManager extends BaseTabPanel
         implements ScriptToolbar.ToolbarActions, ScriptList.ScriptSelectionListener {
 
     // UI Components
@@ -44,54 +43,15 @@ public class LuaScriptManager extends JPanel
     private boolean syntaxHighlightEnabled = true;
 
     public LuaScriptManager() {
+        super();
         this.scripts = new HashMap<>();
         this.fileManager = new ScriptFileManager();
-
-        initializeComponents();
-        initializeServices();
-        layoutComponents();
-        loadScripts();
     }
 
-    private void initializeComponents() {
-        // Create all UI components
+    @Override
+    protected JComponent createHeader() {
+        // Initialize toolbar
         toolbar = new ScriptToolbar(this);
-        scriptList = new ScriptList(this);
-        outputPanel = new OutputPanel();
-        statusBar = new ScriptStatusBar();
-
-        // Create code editor with document listener
-        codeEditor = new LuaCodeEditor(isDarkMode, syntaxHighlightEnabled,
-                new DocumentListener() {
-                    @Override
-                    public void insertUpdate(DocumentEvent e) {
-                        handleEditorUpdate(e);
-                    }
-
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        handleEditorUpdate(e);
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        handleEditorUpdate(e);
-                    }
-                });
-    }
-
-    private void initializeServices() {
-        scriptExecutor = new LuaScriptExecutor(
-                outputPanel::appendNormal,
-                outputPanel::appendError,
-                outputPanel::appendSuccess,
-                outputPanel::appendInfo
-        );
-    }
-
-    private void layoutComponents() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
 
         // Top panel with toolbar and instance selector
         JPanel topPanel = new JPanel(new BorderLayout(10, 0));
@@ -112,23 +72,74 @@ public class LuaScriptManager extends JPanel
         instancePanel.add(refreshButton);
 
         topPanel.add(instancePanel, BorderLayout.EAST);
-        add(topPanel, BorderLayout.NORTH);
 
+        return topPanel;
+    }
+
+    @Override
+    protected JComponent createContent() {
+        // Initialize script list
+        scriptList = new ScriptList(this);
+
+        // Initialize output panel
+        outputPanel = new OutputPanel();
+
+        // Create code editor with document listener
+        codeEditor = new LuaCodeEditor(isDarkMode, syntaxHighlightEnabled,
+                new DocumentListener() {
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        handleEditorUpdate(e);
+                    }
+
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        handleEditorUpdate(e);
+                    }
+
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        handleEditorUpdate(e);
+                    }
+                });
+
+        // Main split pane
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setDividerLocation(300);
-
         mainSplit.setLeftComponent(scriptList);
 
+        // Right split pane for editor and output
         JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         rightSplit.setDividerLocation(450);
         rightSplit.setTopComponent(codeEditor.getEditorPanel());
         rightSplit.setBottomComponent(outputPanel);
 
         mainSplit.setRightComponent(rightSplit);
-        add(mainSplit, BorderLayout.CENTER);
-        add(statusBar, BorderLayout.SOUTH);
 
+        return mainSplit;
+    }
+
+    @Override
+    protected JComponent createStatusBar() {
+        statusBar = new ScriptStatusBar();
+        return statusBar;
+    }
+
+    @Override
+    protected void onInitialized() {
+        // Initialize services
+        scriptExecutor = new LuaScriptExecutor(
+                outputPanel::appendNormal,
+                outputPanel::appendError,
+                outputPanel::appendSuccess,
+                outputPanel::appendInfo
+        );
+
+        // Update theme
         updateTheme();
+
+        // Load scripts
+        loadScripts();
     }
 
     private void updateTheme() {
