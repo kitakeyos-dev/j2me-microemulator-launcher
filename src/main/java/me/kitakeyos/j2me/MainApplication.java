@@ -8,9 +8,9 @@ import me.kitakeyos.j2me.script.ui.LuaScriptManager;
 import me.kitakeyos.j2me.service.EmulatorLauncher;
 import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
+import me.kitakeyos.j2me.ui.component.StatusBar;
 import me.kitakeyos.j2me.ui.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.builder.ConfigurationPanelBuilder;
-import me.kitakeyos.j2me.ui.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.ui.dialog.MessageDialog;
 import me.kitakeyos.j2me.ui.dialog.SettingsDialog;
 import me.kitakeyos.j2me.ui.component.ToastNotification;
@@ -33,7 +33,7 @@ public class MainApplication extends JFrame {
     private JCheckBox syncInputCheckBox;
     private JPanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
-    private me.kitakeyos.j2me.ui.component.StatusBar instancesStatusBar;
+    private StatusBar instancesStatusBar;
     private final ApplicationConfig applicationConfig;
     private final J2meApplicationManager j2meApplicationManager;
     public EmulatorInstanceManager emulatorInstanceManager;
@@ -442,30 +442,6 @@ public class MainApplication extends JFrame {
                 // Update empty state visibility
                 updateInstancesEmptyState();
             }
-        }
-    }
-
-    private void clearAllEmulatorInstances() {
-        int count = emulatorInstanceManager.getInstanceCount();
-        if (count == 0) {
-            showInfoMessage("No instances to clear.");
-            return;
-        }
-
-        boolean confirm = ConfirmDialog.showConfirm(
-                this,
-                "Confirm Clear All",
-                "Are you sure you want to clear all " + count + " instance(s)?"
-        );
-
-        if (confirm) {
-            emulatorInstanceManager.clearAllInstances();
-            emulatorInstanceManager.resetInstanceIdCounter();
-            // Clear running instances panel
-            runningInstancesPanel.removeAll();
-            runningInstancesPanel.revalidate();
-            runningInstancesPanel.repaint();
-            showToast("Cleared all instances", ToastNotification.ToastType.SUCCESS);
         }
     }
 
