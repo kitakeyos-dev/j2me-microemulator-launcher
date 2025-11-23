@@ -1,5 +1,7 @@
 package me.kitakeyos.j2me.ui.component;
 
+import me.kitakeyos.j2me.MainApplication;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -19,7 +21,11 @@ public class ToastNotification extends JWindow {
     private static final int TOAST_HEIGHT = 60;
     private static final int DISPLAY_TIME = 2000; // 2 seconds
 
-    public ToastNotification(String message, ToastType toastType) {
+    private Window owner;
+
+    public ToastNotification(Window owner, String message, ToastType toastType) {
+        super(owner);
+        this.owner = owner;
         initComponents(message);
         positionToast();
         scheduleAutoClose();
@@ -44,18 +50,33 @@ public class ToastNotification extends JWindow {
     }
 
     private void positionToast() {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice gd = ge.getDefaultScreenDevice();
-        DisplayMode mode = gd.getDisplayMode();
+        if (owner != null) {
+            // Position relative to owner window
+            int ownerX = owner.getX();
+            int ownerY = owner.getY();
+            int ownerWidth = owner.getWidth();
+            int ownerHeight = owner.getHeight();
 
-        int screenWidth = mode.getWidth();
-        int screenHeight = mode.getHeight();
+            // Position at bottom-right corner of the owner window with some padding
+            int x = ownerX + ownerWidth - TOAST_WIDTH - 20;
+            int y = ownerY + ownerHeight - TOAST_HEIGHT - 60;
 
-        // Position at bottom-right corner with some padding
-        int x = screenWidth - TOAST_WIDTH - 20;
-        int y = screenHeight - TOAST_HEIGHT - 60;
+            setLocation(x, y);
+        } else {
+            // Fallback to screen positioning if no owner
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice gd = ge.getDefaultScreenDevice();
+            DisplayMode mode = gd.getDisplayMode();
 
-        setLocation(x, y);
+            int screenWidth = mode.getWidth();
+            int screenHeight = mode.getHeight();
+
+            // Position at bottom-right corner with some padding
+            int x = screenWidth - TOAST_WIDTH - 20;
+            int y = screenHeight - TOAST_HEIGHT - 60;
+
+            setLocation(x, y);
+        }
     }
 
     private void scheduleAutoClose() {
@@ -65,41 +86,41 @@ public class ToastNotification extends JWindow {
     }
 
     /**
-     * Show a success toast notification
+     * Show a success toast notification within the main application window
      */
     public static void showSuccess(String message) {
         SwingUtilities.invokeLater(() -> {
-            ToastNotification toast = new ToastNotification(message, ToastType.SUCCESS);
+            ToastNotification toast = new ToastNotification(MainApplication.INSTANCE, message, ToastType.SUCCESS);
             toast.setVisible(true);
         });
     }
 
     /**
-     * Show an error toast notification
+     * Show an error toast notification within the main application window
      */
     public static void showError(String message) {
         SwingUtilities.invokeLater(() -> {
-            ToastNotification toast = new ToastNotification(message, ToastType.ERROR);
+            ToastNotification toast = new ToastNotification(MainApplication.INSTANCE, message, ToastType.ERROR);
             toast.setVisible(true);
         });
     }
 
     /**
-     * Show a warning toast notification
+     * Show a warning toast notification within the main application window
      */
     public static void showWarning(String message) {
         SwingUtilities.invokeLater(() -> {
-            ToastNotification toast = new ToastNotification(message, ToastType.WARNING);
+            ToastNotification toast = new ToastNotification(MainApplication.INSTANCE, message, ToastType.WARNING);
             toast.setVisible(true);
         });
     }
 
     /**
-     * Show an info toast notification
+     * Show an info toast notification within the main application window
      */
     public static void showInfo(String message) {
         SwingUtilities.invokeLater(() -> {
-            ToastNotification toast = new ToastNotification(message, ToastType.INFO);
+            ToastNotification toast = new ToastNotification(MainApplication.INSTANCE, message, ToastType.INFO);
             toast.setVisible(true);
         });
     }
