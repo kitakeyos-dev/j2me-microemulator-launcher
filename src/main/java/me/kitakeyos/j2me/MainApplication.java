@@ -25,7 +25,7 @@ public class MainApplication extends JFrame {
     public MainApplication() {
         setTitle("J2ME MicroEmulator Launcher");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 800);
+        setSize(1090, 800);
         setLocationRelativeTo(null);
 
         // Initialize managers

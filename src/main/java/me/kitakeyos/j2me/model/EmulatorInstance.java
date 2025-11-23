@@ -37,7 +37,6 @@ public class EmulatorInstance {
     private String errorMessage;
 
     // UI components
-    private JPanel uiPanel;
     private JPanel devicePanel;
     private JComponent emulatorDisplay;
     private ActionListener menuExitListener;
@@ -91,10 +90,6 @@ public class EmulatorInstance {
         return errorMessage;
     }
 
-    public JPanel getUIPanel() {
-        return uiPanel;
-    }
-
     public JPanel getDevicePanel() {
         return devicePanel;
     }
@@ -123,10 +118,6 @@ public class EmulatorInstance {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
-    }
-
-    public void setUIPanel(JPanel uiPanel) {
-        this.uiPanel = uiPanel;
     }
 
     public void setDevicePanel(JPanel devicePanel) {

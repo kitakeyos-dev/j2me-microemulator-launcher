@@ -108,6 +108,8 @@ public class InstancesPanel extends BaseTabPanel {
             javax.swing.border.TitledBorder.TOP
         ));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         // Add component listener to handle window resize
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -325,9 +327,8 @@ public class InstancesPanel extends BaseTabPanel {
                     if (emulatorInstance.getState() == InstanceState.RUNNING) {
                         addEmulatorInstanceTab(emulatorInstance);
                     }
-                }),
+                })
                 // onStarted callback
-                null
         )).start();
     }
 

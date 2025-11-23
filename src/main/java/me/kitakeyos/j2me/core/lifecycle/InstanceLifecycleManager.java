@@ -102,7 +102,6 @@ public class InstanceLifecycleManager {
 
         // Clear UI references
         instance.setEmulatorDisplay(null);
-        instance.setUIPanel(null);
     }
 
     /**

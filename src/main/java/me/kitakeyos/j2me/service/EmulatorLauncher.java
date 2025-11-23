@@ -12,7 +12,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -117,14 +116,10 @@ public class EmulatorLauncher {
      *
      * @param instance   The instance to start
      * @param onComplete Callback when instance startup completes (success or failure)
-     * @param onStarted  Callback when instance startup begins
      */
-    public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete, Runnable onStarted) {
+    public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete) {
         // Set state to STARTING
         instance.setState(InstanceState.STARTING);
-        if (onStarted != null) {
-            SwingUtilities.invokeLater(onStarted);
-        }
 
         long instanceStartTime = System.currentTimeMillis();
 

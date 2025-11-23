@@ -35,10 +35,6 @@ public class EmulatorInstanceManager {
 
         // Return the ID back to pool for reuse
         idPool.releaseId(instance.getInstanceId());
-
-        if (instance.getUIPanel() != null) {
-            instancesPanel.remove(instance.getUIPanel());
-        }
     }
 
     public void clearAllInstances() {
