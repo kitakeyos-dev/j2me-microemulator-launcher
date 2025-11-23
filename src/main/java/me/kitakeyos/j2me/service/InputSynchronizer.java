@@ -248,7 +248,7 @@ public class InputSynchronizer {
                 // Find the corresponding component in target display
                 Component targetComponent = findComponentAtPoint(targetDevicePanel, relativePoint);
                 if (targetComponent != null) {
-                    dispatchMouseEventToComponent(sourceEvent, targetComponent, relativePoint);
+                    dispatchMouseEventToComponent(sourceEvent, targetComponent, relativePoint, targetDevicePanel);
                 }
             }
         }
@@ -391,20 +391,12 @@ public class InputSynchronizer {
     /**
      * Dispatch a mouse event to a target component
      */
-    private void dispatchMouseEventToComponent(MouseEvent sourceEvent, Component targetComponent, Point relativePoint) {
-        // Convert relative point to target component's coordinate system
+    private void dispatchMouseEventToComponent(MouseEvent sourceEvent, Component targetComponent, Point relativePoint, JPanel targetDevicePanel) {
+        // Convert relative point from devicePanel coordinates to targetComponent coordinates
         try {
-            Point targetScreenPoint = targetComponent.getLocationOnScreen();
-            JPanel targetDisplay = (JPanel) targetComponent.getParent();
-            while (targetDisplay != null && !(targetDisplay.getParent() == null || targetDisplay.getClientProperty("wrapperPanel") != null)) {
-                targetDisplay = (JPanel) targetDisplay.getParent();
-            }
-
-            Point displayScreenPoint = targetDisplay.getLocationOnScreen();
-            Point targetPoint = new Point(
-                relativePoint.x + displayScreenPoint.x - targetScreenPoint.x,
-                relativePoint.y + displayScreenPoint.y - targetScreenPoint.y
-            );
+            // relativePoint is in devicePanel coordinates
+            // Convert it to targetComponent's coordinate system
+            Point targetPoint = SwingUtilities.convertPoint(targetDevicePanel, relativePoint, targetComponent);
 
             // Create a new mouse event for the target component
             MouseEvent newEvent = new MouseEvent(
