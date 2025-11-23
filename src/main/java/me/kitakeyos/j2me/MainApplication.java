@@ -85,7 +85,7 @@ public class MainApplication extends JFrame {
 
     private JPanel createInstancesPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Top panel: Horizontal layout with three sections
         // WEST: Configuration (compact, no stretch)

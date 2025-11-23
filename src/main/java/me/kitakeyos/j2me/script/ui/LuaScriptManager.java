@@ -115,7 +115,7 @@ public class LuaScriptManager extends JPanel
 
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setDividerLocation(300);
-        mainSplit.setBorder(new EmptyBorder(5, 10, 5, 10));
+        mainSplit.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         mainSplit.setLeftComponent(scriptList);
 
