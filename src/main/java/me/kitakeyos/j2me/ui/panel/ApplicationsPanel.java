@@ -33,10 +33,6 @@ public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationMa
     protected JComponent createHeader() {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
 
-        JLabel titleLabel = new JLabel("Installed J2ME Applications");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.WEST);
-
         JButton addButton = new JButton("Add Application");
         addButton.setToolTipText("Add new J2ME application from JAR or JAD file");
         addButton.addActionListener(e -> addApplication());

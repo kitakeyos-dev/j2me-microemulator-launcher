@@ -51,7 +51,7 @@ public class MainApplication extends JFrame {
         tabbedPane.addTab("Instances", instancesPanel);
 
         // Tab 3: Scripts
-        JPanel scriptsPanel = new LuaScriptManager();
+        JPanel scriptsPanel = new LuaScriptManager(applicationConfig, j2meApplicationManager);
         tabbedPane.addTab("Scripts", scriptsPanel);
 
         add(tabbedPane);

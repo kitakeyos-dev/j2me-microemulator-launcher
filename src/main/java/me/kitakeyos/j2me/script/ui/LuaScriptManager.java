@@ -1,6 +1,7 @@
 package me.kitakeyos.j2me.script.ui;
 
 import me.kitakeyos.j2me.MainApplication;
+import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.script.core.LuaScriptExecutor;
 import me.kitakeyos.j2me.script.model.LuaScript;
@@ -9,6 +10,7 @@ import me.kitakeyos.j2me.script.ui.component.OutputPanel;
 import me.kitakeyos.j2me.script.ui.component.ScriptList;
 import me.kitakeyos.j2me.script.ui.component.ScriptStatusBar;
 import me.kitakeyos.j2me.script.ui.component.ScriptToolbar;
+import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.panel.BaseTabPanel;
 
 import javax.swing.*;
@@ -42,10 +44,8 @@ public class LuaScriptManager extends BaseTabPanel
     private boolean isDarkMode = false;
     private boolean syntaxHighlightEnabled = true;
 
-    public LuaScriptManager() {
-        super(null, null); // LuaScriptManager doesn't need applicationConfig or applicationManager
-        this.scripts = new HashMap<>();
-        this.fileManager = new ScriptFileManager();
+    public LuaScriptManager(ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
+        super(applicationConfig, j2meApplicationManager);
     }
 
     @Override
@@ -267,7 +267,9 @@ public class LuaScriptManager extends BaseTabPanel
     // Utility methods
     private void loadScripts() {
         statusBar.showBusy("Loading scripts");
-        scripts.clear();
+        if (fileManager == null) {
+            fileManager = new ScriptFileManager();
+        }
         scripts = fileManager.loadScripts();
         scriptList.loadScripts(scripts);
         statusBar.setScriptCount(scripts.size());
@@ -296,7 +298,7 @@ public class LuaScriptManager extends BaseTabPanel
 
         if (MainApplication.INSTANCE.emulatorInstanceManager != null) {
             java.util.List<EmulatorInstance> runningInstances =
-                MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
+                    MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
 
             for (EmulatorInstance instance : runningInstances) {
                 instanceSelector.addItem("Instance #" + instance.getInstanceId());
@@ -345,7 +347,7 @@ public class LuaScriptManager extends BaseTabPanel
     private EmulatorInstance findInstanceById(int instanceId) {
         if (MainApplication.INSTANCE.emulatorInstanceManager != null) {
             java.util.List<EmulatorInstance> runningInstances =
-                MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
+                    MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
 
             for (EmulatorInstance instance : runningInstances) {
                 if (instance.getInstanceId() == instanceId) {
@@ -354,20 +356,5 @@ public class LuaScriptManager extends BaseTabPanel
             }
         }
         return null;
-    }
-
-    // Public API
-    public void toggleDarkMode() {
-        isDarkMode = !isDarkMode;
-        updateTheme();
-        statusBar.setSuccess("Switched to " + (isDarkMode ? "dark" : "light") + " mode");
-    }
-
-    public void toggleSyntaxHighlighting() {
-        syntaxHighlightEnabled = !syntaxHighlightEnabled;
-        if (codeEditor != null) {
-            codeEditor.toggleSyntaxHighlighting();
-        }
-        statusBar.setSuccess("Syntax highlighting " + (syntaxHighlightEnabled ? "enabled" : "disabled"));
     }
 }
