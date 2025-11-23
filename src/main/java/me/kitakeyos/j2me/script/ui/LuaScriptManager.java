@@ -17,7 +17,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -134,6 +133,7 @@ public class LuaScriptManager extends BaseTabPanel
                 outputPanel::appendSuccess,
                 outputPanel::appendInfo
         );
+        fileManager = new ScriptFileManager();
 
         // Update theme
         updateTheme();
@@ -267,9 +267,6 @@ public class LuaScriptManager extends BaseTabPanel
     // Utility methods
     private void loadScripts() {
         statusBar.showBusy("Loading scripts");
-        if (fileManager == null) {
-            fileManager = new ScriptFileManager();
-        }
         scripts = fileManager.loadScripts();
         scriptList.loadScripts(scripts);
         statusBar.setScriptCount(scripts.size());
