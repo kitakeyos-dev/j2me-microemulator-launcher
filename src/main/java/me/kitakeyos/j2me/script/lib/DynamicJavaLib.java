@@ -67,8 +67,12 @@ public class DynamicJavaLib extends LuajavaLib {
                             // No-arg constructor
                             Object instance = clazz.getDeclaredConstructor().newInstance();
                             return CoerceJavaToLua.coerce(instance);
+                        } else {
+                            // Constructor with arguments
+                            Object[] javaArgs = convertLuaArgsToJava(args, 2);
+                            Object instance = createInstanceWithArgs(clazz, javaArgs);
+                            return CoerceJavaToLua.coerce(instance);
                         }
-                        // TODO: Implement constructor with arguments
                     }
                 }
 
@@ -79,9 +83,12 @@ public class DynamicJavaLib extends LuajavaLib {
                 if (args.narg() == 1) {
                     Object instance = clazz.getDeclaredConstructor().newInstance();
                     return CoerceJavaToLua.coerce(instance);
+                } else {
+                    // Constructor with arguments
+                    Object[] javaArgs = convertLuaArgsToJava(args, 2);
+                    Object instance = createInstanceWithArgs(clazz, javaArgs);
+                    return CoerceJavaToLua.coerce(instance);
                 }
-
-                return LuaValue.NIL;
             } catch (Exception e) {
                 throw new LuaError("Error creating instance: " + e.getMessage());
             }
@@ -112,6 +119,95 @@ public class DynamicJavaLib extends LuajavaLib {
                 throw new LuaError("Error loading library: " + e.getMessage());
             }
         }
+    }
+
+    private Object[] convertLuaArgsToJava(Varargs args, int startIndex) {
+        int argCount = args.narg() - startIndex + 1;
+        Object[] javaArgs = new Object[argCount];
+
+        for (int i = 0; i < argCount; i++) {
+            LuaValue luaArg = args.arg(startIndex + i);
+            javaArgs[i] = coerceLuaToJava(luaArg);
+        }
+
+        return javaArgs;
+    }
+
+    private Object coerceLuaToJava(LuaValue luaValue) {
+        if (luaValue.isnil()) {
+            return null;
+        } else if (luaValue.isboolean()) {
+            return luaValue.toboolean();
+        } else if (luaValue.isint()) {
+            return luaValue.toint();
+        } else if (luaValue.isnumber()) {
+            return luaValue.todouble();
+        } else if (luaValue.isstring()) {
+            return luaValue.tojstring();
+        } else if (luaValue.isuserdata()) {
+            return luaValue.touserdata();
+        } else {
+            return luaValue;
+        }
+    }
+
+    private Object createInstanceWithArgs(Class<?> clazz, Object[] args) throws Exception {
+        // Try to find a matching constructor in public constructors
+        for (java.lang.reflect.Constructor<?> constructor : clazz.getConstructors()) {
+            if (constructor.getParameterCount() == args.length) {
+                if (parametersMatch(constructor.getParameterTypes(), args)) {
+                    return constructor.newInstance(args);
+                }
+            }
+        }
+
+        // If no exact match, try declared constructors (including private ones)
+        for (java.lang.reflect.Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+            if (constructor.getParameterCount() == args.length) {
+                if (parametersMatch(constructor.getParameterTypes(), args)) {
+                    constructor.setAccessible(true);
+                    return constructor.newInstance(args);
+                }
+            }
+        }
+
+        throw new NoSuchMethodException("No matching constructor found for " + clazz.getName());
+    }
+
+    private boolean parametersMatch(Class<?>[] paramTypes, Object[] args) {
+        for (int i = 0; i < paramTypes.length; i++) {
+            if (args[i] == null) {
+                if (paramTypes[i].isPrimitive()) {
+                    return false;
+                }
+                continue;
+            }
+
+            Class<?> paramType = paramTypes[i];
+            Class<?> argType = args[i].getClass();
+
+            // Handle primitive types and their wrappers
+            if (paramType.isPrimitive()) {
+                if (!isPrimitiveCompatible(paramType, argType)) {
+                    return false;
+                }
+            } else if (!paramType.isAssignableFrom(argType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isPrimitiveCompatible(Class<?> primitiveType, Class<?> wrapperType) {
+        if (primitiveType == int.class) return wrapperType == Integer.class;
+        if (primitiveType == long.class) return wrapperType == Long.class;
+        if (primitiveType == double.class) return wrapperType == Double.class;
+        if (primitiveType == float.class) return wrapperType == Float.class;
+        if (primitiveType == boolean.class) return wrapperType == Boolean.class;
+        if (primitiveType == byte.class) return wrapperType == Byte.class;
+        if (primitiveType == short.class) return wrapperType == Short.class;
+        if (primitiveType == char.class) return wrapperType == Character.class;
+        return false;
     }
 
     private Class<?> loadClass(String className) throws ClassNotFoundException {
