@@ -192,7 +192,7 @@ public class EmulatorLauncher {
 
         Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader, "org.microemu.app.util.MIDletResourceLoader");
         ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader, "classLoader");
-        instance.setClassLoader(classLoader);
+        instance.setAppClassLoader(classLoader);
 
         frame.setResizable(false);
         frame.setTitle("Instance " + instance.getInstanceId());

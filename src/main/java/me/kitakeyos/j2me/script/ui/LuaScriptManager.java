@@ -326,8 +326,8 @@ public class LuaScriptManager extends BaseTabPanel
             int instanceId = Integer.parseInt(selected.replace("Instance #", ""));
             EmulatorInstance instance = findInstanceById(instanceId);
 
-            if (instance != null && instance.getClassLoader() != null) {
-                scriptExecutor.setInstanceClassLoader(instance.getClassLoader());
+            if (instance != null && instance.getAppClassLoader() != null) {
+                scriptExecutor.setInstanceClassLoader(instance.getAppClassLoader());
                 statusBar.setSuccess("Using ClassLoader from Instance #" + instanceId);
             } else {
                 statusBar.setWarning("Instance #" + instanceId + " has no ClassLoader");

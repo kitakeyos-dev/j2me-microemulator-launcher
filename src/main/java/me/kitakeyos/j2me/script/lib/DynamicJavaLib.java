@@ -95,7 +95,7 @@ public class DynamicJavaLib extends LuajavaLib {
         }
     }
 
-    class CreateProxyFunction extends VarArgFunction {
+    static class CreateProxyFunction extends VarArgFunction {
         @Override
         public Varargs invoke(Varargs args) {
             // Simplified proxy creation - can be implemented later
