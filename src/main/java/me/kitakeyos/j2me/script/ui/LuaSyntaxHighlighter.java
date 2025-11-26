@@ -13,21 +13,28 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Optimized Lua Syntax Highlighter with basic color scheme and improved performance
+ * Enhanced Lua Syntax Highlighter with:
+ * - Proper dark mode support
+ * - Better color schemes
+ * - Optimized performance with debouncing
+ * - Support for multi-line comments and strings
  */
 public class LuaSyntaxHighlighter {
 
-    // Core Lua keywords
+    // Lua keywords
     private static final Set<String> LUA_KEYWORDS = new HashSet<>(Arrays.asList(
             "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
             "if", "in", "local", "nil", "not", "or", "repeat", "return", "then",
             "true", "until", "while", "goto"
     ));
 
-    // Essential built-in functions
+    // Lua built-in functions and libraries
     private static final Set<String> LUA_BUILTIN = new HashSet<>(Arrays.asList(
-            "print", "type", "tostring", "tonumber", "pairs", "ipairs",
-            "require", "string", "table", "math", "io", "os"
+            "print", "type", "tostring", "tonumber", "pairs", "ipairs", "next",
+            "require", "assert", "error", "pcall", "xpcall", "select", "unpack",
+            "setmetatable", "getmetatable", "rawget", "rawset", "rawequal",
+            "collectgarbage", "dofile", "load", "loadfile", "loadstring",
+            "string", "table", "math", "io", "os", "coroutine", "debug", "package"
     ));
 
     private StyledDocument doc;
@@ -35,28 +42,33 @@ public class LuaSyntaxHighlighter {
     private Timer highlightTimer;
     private boolean highlightPending = false;
 
-    // Basic style attributes
+    // Style attributes
     private SimpleAttributeSet keywordStyle;
     private SimpleAttributeSet builtinStyle;
     private SimpleAttributeSet stringStyle;
     private SimpleAttributeSet commentStyle;
     private SimpleAttributeSet numberStyle;
     private SimpleAttributeSet normalStyle;
-    private SimpleAttributeSet importStyle;
+    private SimpleAttributeSet operatorStyle;
+    private SimpleAttributeSet functionDefStyle;
 
-    // Pre-compiled patterns for performance
-    private static final Pattern COMMENT_PATTERN = Pattern.compile("--.*$", Pattern.MULTILINE);
-    private static final Pattern STRING_DOUBLE_PATTERN = Pattern.compile("\"([^\"\\\\]|\\\\.)*\"");
-    private static final Pattern STRING_SINGLE_PATTERN = Pattern.compile("'([^'\\\\]|\\\\.)*'");
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\b\\d+(\\.\\d+)?\\b");
+    // Pre-compiled patterns
+    private static final Pattern SINGLE_LINE_COMMENT = Pattern.compile("--(?!\\[\\[).*$", Pattern.MULTILINE);
+    private static final Pattern MULTI_LINE_COMMENT = Pattern.compile("--\\[\\[.*?\\]\\]", Pattern.DOTALL);
+    private static final Pattern STRING_DOUBLE = Pattern.compile("\"([^\"\\\\]|\\\\.)*\"");
+    private static final Pattern STRING_SINGLE = Pattern.compile("'([^'\\\\]|\\\\.)*'");
+    private static final Pattern MULTI_LINE_STRING = Pattern.compile("\\[\\[.*?\\]\\]", Pattern.DOTALL);
+    private static final Pattern NUMBER = Pattern.compile("\\b(0x[0-9a-fA-F]+|\\d+(\\.\\d+)?([eE][+-]?\\d+)?)\\b");
+    private static final Pattern FUNCTION_DEF = Pattern.compile("\\bfunction\\s+([a-zA-Z_][a-zA-Z0-9_]*)");
+    private static final Pattern OPERATOR = Pattern.compile("[+\\-*/%^#=<>~]+|\\.\\.\\.");
 
     public LuaSyntaxHighlighter(JTextPane textPane, boolean isDarkMode) {
         this.doc = textPane.getStyledDocument();
         this.isDarkMode = isDarkMode;
         initializeStyles();
 
-        // Timer for debounced highlighting
-        highlightTimer = new Timer(200, e -> {
+        // Timer for debounced highlighting (150ms delay)
+        highlightTimer = new Timer(150, e -> {
             if (highlightPending) {
                 performHighlighting();
                 highlightPending = false;
@@ -72,36 +84,85 @@ public class LuaSyntaxHighlighter {
     }
 
     private void initializeStyles() {
-        // Normal text
-        normalStyle = new SimpleAttributeSet();
-        StyleConstants.setForeground(normalStyle, Color.BLACK);
+        if (isDarkMode) {
+            initializeDarkStyles();
+        } else {
+            initializeLightStyles();
+        }
+    }
 
-        // Keywords - blue and bold
+    private void initializeLightStyles() {
+        // Normal text - black
+        normalStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(normalStyle, new Color(0, 0, 0));
+
+        // Keywords - blue, bold
         keywordStyle = new SimpleAttributeSet();
-        StyleConstants.setForeground(keywordStyle, new Color(0, 0, 255));
+        StyleConstants.setForeground(keywordStyle, new Color(0, 0, 200));
         StyleConstants.setBold(keywordStyle, true);
 
-        // Built-in functions - purple
+        // Built-in functions - dark magenta
         builtinStyle = new SimpleAttributeSet();
-        StyleConstants.setForeground(builtinStyle, new Color(128, 0, 128));
+        StyleConstants.setForeground(builtinStyle, new Color(136, 0, 136));
 
-        // Strings - green
+        // Strings - dark green
         stringStyle = new SimpleAttributeSet();
         StyleConstants.setForeground(stringStyle, new Color(0, 128, 0));
 
-        // Comments - gray and italic
+        // Comments - gray, italic
         commentStyle = new SimpleAttributeSet();
         StyleConstants.setForeground(commentStyle, new Color(128, 128, 128));
         StyleConstants.setItalic(commentStyle, true);
 
-        // Numbers - red
+        // Numbers - dark red/brown
         numberStyle = new SimpleAttributeSet();
-        StyleConstants.setForeground(numberStyle, new Color(255, 0, 0));
+        StyleConstants.setForeground(numberStyle, new Color(164, 0, 0));
 
-        // Import statements - brown
-        importStyle = new SimpleAttributeSet();
-        StyleConstants.setForeground(importStyle, new Color(139, 69, 19));
-        StyleConstants.setBold(importStyle, true);
+        // Operators - dark gray
+        operatorStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(operatorStyle, new Color(80, 80, 80));
+
+        // Function definitions - teal
+        functionDefStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(functionDefStyle, new Color(0, 128, 128));
+        StyleConstants.setBold(functionDefStyle, true);
+    }
+
+    private void initializeDarkStyles() {
+        // Normal text - light gray
+        normalStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(normalStyle, new Color(187, 187, 187));
+
+        // Keywords - light blue, bold
+        keywordStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(keywordStyle, new Color(86, 156, 214));
+        StyleConstants.setBold(keywordStyle, true);
+
+        // Built-in functions - light magenta
+        builtinStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(builtinStyle, new Color(220, 150, 220));
+
+        // Strings - orange/salmon
+        stringStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(stringStyle, new Color(206, 145, 120));
+
+        // Comments - green, italic
+        commentStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(commentStyle, new Color(106, 153, 85));
+        StyleConstants.setItalic(commentStyle, true);
+
+        // Numbers - light green
+        numberStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(numberStyle, new Color(181, 206, 168));
+
+        // Operators - light cyan
+        operatorStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(operatorStyle, new Color(180, 180, 180));
+
+        // Function definitions - gold/yellow
+        functionDefStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(functionDefStyle, new Color(220, 220, 170));
+        StyleConstants.setBold(functionDefStyle, true);
     }
 
     public SimpleAttributeSet getNormalStyle() {
@@ -123,19 +184,21 @@ public class LuaSyntaxHighlighter {
                 String text = doc.getText(0, doc.getLength());
 
                 // Skip highlighting for very large documents
-                if (text.length() > 15000) {
+                if (text.length() > 20000) {
                     return;
                 }
 
                 // Clear all attributes first
                 doc.setCharacterAttributes(0, doc.getLength(), normalStyle, true);
 
-                // Highlight in order of priority
-                highlightComments(text);
-                highlightStrings(text);
+                // Highlight in order of priority (later styles override earlier ones)
                 highlightNumbers(text);
+                highlightOperators(text);
                 highlightKeywords(text);
                 highlightBuiltins(text);
+                highlightFunctionDefs(text);
+                highlightStrings(text);
+                highlightComments(text);
 
             } catch (BadLocationException e) {
                 // Document changed during highlighting, ignore
@@ -143,74 +206,97 @@ public class LuaSyntaxHighlighter {
         });
     }
 
-    private void highlightComments(String text) throws BadLocationException {
-        Matcher matcher = COMMENT_PATTERN.matcher(text);
+    private void highlightPattern(String text, Pattern pattern, SimpleAttributeSet style) {
+        Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             int start = matcher.start();
-            int length = matcher.end() - matcher.start();
-            doc.setCharacterAttributes(start, length, commentStyle, false);
+            int length = matcher.end() - start;
+            doc.setCharacterAttributes(start, length, style, false);
         }
     }
 
-    private void highlightStrings(String text) throws BadLocationException {
-        // Double quoted strings
-        Matcher matcher = STRING_DOUBLE_PATTERN.matcher(text);
-        while (matcher.find()) {
-            int start = matcher.start();
-            int length = matcher.end() - matcher.start();
-            doc.setCharacterAttributes(start, length, stringStyle, false);
-        }
-
-        // Single quoted strings
-        matcher = STRING_SINGLE_PATTERN.matcher(text);
-        while (matcher.find()) {
-            int start = matcher.start();
-            int length = matcher.end() - matcher.start();
-            doc.setCharacterAttributes(start, length, stringStyle, false);
-        }
+    private void highlightComments(String text) {
+        // Multi-line comments first
+        highlightPattern(text, MULTI_LINE_COMMENT, commentStyle);
+        // Then single-line comments
+        highlightPattern(text, SINGLE_LINE_COMMENT, commentStyle);
     }
 
-    private void highlightNumbers(String text) throws BadLocationException {
-        Matcher matcher = NUMBER_PATTERN.matcher(text);
-        while (matcher.find()) {
-            int start = matcher.start();
-            int length = matcher.end() - matcher.start();
-            doc.setCharacterAttributes(start, length, numberStyle, false);
-        }
+    private void highlightStrings(String text) {
+        highlightPattern(text, MULTI_LINE_STRING, stringStyle);
+        highlightPattern(text, STRING_DOUBLE, stringStyle);
+        highlightPattern(text, STRING_SINGLE, stringStyle);
     }
 
-    private void highlightKeywords(String text) throws BadLocationException {
+    private void highlightNumbers(String text) {
+        highlightPattern(text, NUMBER, numberStyle);
+    }
+
+    private void highlightOperators(String text) {
+        highlightPattern(text, OPERATOR, operatorStyle);
+    }
+
+    private void highlightKeywords(String text) {
         String keywordPattern = "\\b(" + String.join("|", LUA_KEYWORDS) + ")\\b";
         Pattern pattern = Pattern.compile(keywordPattern);
         Matcher matcher = pattern.matcher(text);
 
         while (matcher.find()) {
             int start = matcher.start();
-            int length = matcher.end() - matcher.start();
+            int length = matcher.end() - start;
             doc.setCharacterAttributes(start, length, keywordStyle, false);
         }
     }
 
-    private void highlightBuiltins(String text) throws BadLocationException {
+    private void highlightBuiltins(String text) {
         String builtinPattern = "\\b(" + String.join("|", LUA_BUILTIN) + ")\\b";
         Pattern pattern = Pattern.compile(builtinPattern);
         Matcher matcher = pattern.matcher(text);
 
         while (matcher.find()) {
             int start = matcher.start();
-            int length = matcher.end() - matcher.start();
+            int length = matcher.end() - start;
             doc.setCharacterAttributes(start, length, builtinStyle, false);
         }
     }
 
-    // Simplified document update handling - only trigger for small changes
+    private void highlightFunctionDefs(String text) {
+        Matcher matcher = FUNCTION_DEF.matcher(text);
+        while (matcher.find()) {
+            // Highlight just the function name
+            int nameStart = matcher.start(1);
+            int nameLength = matcher.end(1) - nameStart;
+            doc.setCharacterAttributes(nameStart, nameLength, functionDefStyle, false);
+        }
+    }
+
+    /**
+     * Handles document updates - triggers re-highlighting with debounce
+     */
     public void handleDocumentUpdate(int offset, int length) {
         try {
-            if (doc.getLength() < 10000) {
+            // Only highlight if document is reasonably sized
+            if (doc.getLength() < 20000) {
                 scheduleHighlight();
             }
         } catch (Exception e) {
             // Ignore
         }
+    }
+
+    /**
+     * Forces immediate highlighting without debounce
+     */
+    public void highlightImmediately() {
+        highlightTimer.stop();
+        highlightPending = false;
+        performHighlighting();
+    }
+
+    /**
+     * Gets whether dark mode is enabled
+     */
+    public boolean isDarkMode() {
+        return isDarkMode;
     }
 }
