@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.application.script.state;
+package me.kitakeyos.j2me.app.script.state;
 
 import java.util.HashMap;
 import java.util.Map;

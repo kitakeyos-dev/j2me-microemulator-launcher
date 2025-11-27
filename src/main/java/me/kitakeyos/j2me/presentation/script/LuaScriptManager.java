@@ -2,8 +2,8 @@ package me.kitakeyos.j2me.presentation.script;
 
 import me.kitakeyos.j2me.app.MainApplication;
 import me.kitakeyos.j2me.app.config.ApplicationConfig;
-import me.kitakeyos.j2me.application.script.state.EditorState;
-import me.kitakeyos.j2me.application.script.state.EditorStateManager;
+import me.kitakeyos.j2me.app.script.state.EditorState;
+import me.kitakeyos.j2me.app.script.state.EditorStateManager;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.script.executor.LuaScriptExecutor;
