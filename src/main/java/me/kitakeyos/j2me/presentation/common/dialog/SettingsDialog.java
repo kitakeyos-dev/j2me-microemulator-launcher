@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.presentation.common.dialog;
 
-import me.kitakeyos.j2me.app.config.ApplicationConfig;
+import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 
 import javax.swing.*;

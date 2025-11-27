@@ -1,9 +1,8 @@
 package me.kitakeyos.j2me.presentation.common.component;
 
-import me.kitakeyos.j2me.app.MainApplication;
-import me.kitakeyos.j2me.app.config.ApplicationConfig;
+import me.kitakeyos.j2me.application.MainApplication;
+import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
-import me.kitakeyos.j2me.presentation.common.component.StatusBar;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

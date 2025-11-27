@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.domain.application.service;
 
-import me.kitakeyos.j2me.app.config.ApplicationConfig;
+import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.application.model.J2meApplication;
 import me.kitakeyos.j2me.infrastructure.resource.ManifestReader;
 

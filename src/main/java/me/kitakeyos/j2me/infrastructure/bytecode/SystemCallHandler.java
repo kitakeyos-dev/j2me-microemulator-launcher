@@ -27,8 +27,8 @@
 package me.kitakeyos.j2me.infrastructure.bytecode;
 
 
-import me.kitakeyos.j2me.app.MainApplication;
-import me.kitakeyos.j2me.app.config.ApplicationConfig;
+import me.kitakeyos.j2me.application.MainApplication;
+import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 
 import java.io.File;

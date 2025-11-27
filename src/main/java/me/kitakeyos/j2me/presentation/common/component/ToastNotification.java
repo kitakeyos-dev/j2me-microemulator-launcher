@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.presentation.common.component;
 
-import me.kitakeyos.j2me.app.MainApplication;
+import me.kitakeyos.j2me.application.MainApplication;
 
 import javax.swing.*;
 import java.awt.*;

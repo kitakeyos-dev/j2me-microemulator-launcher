@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.infrastructure.thread;
 
-import me.kitakeyos.j2me.app.MainApplication;
+import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.infrastructure.classloader.InstanceContext;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;

@@ -1,7 +1,7 @@
 package me.kitakeyos.j2me.presentation.emulator.panel;
 
-import me.kitakeyos.j2me.app.MainApplication;
-import me.kitakeyos.j2me.app.config.ApplicationConfig;
+import me.kitakeyos.j2me.application.MainApplication;
+import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
 import me.kitakeyos.j2me.domain.application.model.J2meApplication;

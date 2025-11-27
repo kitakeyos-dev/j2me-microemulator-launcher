@@ -1,4 +1,4 @@
-package me.kitakeyos.j2me.app.config;
+package me.kitakeyos.j2me.application.config;
 
 import java.io.*;
 import java.util.Properties;

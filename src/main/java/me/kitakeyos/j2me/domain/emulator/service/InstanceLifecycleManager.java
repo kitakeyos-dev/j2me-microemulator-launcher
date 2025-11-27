@@ -1,12 +1,11 @@
 package me.kitakeyos.j2me.domain.emulator.service;
 
-import me.kitakeyos.j2me.app.MainApplication;
+import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.infrastructure.classloader.InstanceContext;
 import me.kitakeyos.j2me.infrastructure.resource.ResourceManager;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.logging.Logger;
 
