@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.ui.panel;
 
+import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.EmulatorInstance;
 import me.kitakeyos.j2me.model.EmulatorInstance.InstanceState;
@@ -36,8 +37,8 @@ public class InstancesPanel extends BaseTabPanel {
     // Services and managers
     public EmulatorInstanceManager emulatorInstanceManager;
 
-    public InstancesPanel(ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
-        super(applicationConfig, j2meApplicationManager);
+    public InstancesPanel(MainApplication mainApplication, ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
+        super(mainApplication, applicationConfig, j2meApplicationManager);
     }
 
     @Override
@@ -335,6 +336,7 @@ public class InstancesPanel extends BaseTabPanel {
                 () -> SwingUtilities.invokeLater(() -> {
                     if (emulatorInstance.getState() == InstanceState.RUNNING) {
                         addEmulatorInstanceTab(emulatorInstance);
+                        mainApplication.luaScriptManager.refreshInstanceList();
                     }
                 })
                 // onStarted callback

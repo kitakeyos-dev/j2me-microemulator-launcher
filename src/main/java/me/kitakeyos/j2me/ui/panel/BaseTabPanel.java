@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.ui.panel;
 
+import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.component.StatusBar;
@@ -24,11 +25,13 @@ import java.awt.*;
  */
 public abstract class BaseTabPanel extends JPanel {
 
+    protected MainApplication mainApplication;
     protected final ApplicationConfig applicationConfig;
     protected final J2meApplicationManager applicationManager;
     protected StatusBar statusBar;
 
-    public BaseTabPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
+    public BaseTabPanel(MainApplication mainApplication, ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
+        this.mainApplication = mainApplication;
         this.applicationConfig = applicationConfig;
         this.applicationManager = applicationManager;
 

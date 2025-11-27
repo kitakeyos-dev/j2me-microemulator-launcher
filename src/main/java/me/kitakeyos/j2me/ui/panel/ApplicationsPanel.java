@@ -1,5 +1,6 @@
 package me.kitakeyos.j2me.ui.panel;
 
+import me.kitakeyos.j2me.MainApplication;
 import me.kitakeyos.j2me.config.ApplicationConfig;
 import me.kitakeyos.j2me.model.J2meApplication;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
@@ -22,8 +23,8 @@ import java.util.Date;
 public class ApplicationsPanel extends BaseTabPanel implements J2meApplicationManager.ApplicationChangeListener {
     private JPanel applicationsListPanel;
 
-    public ApplicationsPanel(ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
-        super(applicationConfig, applicationManager);
+    public ApplicationsPanel(MainApplication mainApplication, ApplicationConfig applicationConfig, J2meApplicationManager applicationManager) {
+        super(mainApplication, applicationConfig, applicationManager);
         this.applicationManager.addApplicationChangeListener(this);
     }
 

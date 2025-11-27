@@ -8,6 +8,7 @@ import me.kitakeyos.j2me.service.EmulatorInstanceManager;
 import me.kitakeyos.j2me.service.J2meApplicationManager;
 import me.kitakeyos.j2me.ui.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.ui.panel.InstancesPanel;
+
 import javax.swing.*;
 
 /**
@@ -21,6 +22,8 @@ public class MainApplication extends JFrame {
     private final J2meApplicationManager j2meApplicationManager;
     private InstancesPanel instancesPanel;
     public EmulatorInstanceManager emulatorInstanceManager;
+    public LuaScriptManager luaScriptManager;
+    public ApplicationsPanel applicationsPanel;
 
     public MainApplication() {
         setTitle("J2ME MicroEmulator Launcher");
@@ -31,6 +34,11 @@ public class MainApplication extends JFrame {
         // Initialize managers
         applicationConfig = new ApplicationConfig();
         j2meApplicationManager = new J2meApplicationManager();
+        applicationsPanel = new ApplicationsPanel(this, applicationConfig, j2meApplicationManager);
+        instancesPanel = new InstancesPanel(this, applicationConfig, j2meApplicationManager);
+        luaScriptManager = new LuaScriptManager(this, applicationConfig, j2meApplicationManager);
+
+        emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
 
         initializeComponents();
     }
@@ -40,17 +48,13 @@ public class MainApplication extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         // Tab 1: Applications
-        ApplicationsPanel applicationsPanel = new ApplicationsPanel(applicationConfig, j2meApplicationManager);
         tabbedPane.addTab("Applications", applicationsPanel);
 
         // Tab 2: Instances
-        instancesPanel = new InstancesPanel(applicationConfig, j2meApplicationManager);
-        emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
         tabbedPane.addTab("Instances", instancesPanel);
 
         // Tab 3: Scripts
-        JPanel scriptsPanel = new LuaScriptManager(applicationConfig, j2meApplicationManager);
-        tabbedPane.addTab("Scripts", scriptsPanel);
+        tabbedPane.addTab("Scripts", luaScriptManager);
 
         add(tabbedPane);
 
@@ -66,20 +70,6 @@ public class MainApplication extends JFrame {
                 instancesPanel.refreshApplicationComboBox();
             }
         });
-    }
-
-    /**
-     * Delegate method for compatibility - runs a single emulator instance
-     */
-    public void runSingleInstance(EmulatorInstance emulatorInstance) {
-        instancesPanel.runSingleInstance(emulatorInstance);
-    }
-
-    /**
-     * Delegate method for compatibility - adds an emulator instance tab
-     */
-    public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
-        instancesPanel.addEmulatorInstanceTab(emulatorInstance);
     }
 
     /**

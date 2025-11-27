@@ -53,8 +53,9 @@ public class LuaScriptManager extends BaseTabPanel
     private boolean isDarkMode;
     private boolean syntaxHighlightEnabled;
 
-    public LuaScriptManager(ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
-        super(applicationConfig, j2meApplicationManager);
+    public LuaScriptManager(MainApplication mainApplication, ApplicationConfig applicationConfig, J2meApplicationManager j2meApplicationManager) {
+        super(mainApplication, applicationConfig, j2meApplicationManager);
+        refreshInstanceList();
     }
 
     @Override
@@ -466,9 +467,8 @@ public class LuaScriptManager extends BaseTabPanel
         instanceSelector.removeAllItems();
         instanceSelector.addItem("None (default ClassLoader)");
 
-        if (MainApplication.INSTANCE.emulatorInstanceManager != null) {
-            java.util.List<EmulatorInstance> runningInstances =
-                    MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
+        if (mainApplication.emulatorInstanceManager != null) {
+            java.util.List<EmulatorInstance> runningInstances = mainApplication.emulatorInstanceManager.getRunningInstances();
 
             for (EmulatorInstance instance : runningInstances) {
                 instanceSelector.addItem("Instance #" + instance.getInstanceId());
@@ -508,9 +508,8 @@ public class LuaScriptManager extends BaseTabPanel
     }
 
     private EmulatorInstance findInstanceById(int instanceId) {
-        if (MainApplication.INSTANCE.emulatorInstanceManager != null) {
-            java.util.List<EmulatorInstance> runningInstances =
-                    MainApplication.INSTANCE.emulatorInstanceManager.getRunningInstances();
+        if (mainApplication.emulatorInstanceManager != null) {
+            java.util.List<EmulatorInstance> runningInstances = mainApplication.emulatorInstanceManager.getRunningInstances();
 
             for (EmulatorInstance instance : runningInstances) {
                 if (instance.getInstanceId() == instanceId) {

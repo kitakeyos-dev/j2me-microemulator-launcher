@@ -73,19 +73,6 @@ public class CodeCompletionProvider {
         )));
     }
 
-    // Java classes for import completion
-    private static final Set<String> JAVA_CLASSES = new HashSet<>(Arrays.asList(
-            "java.util.ArrayList", "java.util.HashMap", "java.util.HashSet",
-            "java.util.LinkedList", "java.util.List", "java.util.Map", "java.util.Set",
-            "java.io.File", "java.io.FileReader", "java.io.FileWriter",
-            "java.io.BufferedReader", "java.io.BufferedWriter",
-            "java.lang.String", "java.lang.Integer", "java.lang.Double",
-            "java.lang.Boolean", "java.lang.Math", "java.lang.System",
-            "java.util.Arrays", "java.util.Collections",
-            "java.util.Date", "java.util.Random", "java.util.Scanner",
-            "java.net.URL", "java.net.HttpURLConnection"
-    ));
-
     // Common object methods
     private static final Set<String> COMMON_METHODS = new HashSet<>(Arrays.asList(
             "add", "remove", "size", "get", "put", "set", "clear", "contains",
@@ -146,10 +133,6 @@ public class CodeCompletionProvider {
         updateUserSymbolsCache(text);
 
         // Handle specific completion contexts
-        if (handleImportCompletion(lastLine, suggestions)) {
-            return limitAndSort(suggestions);
-        }
-
         if (handleLibraryMethodCompletion(lastLine, suggestions)) {
             return limitAndSort(suggestions);
         }
@@ -245,20 +228,6 @@ public class CodeCompletionProvider {
         }
 
         return suggestions;
-    }
-
-    private boolean handleImportCompletion(String lastLine, List<String> suggestions) {
-        if (lastLine.trim().startsWith("import ")) {
-            String partial = lastLine.replaceFirst("^\\s*import\\s+", "").trim().toLowerCase();
-
-            for (String javaClass : JAVA_CLASSES) {
-                if (partial.isEmpty() || javaClass.toLowerCase().contains(partial)) {
-                    suggestions.add(javaClass);
-                }
-            }
-            return true;
-        }
-        return false;
     }
 
     private boolean handleLibraryMethodCompletion(String lastLine, List<String> suggestions) {
@@ -402,16 +371,6 @@ public class CodeCompletionProvider {
      * Gets the partial word before the cursor
      */
     public String getPartialWord(String text) {
-        // Check if we're in an import statement
-        String lastLine = getLastLine(text);
-        if (lastLine.trim().startsWith("import ")) {
-            String importPrefix = "import ";
-            int importIndex = lastLine.indexOf(importPrefix);
-            if (importIndex != -1) {
-                return lastLine.substring(importIndex + importPrefix.length()).trim();
-            }
-        }
-
         // Default behavior - find word boundary
         int end = text.length();
         int start = end;
