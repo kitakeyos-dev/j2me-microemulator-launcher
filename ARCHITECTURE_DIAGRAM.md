@@ -6,7 +6,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                     🚀 APPLICATION LAYER                        │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │  app/                                                     │  │
+│  │  application/                                             │  │
 │  │  ├── MainApplication.java    (Entry Point)                │  │
 │  │  └── config/                                              │  │
 │  │  │   └── ApplicationConfig.java                           │  │
