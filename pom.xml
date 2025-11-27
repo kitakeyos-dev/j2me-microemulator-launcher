@@ -56,7 +56,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>me.kitakeyos.j2me.MainApplication</mainClass>
+                            <mainClass>me.kitakeyos.j2me.app.MainApplication</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
