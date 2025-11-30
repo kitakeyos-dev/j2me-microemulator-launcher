@@ -21,12 +21,12 @@ public class ApplicationService {
     private final File configFile;
     private final List<ApplicationChangeListener> listeners;
 
-    public ApplicationService() {
+    public ApplicationService(ApplicationConfig config) {
         this.applications = new ArrayList<>();
         this.listeners = new ArrayList<>();
 
         // Use application directory instead of user home
-        this.dataDirectory = new File(ApplicationConfig.DATA_DIR);
+        this.dataDirectory = config.getDataDirectory();
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }

@@ -152,14 +152,16 @@ public class LuaScriptManager extends BaseTabPanel
 
     @Override
     protected void onInitialized() {
+        fileManager = new ScriptFileManager(applicationConfig);
+
         // Initialize services
         scriptExecutor = new LuaScriptExecutor(
+                fileManager,
                 outputPanel::appendNormal,
                 outputPanel::appendError,
                 outputPanel::appendSuccess,
                 outputPanel::appendInfo
         );
-        fileManager = new ScriptFileManager();
 
         // Update theme
         updateTheme();

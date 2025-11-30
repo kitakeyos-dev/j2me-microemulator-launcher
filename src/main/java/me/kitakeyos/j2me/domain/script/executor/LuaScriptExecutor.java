@@ -17,14 +17,16 @@ import java.util.function.Consumer;
  * LuaScriptExecutor with require support for cross-script communication
  */
 public class LuaScriptExecutor {
+    private final ScriptFileManager fileManager;
     private final Consumer<String> outputConsumer;
     private final Consumer<String> errorConsumer;
     private final Consumer<String> successConsumer;
     private final Consumer<String> infoConsumer;
     private final DynamicJavaLib dynamicJavaLib;
 
-    public LuaScriptExecutor(Consumer<String> outputConsumer, Consumer<String> errorConsumer,
+    public LuaScriptExecutor(ScriptFileManager fileManager, Consumer<String> outputConsumer, Consumer<String> errorConsumer,
                              Consumer<String> successConsumer, Consumer<String> infoConsumer) {
+        this.fileManager = fileManager;
         this.outputConsumer = outputConsumer;
         this.errorConsumer = errorConsumer;
         this.successConsumer = successConsumer;
@@ -61,11 +63,6 @@ public class LuaScriptExecutor {
             globals.load(new JseOsLib());
             globals.load(dynamicJavaLib);
 
-            String currentPath = globals.get("package").get("path").tojstring();
-
-            // Set the new path using the correct method signature
-            globals.get("package").set("path", currentPath + ";./" + ScriptFileManager.SCRIPTS_DIR + "/?.lua");
-
             // Redirect Lua print to output consumer
             globals.set("print", new VarArgFunction() {
                 @Override
@@ -80,8 +77,12 @@ public class LuaScriptExecutor {
                 }
             });
 
+            String scriptsDir = fileManager.getScriptsDirectory().getAbsolutePath().replace("\\", "/");
+            String packagePath = scriptsDir + "/?.lua;" + scriptsDir + "/?/init.lua";
+            globals.get("package").set("path", LuaValue.valueOf(packagePath));
+
             // Execute Lua script
-            LuaValue chunk = globals.loadfile(new File(ScriptFileManager.SCRIPTS_DIR, scriptName + ".lua").getPath());
+            LuaValue chunk = globals.loadfile(new File(fileManager.getScriptsDirectory(), scriptName + ".lua").getPath());
             chunk.call();
 
             outputConsumer.accept(separator);

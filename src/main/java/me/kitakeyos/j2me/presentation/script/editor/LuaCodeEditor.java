@@ -114,6 +114,10 @@ public class LuaCodeEditor {
                 if (!isInternalChange) {
                     documentModified = true;
                     updateLineNumbers();
+                    // Trigger syntax highlighting on text insertion
+                    if (syntaxHighlightEnabled) {
+                        syntaxHighlighter.handleDocumentUpdate(e.getOffset(), e.getLength());
+                    }
                 }
             }
 
@@ -122,6 +126,10 @@ public class LuaCodeEditor {
                 if (!isInternalChange) {
                     documentModified = true;
                     updateLineNumbers();
+                    // Trigger syntax highlighting on text removal
+                    if (syntaxHighlightEnabled) {
+                        syntaxHighlighter.handleDocumentUpdate(e.getOffset(), e.getLength());
+                    }
                 }
             }
 
@@ -171,7 +179,8 @@ public class LuaCodeEditor {
 
         // Xóa các binding mặc định có thể conflict
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "custom-undo");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK), "custom-redo");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK),
+                "custom-redo");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "custom-redo-alt");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), "custom-save");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK), "custom-duplicate");
@@ -335,7 +344,7 @@ public class LuaCodeEditor {
         completionList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value,
-                                                          int index, boolean isSelected, boolean cellHasFocus) {
+                    int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
                 String item = (String) value;
@@ -418,7 +427,8 @@ public class LuaCodeEditor {
     }
 
     private void updateCompletionPopup() {
-        if (completionPopup == null || !completionPopup.isVisible()) return;
+        if (completionPopup == null || !completionPopup.isVisible())
+            return;
 
         try {
             String text = textPane.getText();
@@ -456,7 +466,8 @@ public class LuaCodeEditor {
 
     private void insertSelectedCompletion() {
         String selected = completionList.getSelectedValue();
-        if (selected == null) return;
+        if (selected == null)
+            return;
 
         try {
             int caretOffset = textPane.getCaretPosition();
@@ -491,7 +502,8 @@ public class LuaCodeEditor {
 
     private void insertSnippet(String selected, int caretOffset, String prefix) throws BadLocationException {
         String snippet = completionProvider.getSnippet(selected);
-        if (snippet == null) return;
+        if (snippet == null)
+            return;
 
         String partialWord = completionProvider.getPartialWord(prefix);
         int start = caretOffset - partialWord.length();
@@ -522,7 +534,8 @@ public class LuaCodeEditor {
 
         String importPrefix = "import ";
         int importStartInLine = currentLine.indexOf(importPrefix);
-        if (importStartInLine == -1) return;
+        if (importStartInLine == -1)
+            return;
 
         int importStart = lineStart + importStartInLine + importPrefix.length();
         int replaceLength = caretOffset - importStart;
@@ -634,7 +647,8 @@ public class LuaCodeEditor {
             // Find line boundaries
             int lineStart = text.lastIndexOf('\n', selStart - 1) + 1;
             int lineEnd = text.indexOf('\n', selEnd);
-            if (lineEnd == -1) lineEnd = text.length();
+            if (lineEnd == -1)
+                lineEnd = text.length();
 
             String selectedLines = text.substring(lineStart, lineEnd);
             String[] lines = selectedLines.split("\n", -1);
@@ -668,7 +682,8 @@ public class LuaCodeEditor {
             // Find line boundaries
             int lineStart = text.lastIndexOf('\n', selStart - 1) + 1;
             int lineEnd = text.indexOf('\n', selEnd);
-            if (lineEnd == -1) lineEnd = text.length();
+            if (lineEnd == -1)
+                lineEnd = text.length();
 
             String selectedLines = text.substring(lineStart, lineEnd);
             String[] lines = selectedLines.split("\n", -1);
@@ -713,7 +728,8 @@ public class LuaCodeEditor {
 
             int lineStart = text.lastIndexOf('\n', caretPos - 1) + 1;
             int lineEnd = text.indexOf('\n', caretPos);
-            if (lineEnd == -1) lineEnd = text.length();
+            if (lineEnd == -1)
+                lineEnd = text.length();
 
             String currentLine = text.substring(lineStart, lineEnd);
 
@@ -786,7 +802,8 @@ public class LuaCodeEditor {
      * Saves the current editor state to an EditorState object
      */
     public void saveToState(EditorState state) {
-        if (state == null) return;
+        if (state == null)
+            return;
 
         state.setCode(textPane.getText());
         state.setCaretPosition(textPane.getCaretPosition());

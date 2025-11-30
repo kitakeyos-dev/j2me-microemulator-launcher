@@ -19,7 +19,7 @@ public class MainApplication extends JFrame {
     public static final MainApplication INSTANCE = new MainApplication();
 
     private final ApplicationConfig applicationConfig;
-    private final ApplicationService j2meApplicationManager;
+    private final ApplicationService applicationService;
     private InstancesPanel instancesPanel;
     public InstanceManager emulatorInstanceManager;
     public LuaScriptManager luaScriptManager;
@@ -33,10 +33,10 @@ public class MainApplication extends JFrame {
 
         // Initialize managers
         applicationConfig = new ApplicationConfig();
-        j2meApplicationManager = new ApplicationService();
-        applicationsPanel = new ApplicationsPanel(this, applicationConfig, j2meApplicationManager);
-        instancesPanel = new InstancesPanel(this, applicationConfig, j2meApplicationManager);
-        luaScriptManager = new LuaScriptManager(this, applicationConfig, j2meApplicationManager);
+        applicationService = new ApplicationService(applicationConfig);
+        applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
+        instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
+        luaScriptManager = new LuaScriptManager(this, applicationConfig, applicationService);
 
         emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
 
@@ -59,7 +59,7 @@ public class MainApplication extends JFrame {
         add(tabbedPane);
 
         // Listen for application changes to update combo box in instances panel
-        j2meApplicationManager.addApplicationChangeListener(new ApplicationService.ApplicationChangeListener() {
+        applicationService.addApplicationChangeListener(new ApplicationService.ApplicationChangeListener() {
             @Override
             public void onApplicationAdded(J2meApplication app) {
                 instancesPanel.refreshApplicationComboBox();

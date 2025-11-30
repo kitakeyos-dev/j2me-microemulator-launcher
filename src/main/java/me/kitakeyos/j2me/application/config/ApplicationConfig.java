@@ -7,7 +7,6 @@ import java.util.Properties;
  * Manages application configuration, including microemulator path and other settings
  */
 public class ApplicationConfig {
-    private static final String CONFIG_DIR = "data";
     private static final String CONFIG_FILE = "j2me_launcher.properties";
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
@@ -16,21 +15,22 @@ public class ApplicationConfig {
     public static final String ICONS_DIR = "icons";
     public static final String RMS_DIR = "rms";
     public static final String APPS_CONFIG_FILE = "j2me_apps.properties";
+    public static final String SCRIPTS_DIR = "lua_scripts";
 
     private final Properties properties;
     private final String configFilePath;
-    private final File configDirectory;
+    private final File dataDirectory;
 
     public ApplicationConfig() {
         this.properties = new Properties();
 
         // Use application directory instead of user home
-        this.configDirectory = new File(CONFIG_DIR);
-        if (!configDirectory.exists()) {
-            configDirectory.mkdirs();
+        this.dataDirectory = new File(DATA_DIR);
+        if (!dataDirectory.exists()) {
+            dataDirectory.mkdirs();
         }
 
-        this.configFilePath = new File(configDirectory, CONFIG_FILE).getPath();
+        this.configFilePath = new File(dataDirectory, CONFIG_FILE).getPath();
         loadConfiguration();
     }
     
@@ -102,7 +102,7 @@ public class ApplicationConfig {
     /**
      * Get configuration directory
      */
-    public File getConfigDirectory() {
-        return configDirectory;
+    public File getDataDirectory() {
+        return dataDirectory;
     }
 }
