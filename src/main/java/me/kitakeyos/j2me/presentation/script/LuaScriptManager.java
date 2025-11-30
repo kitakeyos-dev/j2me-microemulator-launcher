@@ -361,13 +361,14 @@ public class LuaScriptManager extends BaseTabPanel
             String templateCode = generateTemplate(name);
             Path scriptPath = fileManager.resolvePath(fullPath);
             LuaScript script = new LuaScript(name, templateCode, scriptPath);
-            scripts.put(fullPath, script);
 
             // Save immediately to ensure file exists
             fileManager.saveScriptToFile(script);
 
-            // Reload to update tree
-            loadScripts();
+            // Update local map and UI incrementally
+            scripts.put(fullPath, script);
+            scriptList.addScript(fullPath);
+            stateManager.initializeState(fullPath, templateCode);
 
             // Select the new script
             onScriptSelected(fullPath);
@@ -385,7 +386,8 @@ public class LuaScriptManager extends BaseTabPanel
             String fullPath = parentPath.isEmpty() ? name : parentPath + "/" + name;
 
             if (fileManager.createFolder(fullPath)) {
-                loadScripts();
+                // Update UI incrementally
+                scriptList.addFolder(fullPath);
                 statusBar.setSuccess("Created folder: " + fullPath);
             } else {
                 statusBar.setError("Failed to create folder: " + fullPath);
@@ -404,14 +406,21 @@ public class LuaScriptManager extends BaseTabPanel
                 // to release any potential file locks (though editor shouldn't hold any)
                 if (currentScript != null) {
                     String currentKey = getScriptKey(currentScript);
-                    if (currentKey.equals(path) || currentKey.startsWith(path + "/")) {
+                    if (currentKey != null && (currentKey.equals(path) || currentKey.startsWith(path + "/"))) {
                         currentScript = null;
                         codeEditor.clearEditor();
                     }
                 }
 
                 if (fileManager.deletePath(path)) {
-                    loadScripts();
+                    // Remove all scripts in this folder from map
+                    scripts.entrySet()
+                            .removeIf(entry -> entry.getKey().equals(path) || entry.getKey().startsWith(path + "/"));
+
+                    // Update UI incrementally
+                    scriptList.removeFolder(path);
+
+                    statusBar.setScriptCount(scripts.size());
                     statusBar.setSuccess("Deleted folder: " + path);
                 } else {
                     statusBar.setError("Failed to delete folder: " + path);
@@ -436,15 +445,19 @@ public class LuaScriptManager extends BaseTabPanel
                     "Delete '" + path + "'?", "Confirm", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                scripts.remove(path);
-                stateManager.removeState(path);
-
                 if (fileManager.deletePath(path)) {
-                    if (currentScript != null && getScriptKey(currentScript).equals(path)) {
+                    if (currentScript != null && path.equals(getScriptKey(currentScript))) {
                         currentScript = null;
                         codeEditor.clearEditor();
                     }
-                    loadScripts();
+
+                    scripts.remove(path);
+                    stateManager.removeState(path);
+
+                    // Update UI incrementally
+                    scriptList.removeScript(path);
+
+                    statusBar.setScriptCount(scripts.size());
                     statusBar.setSuccess("Deleted: " + path);
                 } else {
                     statusBar.setError("Failed to delete: " + path);
@@ -467,30 +480,69 @@ public class LuaScriptManager extends BaseTabPanel
                 return;
 
             if (fileManager.renamePath(path, newPath)) {
-                // Update state manager if script was renamed
-                if (!isFolder) {
-                    EditorState state = stateManager.getState(path);
-                    if (state != null) {
-                        stateManager.removeState(path);
-                        // We need to re-initialize state for new path
-                        // But loadScripts will handle it
+                String oldCurrentKey = currentScript != null ? getScriptKey(currentScript) : null;
+
+                if (isFolder) {
+                    // Update all scripts in map that start with old path
+                    java.util.List<String> keysToUpdate = new java.util.ArrayList<>();
+                    for (String key : scripts.keySet()) {
+                        if (key.startsWith(path + "/")) {
+                            keysToUpdate.add(key);
+                        }
+                    }
+
+                    for (String oldKey : keysToUpdate) {
+                        LuaScript script = scripts.remove(oldKey);
+                        String newKey = newPath + oldKey.substring(path.length());
+                        // Update script object path if needed
+                        Path newScriptPath = fileManager.resolvePath(newKey);
+                        script.setPath(newScriptPath);
+                        scripts.put(newKey, script);
+
+                        // Update state manager
+                        EditorState state = stateManager.getState(oldKey);
+                        if (state != null) {
+                            stateManager.removeState(oldKey);
+                            stateManager.initializeState(newKey, state.getCode());
+                            if (state.isModified()) {
+                                stateManager.setModified(newKey, true);
+                            }
+                        }
+                    }
+                } else {
+                    // Single script rename
+                    LuaScript script = scripts.remove(path);
+                    if (script != null) {
+                        Path newScriptPath = fileManager.resolvePath(newPath);
+                        script.setPath(newScriptPath);
+                        script.setName(newName);
+                        scripts.put(newPath, script);
+
+                        // Update state manager
+                        EditorState state = stateManager.getState(path);
+                        if (state != null) {
+                            stateManager.removeState(path);
+                            stateManager.initializeState(newPath, state.getCode());
+                            if (state.isModified()) {
+                                stateManager.setModified(newPath, true);
+                            }
+                        }
                     }
                 }
 
-                String oldCurrentKey = currentScript != null ? getScriptKey(currentScript) : null;
-
-                loadScripts();
+                // Update UI incrementally
+                scriptList.renameNode(path, newPath);
 
                 // Reselect if needed
                 if (oldCurrentKey != null) {
                     if (!isFolder && oldCurrentKey.equals(path)) {
                         onScriptSelected(newPath);
                     } else if (isFolder && oldCurrentKey.startsWith(path + "/")) {
-                        String newKey = oldCurrentKey.replaceFirst(path, newPath);
+                        String newKey = newPath + oldCurrentKey.substring(path.length());
                         onScriptSelected(newKey);
                     } else {
                         // Restore selection if it wasn't affected
-                        onScriptSelected(oldCurrentKey);
+                        // No need to call onScriptSelected as selection shouldn't change in UI tree
                     }
                 }
 
