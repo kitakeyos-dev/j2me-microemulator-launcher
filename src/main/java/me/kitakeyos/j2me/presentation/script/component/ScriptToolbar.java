@@ -11,12 +11,18 @@ public class ScriptToolbar extends JPanel {
 
     public interface ToolbarActions {
         void onNewScript();
+
+        void onNewFolder();
+
         void onSaveScript();
+
         void onDeleteScript();
+
         void onRunScript();
     }
 
     private JButton newBtn;
+    private JButton newFolderBtn;
     private JButton saveBtn;
     private JButton deleteBtn;
     private JButton runBtn;
@@ -30,12 +36,14 @@ public class ScriptToolbar extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setBorder(new EmptyBorder(5, 10, 5, 10));
 
-        newBtn = new JButton("New");
+        newBtn = new JButton("New Script");
+        newFolderBtn = new JButton("New Folder");
         saveBtn = new JButton("Save");
         deleteBtn = new JButton("Delete");
         runBtn = new JButton("Run");
 
         add(newBtn);
+        add(newFolderBtn);
         add(saveBtn);
         add(deleteBtn);
         add(new JSeparator(SwingConstants.VERTICAL));
@@ -45,6 +53,7 @@ public class ScriptToolbar extends JPanel {
     private void setupActions(ToolbarActions actions) {
         if (actions != null) {
             newBtn.addActionListener(e -> actions.onNewScript());
+            newFolderBtn.addActionListener(e -> actions.onNewFolder());
             saveBtn.addActionListener(e -> actions.onSaveScript());
             deleteBtn.addActionListener(e -> actions.onDeleteScript());
             runBtn.addActionListener(e -> actions.onRunScript());
@@ -55,6 +64,9 @@ public class ScriptToolbar extends JPanel {
         switch (buttonName.toLowerCase()) {
             case "new":
                 newBtn.setEnabled(enabled);
+                break;
+            case "newfolder":
+                newFolderBtn.setEnabled(enabled);
                 break;
             case "save":
                 saveBtn.setEnabled(enabled);
@@ -70,6 +82,7 @@ public class ScriptToolbar extends JPanel {
 
     public void setAllButtonsEnabled(boolean enabled) {
         newBtn.setEnabled(enabled);
+        newFolderBtn.setEnabled(enabled);
         saveBtn.setEnabled(enabled);
         deleteBtn.setEnabled(enabled);
         runBtn.setEnabled(enabled);

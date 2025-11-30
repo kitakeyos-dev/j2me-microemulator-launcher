@@ -5,25 +5,38 @@ import me.kitakeyos.j2me.domain.script.model.LuaScript;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.Enumeration;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Script list component using JTree for displaying Lua scripts in a tree structure.
+ * Script list component using JTree for displaying Lua scripts in a tree
+ * structure.
  * Supports nested folders and provides script selection functionality.
  */
 public class ScriptList extends JPanel {
 
-    public interface ScriptSelectionListener {
+    public interface ScriptActionListener {
         void onScriptSelected(String scriptPath);
+
+        void onNewScript(String folderPath);
+
+        void onNewFolder(String parentPath);
+
+        void onDelete(String path, boolean isFolder);
+
+        void onRename(String path, boolean isFolder);
     }
 
     private DefaultMutableTreeNode rootNode;
     private DefaultTreeModel treeModel;
     private JTree scriptTree;
-    private ScriptSelectionListener listener;
+    private ScriptActionListener listener;
+    private JPopupMenu contextMenu;
 
-    public ScriptList(ScriptSelectionListener listener) {
+    public ScriptList(ScriptActionListener listener) {
         this.listener = listener;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Scripts"));
@@ -42,8 +55,10 @@ public class ScriptList extends JPanel {
         // Selection listener
         scriptTree.addTreeSelectionListener(e -> {
             if (listener != null) {
-                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) scriptTree.getLastSelectedPathComponent();
-                if (selectedNode != null && selectedNode.isLeaf() && selectedNode.getUserObject() instanceof ScriptNode) {
+                DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) scriptTree
+                        .getLastSelectedPathComponent();
+                if (selectedNode != null && selectedNode.isLeaf()
+                        && selectedNode.getUserObject() instanceof ScriptNode) {
                     ScriptNode scriptNode = (ScriptNode) selectedNode.getUserObject();
                     listener.onScriptSelected(scriptNode.getFullPath());
                 } else {
@@ -52,7 +67,107 @@ public class ScriptList extends JPanel {
             }
         });
 
+        setupContextMenu();
+
         add(new JScrollPane(scriptTree), BorderLayout.CENTER);
+    }
+
+    private void setupContextMenu() {
+        contextMenu = new JPopupMenu();
+        JMenuItem newScriptItem = new JMenuItem("New Script");
+        JMenuItem newFolderItem = new JMenuItem("New Folder");
+        JMenuItem renameItem = new JMenuItem("Rename");
+        JMenuItem deleteItem = new JMenuItem("Delete");
+
+        newScriptItem.addActionListener(e -> {
+            String path = getSelectedFolderPath();
+            if (listener != null)
+                listener.onNewScript(path);
+        });
+
+        newFolderItem.addActionListener(e -> {
+            String path = getSelectedFolderPath();
+            if (listener != null)
+                listener.onNewFolder(path);
+        });
+
+        renameItem.addActionListener(e -> {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) scriptTree.getLastSelectedPathComponent();
+            if (node != null && listener != null) {
+                Object userObject = node.getUserObject();
+                if (userObject instanceof ScriptNode) {
+                    listener.onRename(((ScriptNode) userObject).getFullPath(), false);
+                } else if (userObject instanceof FolderNode) {
+                    listener.onRename(getPathFromNode(node), true);
+                }
+            }
+        });
+
+        deleteItem.addActionListener(e -> {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) scriptTree.getLastSelectedPathComponent();
+            if (node != null && listener != null) {
+                Object userObject = node.getUserObject();
+                if (userObject instanceof ScriptNode) {
+                    listener.onDelete(((ScriptNode) userObject).getFullPath(), false);
+                } else if (userObject instanceof FolderNode) {
+                    listener.onDelete(getPathFromNode(node), true);
+                }
+            }
+        });
+
+        contextMenu.add(newScriptItem);
+        contextMenu.add(newFolderItem);
+        contextMenu.addSeparator();
+        contextMenu.add(renameItem);
+        contextMenu.add(deleteItem);
+
+        scriptTree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int row = scriptTree.getRowForLocation(e.getX(), e.getY());
+                    if (row != -1) {
+                        scriptTree.setSelectionRow(row);
+                        contextMenu.show(scriptTree, e.getX(), e.getY());
+                    } else {
+                        // Deselect if clicking on empty space
+                        scriptTree.clearSelection();
+                        contextMenu.show(scriptTree, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+    }
+
+    public String getSelectedFolderPath() {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) scriptTree.getLastSelectedPathComponent();
+        if (node == null)
+            return "";
+
+        Object userObject = node.getUserObject();
+        if (userObject instanceof FolderNode) {
+            return getPathFromNode(node);
+        } else if (userObject instanceof ScriptNode) {
+            // If a script is selected, return its parent folder
+            TreeNode parent = node.getParent();
+            if (parent instanceof DefaultMutableTreeNode) {
+                return getPathFromNode((DefaultMutableTreeNode) parent);
+            }
+        }
+        return "";
+    }
+
+    private String getPathFromNode(DefaultMutableTreeNode node) {
+        if (node == null || node.isRoot())
+            return "";
+
+        Object userObject = node.getUserObject();
+        if (userObject instanceof FolderNode) {
+            String parentPath = getPathFromNode((DefaultMutableTreeNode) node.getParent());
+            return parentPath.isEmpty() ? ((FolderNode) userObject).getName()
+                    : parentPath + "/" + ((FolderNode) userObject).getName();
+        }
+        return "";
     }
 
     /**
@@ -65,6 +180,16 @@ public class ScriptList extends JPanel {
             addScriptToTree(scriptPath);
         }
 
+        sortTree(rootNode);
+        treeModel.reload();
+        expandAllNodes();
+    }
+
+    public void loadFolders(List<String> folders) {
+        for (String folder : folders) {
+            addFolderToTree(folder);
+        }
+        sortTree(rootNode);
         treeModel.reload();
         expandAllNodes();
     }
@@ -74,6 +199,7 @@ public class ScriptList extends JPanel {
      */
     public void addScript(String scriptPath) {
         addScriptToTree(scriptPath);
+        sortTree(rootNode);
         treeModel.reload();
         expandAllNodes();
     }
@@ -105,12 +231,28 @@ public class ScriptList extends JPanel {
         }
     }
 
+    private void addFolderToTree(String folderPath) {
+        String[] parts = folderPath.split("/");
+        DefaultMutableTreeNode currentNode = rootNode;
+
+        for (String part : parts) {
+            DefaultMutableTreeNode childNode = findChild(currentNode, part);
+            if (childNode == null) {
+                FolderNode folderNode = new FolderNode(part);
+                childNode = new DefaultMutableTreeNode(folderNode);
+                currentNode.add(childNode);
+            }
+            currentNode = childNode;
+        }
+    }
+
     /**
      * Remove a script from the tree
      */
     public void removeScript(String scriptPath) {
         removeScriptFromTree(rootNode, scriptPath);
         cleanupEmptyFolders(rootNode);
+        sortTree(rootNode);
         treeModel.reload();
         expandAllNodes();
     }
@@ -139,9 +281,40 @@ public class ScriptList extends JPanel {
             if (child.getUserObject() instanceof FolderNode) {
                 cleanupEmptyFolders(child);
                 if (child.getChildCount() == 0) {
-                    node.remove(i);
+                    // Don't remove empty folders anymore as we support them explicitly
+                    // node.remove(i);
                 }
             }
+        }
+    }
+
+    private void sortTree(DefaultMutableTreeNode node) {
+        if (node.getChildCount() == 0)
+            return;
+
+        List<DefaultMutableTreeNode> children = new ArrayList<>();
+        for (int i = 0; i < node.getChildCount(); i++) {
+            children.add((DefaultMutableTreeNode) node.getChildAt(i));
+        }
+
+        children.sort((n1, n2) -> {
+            boolean isFolder1 = n1.getUserObject() instanceof FolderNode;
+            boolean isFolder2 = n2.getUserObject() instanceof FolderNode;
+
+            if (isFolder1 && !isFolder2)
+                return -1;
+            if (!isFolder1 && isFolder2)
+                return 1;
+
+            String name1 = n1.getUserObject().toString();
+            String name2 = n2.getUserObject().toString();
+            return name1.compareToIgnoreCase(name2);
+        });
+
+        node.removeAllChildren();
+        for (DefaultMutableTreeNode child : children) {
+            node.add(child);
+            sortTree(child);
         }
     }
 
@@ -157,7 +330,7 @@ public class ScriptList extends JPanel {
                 nodeName = ((FolderNode) userObject).getName();
             }
 
-            if (name.equals(nodeName)) {
+            if (name != null && name.equals(nodeName)) {
                 return child;
             }
         }
@@ -262,7 +435,7 @@ public class ScriptList extends JPanel {
 
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
-                                                      boolean expanded, boolean leaf, int row, boolean hasFocus) {
+                boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;

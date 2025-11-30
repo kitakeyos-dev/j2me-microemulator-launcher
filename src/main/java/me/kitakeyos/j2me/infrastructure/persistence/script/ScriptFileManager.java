@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ScriptFileManager - Handles loading and saving of Lua scripts and their metadata
+ * ScriptFileManager - Handles loading and saving of Lua scripts and their
+ * metadata
  * Supports nested folder structure for organizing scripts
  */
 public class ScriptFileManager {
@@ -26,7 +27,8 @@ public class ScriptFileManager {
     }
 
     /**
-     * Loads all Lua scripts recursively from the scripts directory and subdirectories
+     * Loads all Lua scripts recursively from the scripts directory and
+     * subdirectories
      *
      * @return Map of script paths (relative) to LuaScript objects
      */
@@ -57,12 +59,39 @@ public class ScriptFileManager {
                 loadScriptsRecursive(file, subPath, scripts);
             } else if (file.getName().endsWith(".lua")) {
                 // Load Lua script
-                String scriptName = file.getName().replace(".lua", "");
+                String scriptName = file.getName();
                 String scriptPath = relativePath.isEmpty() ? scriptName : relativePath + "/" + scriptName;
 
                 String code = readFileContent(file);
                 LuaScript script = new LuaScript(scriptPath, code);
                 scripts.put(scriptPath, script);
+            }
+        }
+    }
+
+    /**
+     * Get all folders in the scripts directory (recursively)
+     * 
+     * @return List of relative folder paths
+     */
+    public java.util.List<String> getAllFolders() {
+        java.util.List<String> folders = new java.util.ArrayList<>();
+        if (scriptsDirectory.exists()) {
+            getAllFoldersRecursive(scriptsDirectory, "", folders);
+        }
+        return folders;
+    }
+
+    private void getAllFoldersRecursive(File directory, String relativePath, java.util.List<String> folders) {
+        File[] files = directory.listFiles();
+        if (files == null)
+            return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String subPath = relativePath.isEmpty() ? file.getName() : relativePath + "/" + file.getName();
+                folders.add(subPath);
+                getAllFoldersRecursive(file, subPath, folders);
             }
         }
     }
@@ -108,7 +137,8 @@ public class ScriptFileManager {
     /**
      * Deletes a script file
      *
-     * @param scriptPath The relative path of the script to delete (e.g., "folder/scriptname")
+     * @param scriptPath The relative path of the script to delete (e.g.,
+     *                   "folder/scriptname")
      */
     public void deleteScriptFiles(String scriptPath) {
         File scriptFile = getScriptFile(scriptPath);
