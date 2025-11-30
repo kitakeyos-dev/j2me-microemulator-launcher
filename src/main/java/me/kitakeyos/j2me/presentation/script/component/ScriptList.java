@@ -254,7 +254,82 @@ public class ScriptList extends JPanel {
         cleanupEmptyFolders(rootNode);
         sortTree(rootNode);
         treeModel.reload();
+    }
+
+    /**
+     * Add a folder to the tree
+     */
+    public void addFolder(String folderPath) {
+        addFolderToTree(folderPath);
+        sortTree(rootNode);
+        treeModel.reload();
         expandAllNodes();
+    }
+
+    /**
+     * Remove a folder from the tree
+     */
+    public void removeFolder(String folderPath) {
+        DefaultMutableTreeNode node = findNodeByPath(folderPath);
+        if (node != null && node.getUserObject() instanceof FolderNode) {
+            treeModel.removeNodeFromParent(node);
+        }
+    }
+
+    /**
+     * Rename a node (script or folder)
+     */
+    public void renameNode(String oldPath, String newPath) {
+        DefaultMutableTreeNode node = findNodeByPath(oldPath);
+        if (node == null)
+            return;
+
+        Object userObject = node.getUserObject();
+        String newName = newPath.contains("/") ? newPath.substring(newPath.lastIndexOf("/") + 1) : newPath;
+
+        if (userObject instanceof ScriptNode) {
+            node.setUserObject(new ScriptNode(newName, newPath));
+            sortTree((DefaultMutableTreeNode) node.getParent());
+            treeModel.nodeChanged(node);
+            treeModel.reload((TreeNode) node.getParent());
+        } else if (userObject instanceof FolderNode) {
+            node.setUserObject(new FolderNode(newName));
+            // Recursively update paths of all child scripts
+            updateChildPaths(node, oldPath, newPath);
+            sortTree((DefaultMutableTreeNode) node.getParent());
+            treeModel.reload((TreeNode) node.getParent());
+        }
+    }
+
+    private void updateChildPaths(DefaultMutableTreeNode node, String oldBasePath, String newBasePath) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode) node.getChildAt(i);
+            Object userObject = child.getUserObject();
+
+            if (userObject instanceof ScriptNode) {
+                ScriptNode scriptNode = (ScriptNode) userObject;
+                String oldScriptPath = scriptNode.getFullPath();
+                if (oldScriptPath.startsWith(oldBasePath + "/")) {
+                    String newScriptPath = newBasePath + oldScriptPath.substring(oldBasePath.length());
+                    child.setUserObject(new ScriptNode(scriptNode.getName(), newScriptPath));
+                }
+            } else if (userObject instanceof FolderNode) {
+                updateChildPaths(child, oldBasePath, newBasePath);
+            }
+        }
+    }
+
+    private DefaultMutableTreeNode findNodeByPath(String path) {
+        String[] parts = path.split("/");
+        DefaultMutableTreeNode currentNode = rootNode;
+
+        for (String part : parts) {
+            DefaultMutableTreeNode child = findChild(currentNode, part);
+            if (child == null)
+                return null;
+            currentNode = child;
+        }
+        return currentNode;
     }
 
     private boolean removeScriptFromTree(DefaultMutableTreeNode node, String scriptPath) {
