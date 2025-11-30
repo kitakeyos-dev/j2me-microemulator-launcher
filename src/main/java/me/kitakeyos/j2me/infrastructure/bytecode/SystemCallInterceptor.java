@@ -5,7 +5,11 @@ import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.logging.Logger;
+
 public class SystemCallInterceptor extends MethodAdapter {
+
+    private static final Logger logger = Logger.getLogger(SystemCallInterceptor.class.getName());
 
     private static final String INJECTED_CLASS = ByteCodeHelper.toInternalName(SystemCallHandler.class);
     private static final String INSTANCE_CONTEXT_CLASS = ByteCodeHelper.toInternalName(InstanceContext.class);
@@ -47,7 +51,7 @@ public class SystemCallInterceptor extends MethodAdapter {
                 name.equals("<init>") &&
                 desc.equals("(Ljava/lang/String;I)V")) {
 
-            System.out.println("Intercepting Socket constructor: " + owner + "." + name + desc);
+            logger.info("Intercepting Socket constructor: " + owner + "." + name + desc);
 
             // Current stack after skipping NEW and DUP: [host, port]
             // We need: [instanceId, host, port]

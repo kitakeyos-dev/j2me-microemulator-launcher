@@ -6,6 +6,8 @@ import me.kitakeyos.j2me.domain.script.model.LuaScript;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * ScriptFileManager - Handles loading and saving of Lua scripts and their
@@ -13,6 +15,8 @@ import java.util.Map;
  * Supports nested folder structure for organizing scripts
  */
 public class ScriptFileManager {
+    private static final Logger logger = Logger.getLogger(ScriptFileManager.class.getName());
+
     private final File scriptsDirectory;
 
     public ScriptFileManager(ApplicationConfig config) {
@@ -59,7 +63,7 @@ public class ScriptFileManager {
                 loadScriptsRecursive(file, subPath, scripts);
             } else if (file.getName().endsWith(".lua")) {
                 // Load Lua script
-                String scriptName = file.getName();
+                String scriptName = file.getName().replace(".lua", "");
                 String scriptPath = relativePath.isEmpty() ? scriptName : relativePath + "/" + scriptName;
 
                 String code = readFileContent(file);
@@ -108,7 +112,7 @@ public class ScriptFileManager {
             }
             return codeBuilder.toString();
         } catch (IOException e) {
-            System.err.println("Failed to load script file " + file.getName() + ": " + e.getMessage());
+            logger.log(Level.SEVERE, "Failed to load script file " + file.getName() + ": " + e.getMessage());
             return "";
         }
     }
@@ -130,7 +134,7 @@ public class ScriptFileManager {
         try (PrintWriter writer = new PrintWriter(new FileWriter(luaFile))) {
             writer.print(script.getCode());
         } catch (IOException e) {
-            System.err.println("Failed to save script file " + script.getName() + ": " + e.getMessage());
+            logger.log(Level.SEVERE, "Failed to save script file " + script.getName() + ": " + e.getMessage());
         }
     }
 

@@ -6,12 +6,15 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Output panel component for displaying script execution results.
  * Supports color-coded output for info, error, success, and normal messages.
  */
 public class OutputPanel extends JPanel {
+    private static final Logger logger = Logger.getLogger(OutputPanel.class.getName());
 
     private JTextPane outputArea;
 
@@ -43,7 +46,7 @@ public class OutputPanel extends JPanel {
                 doc.insertString(doc.getLength(), text, style);
                 outputArea.setCaretPosition(doc.getLength());
             } catch (BadLocationException e) {
-                System.err.println("Failed to append text to output panel: " + e.getMessage());
+                logger.log(Level.SEVERE, "Failed to append text to output panel: " + e.getMessage());
             }
         });
     }

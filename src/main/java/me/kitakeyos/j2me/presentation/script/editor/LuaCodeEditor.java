@@ -177,7 +177,7 @@ public class LuaCodeEditor {
         InputMap inputMap = textPane.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap actionMap = textPane.getActionMap();
 
-        // Xóa các binding mặc định có thể conflict
+        // Remove default bindings that might conflict
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK), "custom-undo");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK),
                 "custom-redo");
@@ -824,7 +824,7 @@ public class LuaCodeEditor {
 
         hideCompletionPopup();
 
-        // Swap undo manager TRƯỚC khi thay đổi text
+        // Swap undo manager BEFORE changing text
         if (state.getUndoManager() != null) {
             currentUndoManager = state.getUndoManager();
         } else {
@@ -843,7 +843,7 @@ public class LuaCodeEditor {
 
         documentModified = state.isModified();
 
-        // Restore caret, scroll position và apply highlighting
+        // Restore caret, scroll position and apply highlighting
         final int savedCaretPos = state.getCaretPosition();
         final int savedScrollPos = state.getScrollPosition();
 
@@ -862,12 +862,12 @@ public class LuaCodeEditor {
             lineNumberPanel.updateLineNumbers();
             lineNumberPanel.repaint();
 
-            // QUAN TRỌNG: Apply syntax highlighting SAU khi set text
+            // IMPORTANT: Apply syntax highlighting AFTER setting text
             if (syntaxHighlightEnabled) {
                 syntaxHighlighter.highlightAll();
             }
 
-            // Set scroll position sau cùng (sau khi highlighting xong)
+            // Set scroll position last (after highlighting is done)
             SwingUtilities.invokeLater(() -> {
                 scrollPane.getVerticalScrollBar().setValue(savedScrollPos);
             });

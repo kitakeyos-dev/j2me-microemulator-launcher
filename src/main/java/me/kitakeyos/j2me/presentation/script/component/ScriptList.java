@@ -425,11 +425,9 @@ public class ScriptList extends JPanel {
      * Custom cell renderer for script tree
      */
     private static class ScriptTreeCellRenderer extends DefaultTreeCellRenderer {
-        private final Icon folderIcon;
         private final Icon scriptIcon;
 
         public ScriptTreeCellRenderer() {
-            folderIcon = UIManager.getIcon("Tree.closedIcon");
             scriptIcon = UIManager.getIcon("Tree.leafIcon");
         }
 

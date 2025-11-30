@@ -33,11 +33,15 @@ import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.logging.Logger;
+
 /**
  * @author vlads
  *
  */
 public class InstrumentationClassVisitor extends ClassAdapter {
+
+	private static final Logger logger = Logger.getLogger(InstrumentationClassVisitor.class.getName());
 
 	private final String oldSuperclass;
 	private final String newSuperclass;
@@ -54,10 +58,10 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 		// Check if this class extends the old superclass
 		if (superName.equals(this.oldSuperclass)) {
 			shouldChangeSuperCalls = true;
-			System.out.println("Changing superclass:");
-			System.out.println("  Class: " + name);
-			System.out.println("  From: " + superName);
-			System.out.println("  To:   " + newSuperclass);
+			logger.info("Changing superclass:");
+			logger.info("  Class: " + name);
+			logger.info("  From: " + superName);
+			logger.info("  To:   " + newSuperclass);
 
 			// Change to new superclass
 			superName = newSuperclass;
@@ -68,14 +72,15 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 
 	@Override
 	public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
-									 final String[] exceptions) {
+			final String[] exceptions) {
 
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
 		// Wrap with SystemCallInterceptorMethodVisitor first
 		mv = new SystemCallInterceptor(mv);
 
-		// If we changed the superclass and this is a constructor, also redirect super() calls
+		// If we changed the superclass and this is a constructor, also redirect super()
+		// calls
 		if (shouldChangeSuperCalls && name.equals("<init>")) {
 			mv = new SuperCallRedirector(mv, oldSuperclass, newSuperclass);
 		}
@@ -103,7 +108,7 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 					owner.equals(oldSuperclass) &&
 					name.equals("<init>")) {
 
-				System.out.println("  → Redirecting super() call: " + desc);
+				logger.info("  → Redirecting super() call: " + desc);
 
 				// Call new superclass constructor instead
 				mv.visitMethodInsn(opcode, newSuperclass, name, desc);

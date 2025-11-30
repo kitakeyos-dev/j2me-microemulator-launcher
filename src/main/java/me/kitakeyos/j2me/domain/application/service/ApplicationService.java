@@ -8,11 +8,14 @@ import javax.imageio.ImageIO;
 import java.awt.Image;
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Manager for installed J2ME applications
  */
 public class ApplicationService {
+    private static final Logger logger = Logger.getLogger(ApplicationService.class.getName());
 
     private final List<J2meApplication> applications;
     private final File dataDirectory;
@@ -110,7 +113,7 @@ public class ApplicationService {
      */
     private void copyFile(File source, File dest) throws IOException {
         try (InputStream in = new FileInputStream(source);
-             OutputStream out = new FileOutputStream(dest)) {
+                OutputStream out = new FileOutputStream(dest)) {
             byte[] buffer = new byte[8192];
             int length;
             while ((length = in.read(buffer)) > 0) {
@@ -216,7 +219,7 @@ public class ApplicationService {
         try (FileOutputStream fos = new FileOutputStream(configFile)) {
             props.store(fos, "J2ME Applications Configuration");
         } catch (IOException e) {
-            System.err.println("Error saving applications: " + e.getMessage());
+            logger.log(Level.SEVERE, "Error saving applications: " + e.getMessage());
         }
     }
 
@@ -289,7 +292,7 @@ public class ApplicationService {
                 applications.add(app);
             }
         } catch (IOException | NumberFormatException e) {
-            System.err.println("Error loading applications: " + e.getMessage());
+            logger.log(Level.SEVERE, "Error loading applications: " + e.getMessage());
         }
     }
 
@@ -384,6 +387,7 @@ public class ApplicationService {
      */
     public interface ApplicationChangeListener {
         void onApplicationAdded(J2meApplication app);
+
         void onApplicationRemoved(J2meApplication app);
     }
 }

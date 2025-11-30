@@ -2,11 +2,16 @@ package me.kitakeyos.j2me.application.config;
 
 import java.io.*;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Manages application configuration, including microemulator path and other settings
+ * Manages application configuration, including microemulator path and other
+ * settings
  */
 public class ApplicationConfig {
+    private static final Logger logger = Logger.getLogger(ApplicationConfig.class.getName());
+
     private static final String CONFIG_FILE = "j2me_launcher.properties";
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
@@ -33,7 +38,7 @@ public class ApplicationConfig {
         this.configFilePath = new File(dataDirectory, CONFIG_FILE).getPath();
         loadConfiguration();
     }
-    
+
     /**
      * Load configuration from file
      */
@@ -43,7 +48,7 @@ public class ApplicationConfig {
             try (FileInputStream fis = new FileInputStream(configFile)) {
                 properties.load(fis);
             } catch (IOException e) {
-                System.err.println("Cannot load configuration file: " + e.getMessage());
+                logger.log(Level.SEVERE, "Cannot load configuration file: " + e.getMessage());
                 loadDefaultConfiguration();
             }
         } else {
@@ -58,31 +63,31 @@ public class ApplicationConfig {
         try (FileOutputStream fos = new FileOutputStream(configFilePath)) {
             properties.store(fos, "J2ME Launcher Configuration");
         } catch (IOException e) {
-            System.err.println("Cannot save configuration file: " + e.getMessage());
+            logger.log(Level.SEVERE, "Cannot save configuration file: " + e.getMessage());
         }
     }
-    
+
     /**
      * Load default configuration
      */
     private void loadDefaultConfiguration() {
         properties.setProperty(MICROEMULATOR_PATH_KEY, DEFAULT_MICROEMULATOR_PATH);
     }
-    
+
     /**
      * Get microemulator path
      */
     public String getMicroemulatorPath() {
         return properties.getProperty(MICROEMULATOR_PATH_KEY, DEFAULT_MICROEMULATOR_PATH);
     }
-    
+
     /**
      * Set microemulator path
      */
     public void setMicroemulatorPath(String path) {
         properties.setProperty(MICROEMULATOR_PATH_KEY, path);
     }
-    
+
     /**
      * Check if microemulator path is valid
      */
@@ -91,7 +96,7 @@ public class ApplicationConfig {
         File file = new File(path);
         return file.exists() && file.isFile() && path.toLowerCase().endsWith(".jar");
     }
-    
+
     /**
      * Get configuration file path
      */
