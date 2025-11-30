@@ -81,11 +81,12 @@ public class LuaScriptExecutor {
             });
 
             String scriptsDir = fileManager.getScriptsDirectory().toAbsolutePath().toString().replace("\\", "/");
-            String packagePath = scriptsDir + "/?.lua;" + scriptsDir + "/?/init.lua";
+            String currentScriptDir = scriptPath.toAbsolutePath().getParent().toString().replace("\\", "/");
+            String packagePath = currentScriptDir + "/?.lua;" + currentScriptDir + "/?/init.lua;" +
+                    scriptsDir + "/?.lua;" + scriptsDir + "/?/init.lua";
             globals.get("package").set("path", LuaValue.valueOf(packagePath));
 
             // Execute Lua script
-            System.out.println("Executing script: " + scriptPath);
             LuaValue chunk = globals.loadfile(scriptPath.toAbsolutePath().toString());
             chunk.call();
 
