@@ -9,6 +9,7 @@ import org.luaj.vm2.lib.*;
 import org.luaj.vm2.lib.jse.*;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.function.Consumer;
@@ -24,8 +25,9 @@ public class LuaScriptExecutor {
     private final Consumer<String> infoConsumer;
     private final DynamicJavaLib dynamicJavaLib;
 
-    public LuaScriptExecutor(ScriptFileManager fileManager, Consumer<String> outputConsumer, Consumer<String> errorConsumer,
-                             Consumer<String> successConsumer, Consumer<String> infoConsumer) {
+    public LuaScriptExecutor(ScriptFileManager fileManager, Consumer<String> outputConsumer,
+            Consumer<String> errorConsumer,
+            Consumer<String> successConsumer, Consumer<String> infoConsumer) {
         this.fileManager = fileManager;
         this.outputConsumer = outputConsumer;
         this.errorConsumer = errorConsumer;
@@ -41,7 +43,7 @@ public class LuaScriptExecutor {
         dynamicJavaLib.setInstanceClassLoader(classLoader);
     }
 
-    public void executeScript(String scriptName) {
+    public void executeScript(Path scriptPath) {
         String separator = new String(new char[50]).replace('\0', '-');
         infoConsumer.accept("Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 
@@ -69,7 +71,8 @@ public class LuaScriptExecutor {
                 public Varargs invoke(Varargs args) {
                     StringBuilder output = new StringBuilder();
                     for (int i = 1; i <= args.narg(); i++) {
-                        if (i > 1) output.append("\t");
+                        if (i > 1)
+                            output.append("\t");
                         output.append(args.arg(i).tojstring());
                     }
                     outputConsumer.accept(output.toString());
@@ -82,7 +85,8 @@ public class LuaScriptExecutor {
             globals.get("package").set("path", LuaValue.valueOf(packagePath));
 
             // Execute Lua script
-            LuaValue chunk = globals.loadfile(new File(fileManager.getScriptsDirectory(), scriptName + ".lua").getPath());
+            System.out.println("Executing script: " + scriptPath);
+            LuaValue chunk = globals.loadfile(scriptPath.toString());
             chunk.call();
 
             outputConsumer.accept(separator);

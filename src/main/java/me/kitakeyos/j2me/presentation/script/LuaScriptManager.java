@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -278,7 +279,7 @@ public class LuaScriptManager extends BaseTabPanel
             SwingUtilities.invokeLater(() -> {
                 try {
                     onSaveScript();
-                    scriptExecutor.executeScript(currentScriptName);
+                    scriptExecutor.executeScript(script.getPath());
                     statusBar.setSuccess("Execution completed");
                 } catch (Exception e) {
                     outputPanel.appendError("Execution failed: " + e.getMessage());
@@ -355,7 +356,7 @@ public class LuaScriptManager extends BaseTabPanel
             saveCurrentScriptState();
 
             String templateCode = generateTemplate(name);
-            LuaScript script = new LuaScript(fullPath, templateCode);
+            LuaScript script = new LuaScript(fullPath, templateCode, Paths.get(fullPath));
             scripts.put(fullPath, script);
 
             // Save immediately to ensure file exists

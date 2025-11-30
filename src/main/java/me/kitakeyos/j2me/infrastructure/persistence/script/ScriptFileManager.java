@@ -4,6 +4,7 @@ import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.script.model.LuaScript;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -67,7 +68,7 @@ public class ScriptFileManager {
                 String scriptPath = relativePath.isEmpty() ? scriptName : relativePath + "/" + scriptName;
 
                 String code = readFileContent(file);
-                LuaScript script = new LuaScript(scriptPath, code);
+                LuaScript script = new LuaScript(scriptPath, code, file.toPath());
                 scripts.put(scriptPath, script);
             }
         }
@@ -158,6 +159,9 @@ public class ScriptFileManager {
      * Get the actual File object for a script path
      */
     private File getScriptFile(String scriptPath) {
+        if (scriptPath.endsWith(".lua")) {
+            return new File(scriptsDirectory, scriptPath);
+        }
         return new File(scriptsDirectory, scriptPath + ".lua");
     }
 
