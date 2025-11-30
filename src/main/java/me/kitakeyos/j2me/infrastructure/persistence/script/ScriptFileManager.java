@@ -3,31 +3,36 @@ package me.kitakeyos.j2me.infrastructure.persistence.script;
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.script.model.LuaScript;
 
-import java.io.*;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * ScriptFileManager - Handles loading and saving of Lua scripts and their
- * metadata
- * Supports nested folder structure for organizing scripts
+ * metadata using java.nio.file API.
+ * Supports nested folder structure for organizing scripts.
  */
 public class ScriptFileManager {
     private static final Logger logger = Logger.getLogger(ScriptFileManager.class.getName());
 
-    private final File scriptsDirectory;
+    private final Path scriptsDirectory;
 
     public ScriptFileManager(ApplicationConfig config) {
-        this.scriptsDirectory = new File(config.getDataDirectory(), ApplicationConfig.SCRIPTS_DIR);
-        if (!this.scriptsDirectory.exists()) {
-            this.scriptsDirectory.mkdirs();
+        this.scriptsDirectory = Paths.get(config.getDataDirectory().getAbsolutePath(), ApplicationConfig.SCRIPTS_DIR);
+        try {
+            if (!Files.exists(scriptsDirectory)) {
+                Files.createDirectories(scriptsDirectory);
+            }
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to create scripts directory", e);
         }
     }
 
-    public File getScriptsDirectory() {
+    public Path getScriptsDirectory() {
         return scriptsDirectory;
     }
 
@@ -35,43 +40,30 @@ public class ScriptFileManager {
      * Loads all Lua scripts recursively from the scripts directory and
      * subdirectories
      *
-     * @return Map of script paths (relative) to LuaScript objects
+     * @return Map of script paths (relative string) to LuaScript objects
      */
     public Map<String, LuaScript> loadScripts() {
         Map<String, LuaScript> scripts = new HashMap<>();
-
-        if (!scriptsDirectory.exists()) {
+        if (!Files.exists(scriptsDirectory)) {
             return scripts;
         }
 
-        loadScriptsRecursive(scriptsDirectory, "", scripts);
+        try (Stream<Path> stream = Files.walk(scriptsDirectory)) {
+            stream.filter(p -> !Files.isDirectory(p) && p.toString().endsWith(".lua"))
+                    .forEach(p -> {
+                        try {
+                            String code = new String(Files.readAllBytes(p));
+                            String relativePath = getRelativePathString(p);
+                            // Use filename as name, but store full relative path as key
+                            scripts.put(relativePath, new LuaScript(p.getFileName().toString(), code, p));
+                        } catch (IOException e) {
+                            logger.log(Level.SEVERE, "Failed to load script: " + p, e);
+                        }
+                    });
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to walk scripts directory", e);
+        }
         return scripts;
-    }
-
-    /**
-     * Recursively load scripts from directory and subdirectories
-     */
-    private void loadScriptsRecursive(File directory, String relativePath, Map<String, LuaScript> scripts) {
-        File[] files = directory.listFiles();
-        if (files == null) {
-            return;
-        }
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                // Recurse into subdirectory
-                String subPath = relativePath.isEmpty() ? file.getName() : relativePath + "/" + file.getName();
-                loadScriptsRecursive(file, subPath, scripts);
-            } else if (file.getName().endsWith(".lua")) {
-                // Load Lua script
-                String scriptName = file.getName();
-                String scriptPath = relativePath.isEmpty() ? scriptName : relativePath + "/" + scriptName;
-
-                String code = readFileContent(file);
-                LuaScript script = new LuaScript(scriptPath, code, file.toPath());
-                scripts.put(scriptPath, script);
-            }
-        }
     }
 
     /**
@@ -79,43 +71,20 @@ public class ScriptFileManager {
      * 
      * @return List of relative folder paths
      */
-    public java.util.List<String> getAllFolders() {
-        java.util.List<String> folders = new java.util.ArrayList<>();
-        if (scriptsDirectory.exists()) {
-            getAllFoldersRecursive(scriptsDirectory, "", folders);
+    public List<String> getAllFolders() {
+        List<String> folders = new ArrayList<>();
+        if (!Files.exists(scriptsDirectory)) {
+            return folders;
+        }
+
+        try (Stream<Path> stream = Files.walk(scriptsDirectory)) {
+            stream.filter(Files::isDirectory)
+                    .filter(p -> !p.equals(scriptsDirectory))
+                    .forEach(p -> folders.add(getRelativePathString(p)));
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to walk scripts directory for folders", e);
         }
         return folders;
-    }
-
-    private void getAllFoldersRecursive(File directory, String relativePath, java.util.List<String> folders) {
-        File[] files = directory.listFiles();
-        if (files == null)
-            return;
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                String subPath = relativePath.isEmpty() ? file.getName() : relativePath + "/" + file.getName();
-                folders.add(subPath);
-                getAllFoldersRecursive(file, subPath, folders);
-            }
-        }
-    }
-
-    /**
-     * Read file content as string
-     */
-    private String readFileContent(File file) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            StringBuilder codeBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                codeBuilder.append(line).append("\n");
-            }
-            return codeBuilder.toString();
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to load script file " + file.getName() + ": " + e.getMessage());
-            return "";
-        }
     }
 
     /**
@@ -124,60 +93,89 @@ public class ScriptFileManager {
      * @param script The LuaScript object to save
      */
     public void saveScriptToFile(LuaScript script) {
-        File luaFile = getScriptFile(script.getName());
-
-        // Create parent directories if they don't exist
-        File parentDir = luaFile.getParentFile();
-        if (!parentDir.exists()) {
-            parentDir.mkdirs();
+        Path path = script.getPath();
+        if (path == null) {
+            // Should not happen if properly initialized, but fallback
+            path = scriptsDirectory.resolve(script.getName());
         }
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(luaFile))) {
-            writer.print(script.getCode());
+        try {
+            Files.createDirectories(path.getParent());
+            Files.write(path, script.getCode().getBytes());
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failed to save script file " + script.getName() + ": " + e.getMessage());
+            logger.log(Level.SEVERE, "Failed to save script file " + path, e);
         }
     }
 
     /**
-     * Deletes a script file
+     * Deletes a script file or folder
      *
-     * @param scriptPath The relative path of the script to delete (e.g.,
-     *                   "folder/scriptname")
+     * @param relativePath The relative path of the script/folder to delete
+     * @return true if successful
      */
-    public void deleteScriptFiles(String scriptPath) {
-        File scriptFile = getScriptFile(scriptPath);
-        if (scriptFile.exists()) {
-            scriptFile.delete();
-
-            // Clean up empty parent directories
-            cleanupEmptyDirectories(scriptFile.getParentFile());
-        }
-    }
-
-    /**
-     * Get the actual File object for a script path
-     */
-    private File getScriptFile(String scriptPath) {
-        if (scriptPath.endsWith(".lua")) {
-            return new File(scriptsDirectory, scriptPath);
-        }
-        return new File(scriptsDirectory, scriptPath + ".lua");
-    }
-
-    /**
-     * Remove empty directories up to the scripts root
-     */
-    private void cleanupEmptyDirectories(File directory) {
-        while (directory != null && !directory.equals(scriptsDirectory)) {
-            File[] files = directory.listFiles();
-            if (files == null || files.length == 0) {
-                directory.delete();
-                directory = directory.getParentFile();
-            } else {
-                break;
+    public boolean deletePath(String relativePath) {
+        Path target = scriptsDirectory.resolve(relativePath);
+        if (!Files.exists(target)) {
+            // Try appending .lua if it's a script and not found
+            if (!relativePath.endsWith(".lua")) {
+                Path withExt = scriptsDirectory.resolve(relativePath + ".lua");
+                if (Files.exists(withExt)) {
+                    target = withExt;
+                }
             }
         }
+
+        if (!Files.exists(target))
+            return false;
+
+        try {
+            if (Files.isDirectory(target)) {
+                deleteDirectoryRecursive(target);
+            } else {
+                deleteFileWithRetry(target);
+            }
+            return true;
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to delete path: " + target, e);
+            return false;
+        }
+    }
+
+    private void deleteFileWithRetry(Path file) throws IOException {
+        try {
+            Files.delete(file);
+        } catch (IOException e) {
+            // Retry logic for Windows file locks
+            try {
+                System.gc();
+                Thread.sleep(50);
+                Files.delete(file);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted during deletion retry", ie);
+            } catch (IOException ex) {
+                logger.warning("Failed to delete file after retry: " + file);
+                throw ex;
+            }
+        }
+    }
+
+    private void deleteDirectoryRecursive(Path directory) throws IOException {
+        Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                deleteFileWithRetry(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (exc != null)
+                    throw exc;
+                deleteFileWithRetry(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     /**
@@ -187,79 +185,60 @@ public class ScriptFileManager {
      * @return true if folder was created successfully
      */
     public boolean createFolder(String folderPath) {
-        File folder = new File(scriptsDirectory, folderPath);
-        return folder.mkdirs();
+        Path target = scriptsDirectory.resolve(folderPath);
+        try {
+            Files.createDirectories(target);
+            return true;
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to create folder: " + target, e);
+            return false;
+        }
     }
 
     /**
-     * Delete a folder and all its contents
+     * Rename a script or folder
      *
-     * @param folderPath Relative path of the folder to delete
-     * @return true if folder was deleted successfully
+     * @param oldRelPath Old relative path
+     * @param newRelPath New relative path
+     * @return true if rename was successful
      */
-    public boolean deleteFolder(String folderPath) {
-        File folder = new File(scriptsDirectory, folderPath);
-        return deleteRecursive(folder);
-    }
+    public boolean renamePath(String oldRelPath, String newRelPath) {
+        Path source = scriptsDirectory.resolve(oldRelPath);
+        Path target = scriptsDirectory.resolve(newRelPath);
 
-    private boolean deleteRecursive(File file) {
-        if (file.isDirectory()) {
-            File[] children = file.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    if (!deleteRecursive(child)) {
-                        logger.warning("Failed to delete child: " + child.getAbsolutePath());
-                        return false;
-                    }
+        // Handle implicit .lua extension for source if needed
+        if (!Files.exists(source) && !oldRelPath.endsWith(".lua")) {
+            Path withExt = scriptsDirectory.resolve(oldRelPath + ".lua");
+            if (Files.exists(withExt)) {
+                source = withExt;
+                // If source had implicit extension, target probably should too unless specified
+                if (!newRelPath.endsWith(".lua")) {
+                    target = scriptsDirectory.resolve(newRelPath + ".lua");
                 }
             }
         }
 
-        // Try to delete with a small retry
-        if (!file.delete()) {
-            try {
-                System.gc(); // Suggest GC to release file handles
-                Thread.sleep(50); // Wait a bit
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        if (!Files.exists(source))
+            return false;
 
-            if (!file.delete()) {
-                logger.warning("Failed to delete file/folder after retry: " + file.getAbsolutePath());
-                return false;
-            }
+        try {
+            Files.createDirectories(target.getParent());
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to rename path from " + source + " to " + target, e);
+            return false;
         }
-        return true;
     }
 
     /**
-     * Rename a script or move it to a different path
-     *
-     * @param oldPath Old relative path
-     * @param newPath New relative path
-     * @return true if rename was successful
+     * Resolve a relative path string to an absolute Path object
      */
-    public boolean renameScript(String oldPath, String newPath) {
-        File oldFile = getScriptFile(oldPath);
-        File newFile = getScriptFile(newPath);
+    public Path resolvePath(String relativePath) {
+        return scriptsDirectory.resolve(relativePath);
+    }
 
-        if (!oldFile.exists()) {
-            return false;
-        }
-
-        // Create parent directories for new location if needed
-        File newParent = newFile.getParentFile();
-        if (!newParent.exists()) {
-            newParent.mkdirs();
-        }
-
-        boolean success = oldFile.renameTo(newFile);
-
-        if (success) {
-            // Clean up empty directories from old location
-            cleanupEmptyDirectories(oldFile.getParentFile());
-        }
-
-        return success;
+    private String getRelativePathString(Path path) {
+        return scriptsDirectory.relativize(path).toString().replace("\\", "/");
     }
 }

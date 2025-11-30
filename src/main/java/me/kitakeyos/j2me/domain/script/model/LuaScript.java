@@ -4,7 +4,16 @@ import java.nio.file.Path;
 
 /**
  * Represents a Lua script with its name and code content.
- * This is a simple data model class for managing Lua scripts in the application.
+ * This is a simple data model class for managing Lua scripts in the
+ * application.
+ * package me.kitakeyos.j2me.domain.script.model;
+ * 
+ * import java.nio.file.Path;
+ * 
+ * /**
+ * Represents a Lua script with its name and code content.
+ * This is a simple data model class for managing Lua scripts in the
+ * application.
  */
 public class LuaScript {
     private String name;
@@ -38,11 +47,25 @@ public class LuaScript {
         return path;
     }
 
+    public void setPath(Path path) {
+        this.path = path;
+    }
+
+    public String getRelativePath(Path root) {
+        if (path == null || root == null)
+            return name;
+        try {
+            return root.relativize(path).toString().replace("\\", "/");
+        } catch (IllegalArgumentException e) {
+            return name;
+        }
+    }
+
     @Override
     public String toString() {
         return "LuaScript{" +
                 "name='" + name + '\'' +
-                ", codeLength=" + (code != null ? code.length() : 0) +
+                ", path=" + path +
                 '}';
     }
 }

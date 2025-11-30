@@ -21,7 +21,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +52,7 @@ public class LuaScriptManager extends BaseTabPanel
 
     // State management
     private EditorStateManager stateManager;
-    private String currentScriptName;
+    private LuaScript currentScript;
     private boolean isLoadingScript = false; // Flag to avoid loop when loading script
 
     // Settings
@@ -185,16 +185,18 @@ public class LuaScriptManager extends BaseTabPanel
      * Called when editor content changes
      */
     private void handleEditorUpdate() {
-        if (currentScriptName != null && !isLoadingScript) {
-            stateManager.setModified(currentScriptName, true);
+        if (currentScript != null && !isLoadingScript) {
+            String scriptName = getScriptKey(currentScript);
+            stateManager.setModified(scriptName, true);
             updateTitleWithModifiedIndicator();
         }
     }
 
     private void updateTitleWithModifiedIndicator() {
-        if (currentScriptName != null) {
-            boolean modified = stateManager.isModified(currentScriptName);
-            String title = modified ? currentScriptName + " *" : currentScriptName;
+        if (currentScript != null) {
+            String scriptName = getScriptKey(currentScript);
+            boolean modified = stateManager.isModified(scriptName);
+            String title = modified ? scriptName + " *" : scriptName;
             statusBar.setStatus("Editing: " + title);
         }
     }
@@ -215,31 +217,30 @@ public class LuaScriptManager extends BaseTabPanel
 
     @Override
     public void onSaveScript() {
-        if (currentScriptName == null) {
+        if (currentScript == null) {
             statusBar.setWarning("No script selected");
             return;
         }
 
-        LuaScript script = scripts.get(currentScriptName);
-        if (script != null) {
-            // Get current code from editor
-            String code = codeEditor.getText();
-            script.setCode(code);
+        // Get current code from editor
+        String code = codeEditor.getText();
+        currentScript.setCode(code);
 
-            // Update state
-            EditorState state = stateManager.getState(currentScriptName);
-            if (state != null) {
-                state.setCode(code);
-                state.setModified(false);
-            }
+        String scriptName = getScriptKey(currentScript);
 
-            // Save to file
-            fileManager.saveScriptToFile(script);
-
-            codeEditor.setModified(false);
-            statusBar.setSuccess("Saved: " + currentScriptName);
-            updateTitleWithModifiedIndicator();
+        // Update state
+        EditorState state = stateManager.getState(scriptName);
+        if (state != null) {
+            state.setCode(code);
+            state.setModified(false);
         }
+
+        // Save to file
+        fileManager.saveScriptToFile(currentScript);
+
+        codeEditor.setModified(false);
+        statusBar.setSuccess("Saved: " + scriptName);
+        updateTitleWithModifiedIndicator();
     }
 
     @Override
@@ -248,9 +249,9 @@ public class LuaScriptManager extends BaseTabPanel
         boolean isFolder = scriptList.isSelectedFolder();
 
         if (selectedPath == null) {
-            if (currentScriptName != null) {
+            if (currentScript != null) {
                 // Fallback to current script if nothing selected in tree
-                onDelete(currentScriptName, false);
+                onDelete(getScriptKey(currentScript), false);
             } else {
                 statusBar.setWarning("No script or folder selected");
             }
@@ -262,31 +263,28 @@ public class LuaScriptManager extends BaseTabPanel
 
     @Override
     public void onRunScript() {
-        if (currentScriptName == null) {
+        if (currentScript == null) {
             outputPanel.appendError("No script selected");
             return;
         }
 
-        LuaScript script = scripts.get(currentScriptName);
-        if (script != null) {
-            // Auto-save before running
-            script.setCode(codeEditor.getText());
+        // Auto-save before running
+        currentScript.setCode(codeEditor.getText());
 
-            outputPanel.clearOutput();
-            outputPanel.appendInfo("Executing: " + currentScriptName);
-            statusBar.showBusy("Executing script");
+        outputPanel.clearOutput();
+        outputPanel.appendInfo("Executing: " + currentScript.getName());
+        statusBar.showBusy("Executing script");
 
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    onSaveScript();
-                    scriptExecutor.executeScript(script.getPath());
-                    statusBar.setSuccess("Execution completed");
-                } catch (Exception e) {
-                    outputPanel.appendError("Execution failed: " + e.getMessage());
-                    statusBar.setError("Execution failed");
-                }
-            });
-        }
+        SwingUtilities.invokeLater(() -> {
+            try {
+                onSaveScript();
+                scriptExecutor.executeScript(currentScript.getPath());
+                statusBar.setSuccess("Execution completed");
+            } catch (Exception e) {
+                outputPanel.appendError("Execution failed: " + e.getMessage());
+                statusBar.setError("Execution failed");
+            }
+        });
     }
 
     // ========== ScriptActionListener Implementation ==========
@@ -299,39 +297,41 @@ public class LuaScriptManager extends BaseTabPanel
         }
 
         // If selecting the same script, do nothing
-        if (scriptName != null && scriptName.equals(currentScriptName)) {
+        if (currentScript != null && scriptName != null && scriptName.equals(getScriptKey(currentScript))) {
             return;
         }
 
         // IMPORTANT: Save state of current script BEFORE switching
         saveCurrentScriptState();
 
-        // Update current script
-        currentScriptName = scriptName;
-        stateManager.setCurrentScriptName(scriptName);
-
         if (scriptName != null) {
             LuaScript script = scripts.get(scriptName);
-            if (script != null && codeEditor != null) {
-                isLoadingScript = true;
-                try {
-                    // Get or create state for this script
-                    EditorState state = stateManager.getOrCreateState(scriptName);
+            if (script != null) {
+                currentScript = script;
+                stateManager.setCurrentScriptName(scriptName);
 
-                    // If state has no code, initialize from script
-                    if (state.getCode() == null || state.getCode().isEmpty()) {
-                        state.setCode(script.getCode());
+                if (codeEditor != null) {
+                    isLoadingScript = true;
+                    try {
+                        // Get or create state for this script
+                        EditorState state = stateManager.getOrCreateState(scriptName);
+
+                        // If state has no code, initialize from script
+                        if (state.getCode() == null || state.getCode().isEmpty()) {
+                            state.setCode(script.getCode());
+                        }
+
+                        // Restore editor from state (including code, caret, scroll, undo manager)
+                        codeEditor.restoreFromState(state);
+
+                        updateTitleWithModifiedIndicator();
+                    } finally {
+                        isLoadingScript = false;
                     }
-
-                    // Restore editor from state (including code, caret, scroll, undo manager)
-                    codeEditor.restoreFromState(state);
-
-                    updateTitleWithModifiedIndicator();
-                } finally {
-                    isLoadingScript = false;
                 }
             }
         } else {
+            currentScript = null;
             if (codeEditor != null) {
                 codeEditor.clearEditor();
             }
@@ -346,6 +346,9 @@ public class LuaScriptManager extends BaseTabPanel
             name = name.trim();
 
             String fullPath = folderPath.isEmpty() ? name : folderPath + "/" + name;
+            if (!fullPath.endsWith(".lua")) {
+                fullPath += ".lua";
+            }
 
             if (scripts.containsKey(fullPath)) {
                 JOptionPane.showMessageDialog(this, "Script name already exists!");
@@ -356,7 +359,8 @@ public class LuaScriptManager extends BaseTabPanel
             saveCurrentScriptState();
 
             String templateCode = generateTemplate(name);
-            LuaScript script = new LuaScript(fullPath, templateCode, Paths.get(fullPath));
+            Path scriptPath = fileManager.resolvePath(fullPath);
+            LuaScript script = new LuaScript(name, templateCode, scriptPath);
             scripts.put(fullPath, script);
 
             // Save immediately to ensure file exists
@@ -398,13 +402,15 @@ public class LuaScriptManager extends BaseTabPanel
             if (confirm == JOptionPane.YES_OPTION) {
                 // If current script was in deleted folder, clear editor BEFORE deletion
                 // to release any potential file locks (though editor shouldn't hold any)
-                if (currentScriptName != null
-                        && (currentScriptName.equals(path) || currentScriptName.startsWith(path + "/"))) {
-                    currentScriptName = null;
-                    codeEditor.clearEditor();
+                if (currentScript != null) {
+                    String currentKey = getScriptKey(currentScript);
+                    if (currentKey.equals(path) || currentKey.startsWith(path + "/")) {
+                        currentScript = null;
+                        codeEditor.clearEditor();
+                    }
                 }
 
-                if (fileManager.deleteFolder(path)) {
+                if (fileManager.deletePath(path)) {
                     loadScripts();
                     statusBar.setSuccess("Deleted folder: " + path);
                 } else {
@@ -432,15 +438,17 @@ public class LuaScriptManager extends BaseTabPanel
             if (confirm == JOptionPane.YES_OPTION) {
                 scripts.remove(path);
                 stateManager.removeState(path);
-                fileManager.deleteScriptFiles(path);
 
-                if (path.equals(currentScriptName)) {
-                    currentScriptName = null;
-                    codeEditor.clearEditor();
+                if (fileManager.deletePath(path)) {
+                    if (currentScript != null && getScriptKey(currentScript).equals(path)) {
+                        currentScript = null;
+                        codeEditor.clearEditor();
+                    }
+                    loadScripts();
+                    statusBar.setSuccess("Deleted: " + path);
+                } else {
+                    statusBar.setError("Failed to delete: " + path);
                 }
-
-                loadScripts();
-                statusBar.setSuccess("Deleted: " + path);
             }
         }
     }
@@ -458,7 +466,7 @@ public class LuaScriptManager extends BaseTabPanel
             if (path.equals(newPath))
                 return;
 
-            if (fileManager.renameScript(path, newPath)) {
+            if (fileManager.renamePath(path, newPath)) {
                 // Update state manager if script was renamed
                 if (!isFolder) {
                     EditorState state = stateManager.getState(path);
@@ -467,21 +475,23 @@ public class LuaScriptManager extends BaseTabPanel
                         // We need to re-initialize state for new path
                         // But loadScripts will handle it
                     }
-                    if (path.equals(currentScriptName)) {
-                        currentScriptName = newPath;
-                    }
-                } else {
-                    // If folder renamed, we might need to update currentScriptName if it was inside
-                    if (currentScriptName != null && currentScriptName.startsWith(path + "/")) {
-                        currentScriptName = currentScriptName.replaceFirst(path, newPath);
-                    }
                 }
+
+                String oldCurrentKey = currentScript != null ? getScriptKey(currentScript) : null;
 
                 loadScripts();
 
                 // Reselect if needed
-                if (currentScriptName != null) {
-                    onScriptSelected(currentScriptName);
+                if (oldCurrentKey != null) {
+                    if (!isFolder && oldCurrentKey.equals(path)) {
+                        onScriptSelected(newPath);
+                    } else if (isFolder && oldCurrentKey.startsWith(path + "/")) {
+                        String newKey = oldCurrentKey.replaceFirst(path, newPath);
+                        onScriptSelected(newKey);
+                    } else {
+                        // Restore selection if it wasn't affected
+                        onScriptSelected(oldCurrentKey);
+                    }
                 }
 
                 statusBar.setSuccess("Renamed to: " + newPath);
@@ -495,15 +505,13 @@ public class LuaScriptManager extends BaseTabPanel
      * Save state of current script
      */
     private void saveCurrentScriptState() {
-        if (currentScriptName != null && codeEditor != null && !isLoadingScript) {
-            EditorState state = stateManager.getOrCreateState(currentScriptName);
+        if (currentScript != null && codeEditor != null && !isLoadingScript) {
+            String scriptName = getScriptKey(currentScript);
+            EditorState state = stateManager.getOrCreateState(scriptName);
             codeEditor.saveToState(state);
 
             // Update code in LuaScript object to sync
-            LuaScript script = scripts.get(currentScriptName);
-            if (script != null) {
-                script.setCode(state.getCode());
-            }
+            currentScript.setCode(state.getCode());
         }
     }
 
@@ -525,7 +533,19 @@ public class LuaScriptManager extends BaseTabPanel
             stateManager.initializeState(entry.getKey(), entry.getValue().getCode());
         }
 
-        if (currentScriptName != null && scripts.containsKey(currentScriptName)) {
+        // Re-bind currentScript object if possible
+        if (currentScript != null) {
+            String key = getScriptKey(currentScript);
+            if (scripts.containsKey(key)) {
+                currentScript = scripts.get(key);
+            } else {
+                // Script might have been deleted externally or renamed
+                currentScript = null;
+                codeEditor.clearEditor();
+            }
+        }
+
+        if (currentScript != null) {
             // Keep selection
         } else if (!scripts.isEmpty()) {
             scriptList.selectFirstScript();
@@ -534,6 +554,27 @@ public class LuaScriptManager extends BaseTabPanel
             statusBar.setInfo("No scripts available");
         }
         statusBar.setReady();
+    }
+
+    /**
+     * Helper to get the key (relative path) for a script object
+     */
+    private String getScriptKey(LuaScript script) {
+        if (script == null)
+            return null;
+        for (Map.Entry<String, LuaScript> entry : scripts.entrySet()) {
+            if (entry.getValue() == script) {
+                return entry.getKey();
+            }
+        }
+        // Fallback: if we can't find the exact object (maybe it's stale), try by path
+        // equality
+        for (Map.Entry<String, LuaScript> entry : scripts.entrySet()) {
+            if (entry.getValue().getPath().equals(script.getPath())) {
+                return entry.getKey();
+            }
+        }
+        return script.getName(); // Fallback to name if all else fails
     }
 
     private String generateTemplate(String name) {
@@ -649,8 +690,8 @@ public class LuaScriptManager extends BaseTabPanel
     /**
      * Gets the current script being edited
      */
-    public String getCurrentScriptName() {
-        return currentScriptName;
+    public LuaScript getCurrentScript() {
+        return currentScript;
     }
 
     /**
