@@ -373,6 +373,25 @@ public class ScriptList extends JPanel {
         }
     }
 
+    public String getSelectedPath() {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) scriptTree.getLastSelectedPathComponent();
+        if (node == null)
+            return null;
+
+        Object userObject = node.getUserObject();
+        if (userObject instanceof ScriptNode) {
+            return ((ScriptNode) userObject).getFullPath();
+        } else if (userObject instanceof FolderNode) {
+            return getPathFromNode(node);
+        }
+        return null;
+    }
+
+    public boolean isSelectedFolder() {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) scriptTree.getLastSelectedPathComponent();
+        return node != null && node.getUserObject() instanceof FolderNode;
+    }
+
     // ==================== Inner Classes ====================
 
     /**

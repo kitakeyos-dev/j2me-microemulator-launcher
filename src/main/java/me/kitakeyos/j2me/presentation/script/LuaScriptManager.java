@@ -243,11 +243,20 @@ public class LuaScriptManager extends BaseTabPanel
 
     @Override
     public void onDeleteScript() {
-        if (currentScriptName == null) {
-            statusBar.setWarning("No script selected");
+        String selectedPath = scriptList.getSelectedPath();
+        boolean isFolder = scriptList.isSelectedFolder();
+
+        if (selectedPath == null) {
+            if (currentScriptName != null) {
+                // Fallback to current script if nothing selected in tree
+                onDelete(currentScriptName, false);
+            } else {
+                statusBar.setWarning("No script or folder selected");
+            }
             return;
         }
-        onDelete(currentScriptName, false);
+
+        onDelete(selectedPath, isFolder);
     }
 
     @Override
@@ -386,13 +395,15 @@ public class LuaScriptManager extends BaseTabPanel
                     "Delete folder '" + path + "' and all its contents?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
+                // If current script was in deleted folder, clear editor BEFORE deletion
+                // to release any potential file locks (though editor shouldn't hold any)
+                if (currentScriptName != null
+                        && (currentScriptName.equals(path) || currentScriptName.startsWith(path + "/"))) {
+                    currentScriptName = null;
+                    codeEditor.clearEditor();
+                }
+
                 if (fileManager.deleteFolder(path)) {
-                    // If current script was in deleted folder, clear editor
-                    if (currentScriptName != null
-                            && (currentScriptName.equals(path) || currentScriptName.startsWith(path + "/"))) {
-                        currentScriptName = null;
-                        codeEditor.clearEditor();
-                    }
                     loadScripts();
                     statusBar.setSuccess("Deleted folder: " + path);
                 } else {

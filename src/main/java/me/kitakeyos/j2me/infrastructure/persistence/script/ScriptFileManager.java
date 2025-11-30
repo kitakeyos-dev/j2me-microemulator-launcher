@@ -63,7 +63,7 @@ public class ScriptFileManager {
                 loadScriptsRecursive(file, subPath, scripts);
             } else if (file.getName().endsWith(".lua")) {
                 // Load Lua script
-                String scriptName = file.getName().replace(".lua", "");
+                String scriptName = file.getName();
                 String scriptPath = relativePath.isEmpty() ? scriptName : relativePath + "/" + scriptName;
 
                 String code = readFileContent(file);
@@ -203,11 +203,29 @@ public class ScriptFileManager {
             File[] children = file.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    deleteRecursive(child);
+                    if (!deleteRecursive(child)) {
+                        logger.warning("Failed to delete child: " + child.getAbsolutePath());
+                        return false;
+                    }
                 }
             }
         }
-        return file.delete();
+
+        // Try to delete with a small retry
+        if (!file.delete()) {
+            try {
+                System.gc(); // Suggest GC to release file handles
+                Thread.sleep(50); // Wait a bit
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            if (!file.delete()) {
+                logger.warning("Failed to delete file/folder after retry: " + file.getAbsolutePath());
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
