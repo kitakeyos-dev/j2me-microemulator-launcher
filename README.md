@@ -36,6 +36,12 @@ This project is ideal for developers, enthusiasts, or anyone working with J2ME a
 - **Toast Notifications**: Non-intrusive notifications for actions like instance creation and synchronization toggle
 - **Cross-Platform**: Runs seamlessly on Windows, macOS, and Linux
 
+### Lua Scripting 📜
+- **Automation**: Write Lua scripts to automate interactions with running instances
+- **Integrated Editor**: Built-in code editor with syntax highlighting, undo/redo, and state preservation
+- **Folder Organization**: Organize scripts into nested folders for better management
+- **Context-Aware Execution**: Run scripts against specific emulator instances or the default classloader
+
 ## Requirements
 
 - Java Runtime Environment (JRE) 8 or higher.
@@ -129,6 +135,14 @@ This structure ensures:
    - Click "Stop All" to stop all running instances at once
    - When stopped, instances are properly disposed and all resources are freed
 
+### Lua Scripting
+
+7. **Script Management** (Scripts tab):
+   - **Create Scripts**: Click "New Script" to create a new Lua script. You can organize them into folders using "New Folder".
+   - **Edit Code**: Use the integrated editor with syntax highlighting to write your Lua code.
+   - **Run Scripts**: Select a target instance (or default) and click "Run" (or Ctrl+R) to execute.
+   - **Save**: Scripts are auto-saved before running, or use Ctrl+S to save manually.
+
 ## Technical Details
 
 ### Performance Architecture
@@ -169,6 +183,11 @@ This structure ensures:
 - Component hierarchy matching ensures keyboard events target the corresponding component
 - All events are dispatched asynchronously via `SwingUtilities.invokeLater()` to prevent UI blocking
 - Listeners are automatically attached/detached when instances start/stop
+
+#### Lua Scripting Engine
+- **Luaj Integration**: Uses Luaj to execute Lua scripts within the Java environment
+- **Binding**: Exposes Java objects (like Emulator instances) to Lua for direct manipulation
+- **Thread Safety**: Scripts run on their own threads to prevent blocking the UI or the emulator core
 
 For detailed code structure, refer to the source files in the `src` directory.
 

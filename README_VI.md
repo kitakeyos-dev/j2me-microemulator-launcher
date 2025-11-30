@@ -36,6 +36,12 @@ Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bấ
 - **Thông báo Toast**: Thông báo không xâm phạm cho các thao tác như tạo instance và bật/tắt đồng bộ
 - **Đa Nền tảng**: Chạy mượt mà trên Windows, macOS và Linux
 
+### Lua Scripting 📜
+- **Tự động hóa**: Viết script Lua để tự động hóa các tương tác với instances đang chạy
+- **Trình soạn thảo tích hợp**: Editor code tích hợp sẵn với tô màu cú pháp, undo/redo và lưu trạng thái
+- **Tổ chức Thư mục**: Sắp xếp script vào các thư mục lồng nhau để quản lý dễ dàng hơn
+- **Thực thi theo Ngữ cảnh**: Chạy script trên các instance cụ thể hoặc classloader mặc định
+
 ## Yêu cầu
 
 - Môi trường Java Runtime Environment (JRE) 8 trở lên.
@@ -129,6 +135,14 @@ Cấu trúc này đảm bảo:
    - Nhấn "Stop All" để dừng tất cả instances đang chạy cùng lúc
    - Khi dừng, instances được dispose đúng cách và tất cả tài nguyên được giải phóng
 
+### Lua Scripting
+
+7. **Quản lý Script** (tab Scripts):
+   - **Tạo Script**: Nhấn "New Script" để tạo script Lua mới. Bạn có thể tổ chức chúng vào thư mục bằng "New Folder".
+   - **Soạn thảo Code**: Sử dụng editor tích hợp với tô màu cú pháp để viết code Lua.
+   - **Chạy Script**: Chọn instance mục tiêu (hoặc mặc định) và nhấn "Run" (hoặc Ctrl+R) để thực thi.
+   - **Lưu**: Script được tự động lưu trước khi chạy, hoặc dùng Ctrl+S để lưu thủ công.
+
 ## Chi tiết Kỹ thuật
 
 ### Kiến trúc Hiệu năng
@@ -169,6 +183,11 @@ Cấu trúc này đảm bảo:
 - Matching component hierarchy đảm bảo keyboard events nhắm đến component tương ứng
 - Tất cả events được dispatch bất đồng bộ qua `SwingUtilities.invokeLater()` để tránh block UI
 - Listeners được tự động attach/detach khi instances start/stop
+
+#### Lua Scripting Engine
+- **Tích hợp Luaj**: Sử dụng Luaj để thực thi script Lua trong môi trường Java
+- **Binding**: Expose các đối tượng Java (như Emulator instances) cho Lua để thao tác trực tiếp
+- **An toàn Luồng**: Script chạy trên thread riêng để tránh block UI hoặc emulator core
 
 Để biết cấu trúc code chi tiết, tham khảo các file nguồn trong thư mục `src`.
 
