@@ -79,7 +79,7 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
 		// Wrap with SystemCallInterceptorMethodVisitor first
-		mv = new SystemCallInterceptor(mv);
+		mv = new SystemCallInterceptor(mv, instanceId);
 
 		// If we changed the superclass and this is a constructor, also redirect super()
 		// calls

@@ -186,8 +186,6 @@ public class EmulatorClassLoader extends URLClassLoader {
      */
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        // Set the instance ID in ThreadLocal for dynamic instrumentation
-        InstanceContext.setInstanceId(instanceId);
 
         try {
             String resourcePath = ByteCodeHelper.getClassResourcePath(name);

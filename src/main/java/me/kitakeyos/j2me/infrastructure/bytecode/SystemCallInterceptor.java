@@ -1,6 +1,5 @@
 package me.kitakeyos.j2me.infrastructure.bytecode;
 
-import me.kitakeyos.j2me.infrastructure.classloader.InstanceContext;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -10,15 +9,16 @@ import java.util.logging.Logger;
 public class SystemCallInterceptor extends MethodAdapter {
 
     private static final Logger logger = Logger.getLogger(SystemCallInterceptor.class.getName());
+    private final int instanceId;
 
     private static final String INJECTED_CLASS = ByteCodeHelper.toInternalName(SystemCallHandler.class);
-    private static final String INSTANCE_CONTEXT_CLASS = ByteCodeHelper.toInternalName(InstanceContext.class);
 
     // Track if we just saw NEW Socket
     private boolean foundNewSocket = false;
 
-    public SystemCallInterceptor(MethodVisitor mv) {
+    public SystemCallInterceptor(MethodVisitor mv, int instanceId) {
         super(mv);
+        this.instanceId = instanceId;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class SystemCallInterceptor extends MethodAdapter {
             // We need: [instanceId, host, port]
 
             // Get instance ID and insert it at the bottom of the stack
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, INSTANCE_CONTEXT_CLASS, "getInstanceId", "()I");
+            mv.visitLdcInsn(instanceId);
             // Stack: [host, port, instanceId]
 
             // Swap to get: [host, instanceId, port]
@@ -92,14 +92,14 @@ public class SystemCallInterceptor extends MethodAdapter {
         // Handle System.exit
         if (opcode == Opcodes.INVOKESTATIC) {
             if ((name.equals("exit")) && (owner.equals("java/lang/System"))) {
-                mv.visitMethodInsn(Opcodes.INVOKESTATIC, INSTANCE_CONTEXT_CLASS, "getInstanceId", "()I");
+                mv.visitLdcInsn(instanceId);
                 mv.visitInsn(Opcodes.SWAP);
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(II)V");
                 return;
             }
 
             if ((name.equals("initMEHomePath")) && (owner.equals("org/microemu/app/Config"))) {
-                mv.visitMethodInsn(Opcodes.INVOKESTATIC, INSTANCE_CONTEXT_CLASS, "getInstanceId", "()I");
+                mv.visitLdcInsn(instanceId);
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(I)Ljava/io/File;");
                 return;
             }

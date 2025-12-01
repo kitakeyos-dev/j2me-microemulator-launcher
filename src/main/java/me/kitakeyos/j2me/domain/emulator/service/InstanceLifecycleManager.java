@@ -1,7 +1,6 @@
 package me.kitakeyos.j2me.domain.emulator.service;
 
 import me.kitakeyos.j2me.application.MainApplication;
-import me.kitakeyos.j2me.infrastructure.classloader.InstanceContext;
 import me.kitakeyos.j2me.infrastructure.resource.ResourceManager;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 
@@ -43,9 +42,6 @@ public class InstanceLifecycleManager {
 
         // Clean up UI components
         cleanupUIComponents(instance);
-
-        // Clear ThreadLocal context if needed
-        clearThreadLocalContext(instance);
 
         logger.info("Instance #" + instance.getInstanceId() + " shutdown completed");
 
@@ -104,20 +100,6 @@ public class InstanceLifecycleManager {
     }
 
     /**
-     * Clear ThreadLocal context if this thread is associated with this instance
-     */
-    private static void clearThreadLocalContext(EmulatorInstance instance) {
-        try {
-            if (InstanceContext.isSet() && InstanceContext.getInstanceId() == instance.getInstanceId()) {
-                InstanceContext.clear();
-                logger.fine("ThreadLocal context cleared for instance #" + instance.getInstanceId());
-            }
-        } catch (Exception e) {
-            logger.warning("Error clearing InstanceContext: " + e.getMessage());
-        }
-    }
-
-    /**
      * Force shutdown an instance even if it's already stopped
      * Use this for cleanup operations that must run regardless of state
      */
@@ -126,6 +108,5 @@ public class InstanceLifecycleManager {
         instance.setState(EmulatorInstance.InstanceState.STOPPED);
         cleanupResources(instance);
         cleanupUIComponents(instance);
-        clearThreadLocalContext(instance);
     }
 }
