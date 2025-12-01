@@ -9,14 +9,6 @@ import java.awt.*;
 public class ConfigurationPanelBuilder {
 
     /**
-     * Create configuration panel with JComboBox for application selection
-     */
-    public static JPanel createConfigurationPanel(JComboBox<?> applicationComboBox, JSpinner instanceCountSpinner,
-                                           JTextField microemulatorPathField, Runnable onOpenSettings) {
-        return createConfigurationPanel(applicationComboBox, instanceCountSpinner, microemulatorPathField, null, null, onOpenSettings);
-    }
-
-    /**
      * Create configuration panel with display size configuration
      */
     public static JPanel createConfigurationPanel(JComboBox<?> applicationComboBox, JSpinner instanceCountSpinner,

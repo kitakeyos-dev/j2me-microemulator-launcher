@@ -459,6 +459,7 @@ public class InstancesPanel extends BaseTabPanel {
                 // Revalidate to trigger layout recalculation
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
+                mainApplication.luaScriptManager.refreshInstanceList();
                 // Update empty state visibility
                 updateInstancesEmptyState();
             }

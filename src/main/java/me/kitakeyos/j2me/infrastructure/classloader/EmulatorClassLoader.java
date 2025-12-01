@@ -92,7 +92,7 @@ public class EmulatorClassLoader extends URLClassLoader {
      * 3. Delegate to parent (System ClassLoader)
      */
     @Override
-    protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         // First, check if the class has already been loaded
         Class<?> loadedClass = findLoadedClass(name);
 
