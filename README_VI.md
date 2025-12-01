@@ -149,16 +149,8 @@ Cấu trúc này đảm bảo:
 
 #### Bytecode Instrumentation Caching
 - Các class emulator được instrument một lần và cache trong bộ nhớ
-- Instrumented bytecode được chia sẻ giữa tất cả instances qua `InstrumentedClassCache`
-- `ThreadLocal<Integer>` lưu trữ instance ID hiện tại để tra cứu động tại runtime
 - Instance đầu tiên: Instrument và cache các class
 - Các instance tiếp theo: Khởi động tức thì sử dụng cached bytecode
-
-#### ClassLoader Pre-warming
-- Khi ứng dụng khởi động, 10 class emulator quan trọng được pre-load
-- Pre-warming chạy trong background thread để tránh block UI
-- Các class phổ biến (Main, Config, DeviceFactory, v.v.) sẵn sàng trước khi launch instance đầu tiên
-- Thời gian pre-warming điển hình: 100-300ms
 
 #### Quản lý Bộ nhớ
 - Instances bị dừng kích hoạt cleanup toàn diện:

@@ -149,16 +149,8 @@ This structure ensures:
 
 #### Bytecode Instrumentation Caching
 - Emulator classes are instrumented once and cached in memory
-- Instrumented bytecode is shared across all instances via `InstrumentedClassCache`
-- `ThreadLocal<Integer>` stores the current instance ID for dynamic runtime lookup
 - First instance: Instruments and caches classes
 - Subsequent instances: Instant startup using cached bytecode
-
-#### ClassLoader Pre-warming
-- When the application starts, 10 critical emulator classes are pre-loaded
-- Pre-warming runs in a background thread to avoid blocking the UI
-- Common classes (Main, Config, DeviceFactory, etc.) are ready before the first instance launches
-- Typical pre-warming time: 100-300ms
 
 #### Memory Management
 - Stopped instances trigger comprehensive cleanup:
