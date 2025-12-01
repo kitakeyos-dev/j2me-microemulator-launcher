@@ -10,6 +10,7 @@ import me.kitakeyos.j2me.domain.emulator.launcher.EmulatorLauncher;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.presentation.common.builder.ConfigurationPanelBuilder;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
+import me.kitakeyos.j2me.presentation.common.component.ScrollablePanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
 import me.kitakeyos.j2me.presentation.common.layout.SimpleFlowLayout;
@@ -32,13 +33,14 @@ public class InstancesPanel extends BaseTabPanel {
     private JCheckBox syncInputCheckBox;
     private JCheckBox scaleInputBySizeCheckBox;
     private JCheckBox fullDisplayModeCheckBox;
-    private JPanel runningInstancesPanel;
+    private ScrollablePanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
 
     // Services and managers
     public InstanceManager emulatorInstanceManager;
 
-    public InstancesPanel(MainApplication mainApplication, ApplicationConfig applicationConfig, ApplicationService j2meApplicationManager) {
+    public InstancesPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
+            ApplicationService j2meApplicationManager) {
         super(mainApplication, applicationConfig, j2meApplicationManager);
     }
 
@@ -90,8 +92,8 @@ public class InstancesPanel extends BaseTabPanel {
     @Override
     protected JComponent createContent() {
         // Running instances panel in center (using SimpleFlowLayout for auto-wrapping)
-        runningInstancesPanel = new JPanel();
-        runningInstancesPanel.setLayout(new SimpleFlowLayout(FlowLayout.LEFT, 10, 10));
+        // Use ScrollablePanel to ensure it tracks viewport width
+        runningInstancesPanel = new ScrollablePanel(new SimpleFlowLayout(FlowLayout.LEFT, 10, 10));
         emulatorInstanceManager = new InstanceManager(runningInstancesPanel);
 
         // Create empty state label
@@ -103,22 +105,13 @@ public class InstancesPanel extends BaseTabPanel {
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-            "Running Instances",
-            javax.swing.border.TitledBorder.LEFT,
-            javax.swing.border.TitledBorder.TOP
-        ));
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                "Running Instances",
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        // Add component listener to handle window resize
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
-                runningInstancesPanel.revalidate();
-            }
-        });
 
         return scrollPane;
     }
@@ -164,9 +157,8 @@ public class InstancesPanel extends BaseTabPanel {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("Options"),
-            BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
+                BorderFactory.createTitledBorder("Options"),
+                BorderFactory.createEmptyBorder(10, 15, 10, 15)));
 
         // Input synchronization option
         syncInputCheckBox = new JCheckBox("Sync Mouse & Keyboard Input");
@@ -184,7 +176,8 @@ public class InstancesPanel extends BaseTabPanel {
 
         // Scale input by size option
         scaleInputBySizeCheckBox = new JCheckBox("Scale Input by Size");
-        scaleInputBySizeCheckBox.setToolTipText("Scale mouse coordinates based on device panel size (useful when instances have different sizes)");
+        scaleInputBySizeCheckBox.setToolTipText(
+                "Scale mouse coordinates based on device panel size (useful when instances have different sizes)");
         scaleInputBySizeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         scaleInputBySizeCheckBox.addActionListener(e -> {
             boolean enabled = scaleInputBySizeCheckBox.isSelected();
@@ -198,7 +191,8 @@ public class InstancesPanel extends BaseTabPanel {
 
         // Full display mode option
         fullDisplayModeCheckBox = new JCheckBox("Full Display Mode");
-        fullDisplayModeCheckBox.setToolTipText("Show emulator with full interface (menubar, toolbar) instead of simple device panel only");
+        fullDisplayModeCheckBox.setToolTipText(
+                "Show emulator with full interface (menubar, toolbar) instead of simple device panel only");
         fullDisplayModeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         panel.add(syncInputCheckBox);
@@ -302,7 +296,8 @@ public class InstancesPanel extends BaseTabPanel {
 
         for (int i = 0; i < numberOfInstances; i++) {
             int instanceId = emulatorInstanceManager.getNextInstanceId();
-            EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath, displayWidth, displayHeight, fullDisplayMode);
+            EmulatorInstance emulatorInstance = new EmulatorInstance(instanceId, microemulatorPath, j2meFilePath,
+                    displayWidth, displayHeight, fullDisplayMode);
 
             emulatorInstanceManager.addInstance(emulatorInstance);
             // Automatically start the instance
@@ -332,7 +327,7 @@ public class InstancesPanel extends BaseTabPanel {
                         mainApplication.luaScriptManager.refreshInstanceList();
                     }
                 })
-                // onStarted callback
+        // onStarted callback
         )).start();
     }
 
@@ -410,7 +405,8 @@ public class InstancesPanel extends BaseTabPanel {
             emulatorInstance.getEmulatorDisplay().putClientProperty("wrapperPanel", wrapperPanel);
             wrapperPanel.putClientProperty("instanceId", emulatorInstance.getInstanceId());
 
-            // Find correct position to insert based on instanceId (sorted in ascending order)
+            // Find correct position to insert based on instanceId (sorted in ascending
+            // order)
             int insertIndex = findInsertPosition(emulatorInstance.getInstanceId());
             runningInstancesPanel.add(wrapperPanel, insertIndex);
 
