@@ -43,12 +43,14 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 
 	private static final Logger logger = Logger.getLogger(InstrumentationClassVisitor.class.getName());
 
+	private final int instanceId;
 	private final String oldSuperclass;
 	private final String newSuperclass;
 	private boolean shouldChangeSuperCalls = false;
 
-	public InstrumentationClassVisitor(ClassVisitor cv) {
+	public InstrumentationClassVisitor(ClassVisitor cv, int instanceId) {
 		super(cv);
+		this.instanceId = instanceId;
 		this.oldSuperclass = ByteCodeHelper.toInternalName(Thread.class);
 		this.newSuperclass = ByteCodeHelper.toInternalName(XThread.class);
 	}
@@ -82,7 +84,7 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 		// If we changed the superclass and this is a constructor, also redirect super()
 		// calls
 		if (shouldChangeSuperCalls && name.equals("<init>")) {
-			mv = new SuperCallRedirector(mv, oldSuperclass, newSuperclass);
+			mv = new SuperCallRedirector(mv, oldSuperclass, newSuperclass, instanceId);
 		}
 
 		return mv;
@@ -94,11 +96,13 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 	private static class SuperCallRedirector extends MethodAdapter {
 		private final String oldSuperclass;
 		private final String newSuperclass;
+		private final int instanceId;
 
-		public SuperCallRedirector(MethodVisitor mv, String oldSuperclass, String newSuperclass) {
+		public SuperCallRedirector(MethodVisitor mv, String oldSuperclass, String newSuperclass, int instanceId) {
 			super(mv);
 			this.oldSuperclass = oldSuperclass;
 			this.newSuperclass = newSuperclass;
+			this.instanceId = instanceId;
 		}
 
 		@Override
@@ -110,8 +114,16 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 
 				logger.info("  → Redirecting super() call: " + desc);
 
+				// Push instanceId to stack
+				mv.visitLdcInsn(instanceId);
+
+				// Modify descriptor to accept int at the end
+				// We need to insert 'I' before the closing parenthesis ')'
+				int closingParenIndex = desc.lastIndexOf(')');
+				String newDesc = desc.substring(0, closingParenIndex) + "I" + desc.substring(closingParenIndex);
+
 				// Call new superclass constructor instead
-				mv.visitMethodInsn(opcode, newSuperclass, name, desc);
+				mv.visitMethodInsn(opcode, newSuperclass, name, newDesc);
 				return;
 			}
 

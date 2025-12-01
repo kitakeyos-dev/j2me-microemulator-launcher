@@ -54,7 +54,6 @@ public class EmulatorClassLoader extends URLClassLoader {
     private static final Logger logger = Logger.getLogger(EmulatorClassLoader.class.getName());
 
     // Configuration
-    private static final boolean ENABLE_INSTRUMENTATION = true;
     private static final boolean DELEGATE_TO_PARENT = false;
     private static final boolean SEARCH_IN_PARENT = false;
 
@@ -63,12 +62,6 @@ public class EmulatorClassLoader extends URLClassLoader {
     private static final int MAX_CLASS_SIZE = 16 * 1024; // 16KB
 
     private final int instanceId;
-
-    // Per-instance statistics
-    private int cacheHits = 0;
-    private int cacheMisses = 0;
-    private int classesLoaded = 0;
-    private long totalInstrumentationTime = 0; // nanoseconds
 
     public EmulatorClassLoader(int instanceId, URL[] urls, ClassLoader parent) {
         super(urls, parent);
@@ -82,35 +75,6 @@ public class EmulatorClassLoader extends URLClassLoader {
      */
     public int getInstanceId() {
         return instanceId;
-    }
-
-    /**
-     * Get detailed statistics for this classloader
-     */
-    public String getStatistics() {
-        int totalCacheRequests = cacheHits + cacheMisses;
-        double hitRate = totalCacheRequests > 0 ? (cacheHits * 100.0 / totalCacheRequests) : 0.0;
-        double avgInstrumentationTime = cacheMisses > 0 ?
-                (totalInstrumentationTime / cacheMisses / 1_000_000.0) : 0.0;
-
-        return String.format(
-                "Instance #%d ClassLoader Stats:\n" +
-                        "  Classes loaded: %d\n" +
-                        "  Cache hits: %d, Cache misses: %d\n" +
-                        "  Cache hit rate: %.2f%%\n" +
-                        "  Avg instrumentation time: %.2f ms",
-                instanceId, classesLoaded, cacheHits, cacheMisses, hitRate, avgInstrumentationTime
-        );
-    }
-
-    /**
-     * Reset statistics counters
-     */
-    public void resetStatistics() {
-        cacheHits = 0;
-        cacheMisses = 0;
-        classesLoaded = 0;
-        totalInstrumentationTime = 0;
     }
 
     /**
@@ -245,82 +209,15 @@ public class EmulatorClassLoader extends URLClassLoader {
 
             byte[] bytecode;
             try {
-                if (ENABLE_INSTRUMENTATION) {
-                    bytecode = loadWithInstrumentation(name, is);
-                } else {
-                    bytecode = loadWithoutInstrumentation(is);
-                }
+                bytecode = ClassPreprocessor.instrumentAndModifyBytecode(is, instanceId);
             } finally {
                 closeQuietly(is);
             }
-
-            classesLoaded++;
             return defineClass(name, bytecode, 0, bytecode.length);
 
         } finally {
             // Keep instance ID in ThreadLocal for the lifetime of the emulator instance
             // Don't clear it here as the class will be used in the same thread
-        }
-    }
-
-    /**
-     * Load class bytecode with instrumentation and caching
-     */
-    private byte[] loadWithInstrumentation(String className, InputStream is) throws ClassNotFoundException {
-        // Try to get from cache first
-        byte[] bytecode = InstrumentedClassCache.get(className);
-
-        if (bytecode != null) {
-            // Cache hit!
-            cacheHits++;
-            logger.fine(String.format("Instance #%d: Cache HIT for '%s'", instanceId, className));
-            return bytecode;
-        }
-
-        // Cache miss - instrument and cache
-        cacheMisses++;
-        long startTime = System.nanoTime();
-
-        bytecode = ClassPreprocessor.instrumentAndModifyBytecode(is);
-        long duration = System.nanoTime() - startTime;
-        totalInstrumentationTime += duration;
-
-        if (bytecode != null) {
-            // Cache the instrumented bytecode
-            InstrumentedClassCache.put(className, bytecode);
-
-            logger.fine(String.format(
-                    "Instance #%d: Instrumented and cached '%s' in %.2f ms",
-                    instanceId, className, duration / 1_000_000.0
-            ));
-        }
-
-        return bytecode;
-
-    }
-
-    /**
-     * Load class bytecode without instrumentation
-     */
-    private byte[] loadWithoutInstrumentation(InputStream is) throws ClassNotFoundException {
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream(READ_CHUNK_SIZE);
-            byte[] chunk = new byte[READ_CHUNK_SIZE];
-            int bytesRead;
-
-            while ((bytesRead = is.read(chunk)) != -1) {
-                buffer.write(chunk, 0, bytesRead);
-
-                // Check size limit
-                if (buffer.size() > MAX_CLASS_SIZE) {
-                    throw new ClassFormatError("Class size exceeds maximum limit of " + MAX_CLASS_SIZE + " bytes");
-                }
-            }
-
-            return buffer.toByteArray();
-
-        } catch (IOException e) {
-            throw new ClassNotFoundException("Failed to read class bytecode", e);
         }
     }
 
@@ -335,13 +232,5 @@ public class EmulatorClassLoader extends URLClassLoader {
                 // Ignore
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        return String.format("EmulatorClassLoader[instance=%d, classes=%d, cacheHitRate=%.1f%%]",
-                instanceId, classesLoaded,
-                (cacheHits + cacheMisses) > 0 ? (cacheHits * 100.0 / (cacheHits + cacheMisses)) : 0.0
-        );
     }
 }

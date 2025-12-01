@@ -1,7 +1,6 @@
 package me.kitakeyos.j2me.domain.emulator.launcher;
 
 import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
-import me.kitakeyos.j2me.infrastructure.classloader.InstrumentedClassCache;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
 import me.kitakeyos.j2me.util.reflection.EmulatorReflectionHelper;
@@ -76,12 +75,6 @@ public class EmulatorLauncher {
                     }
                 }
 
-                long duration = System.currentTimeMillis() - startTime;
-                logger.info(String.format(
-                        "Classloader pre-warming completed in %d ms. Loaded: %d, Failed: %d. %s",
-                        duration, successCount, failCount, InstrumentedClassCache.getStatistics()
-                ));
-
             } catch (Exception e) {
                 logger.warning("Failed to prewarm classloader: " + e.getMessage());
             }
@@ -146,8 +139,6 @@ public class EmulatorLauncher {
 
             long instanceDuration = System.currentTimeMillis() - instanceStartTime;
             logger.info(String.format("Instance #%d started in %d ms", instance.getInstanceId(), instanceDuration));
-            logger.info(emulatorClassLoader.getStatistics());
-            logger.info("Global " + InstrumentedClassCache.getStatistics());
 
         } catch (Exception e) {
             instance.setErrorMessage(e.getMessage());

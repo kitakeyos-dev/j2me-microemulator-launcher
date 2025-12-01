@@ -45,11 +45,11 @@ public class ClassPreprocessor {
 	 * The instrumented code will call InstanceContext.getInstanceId() dynamically.
 	 * This allows the same instrumented bytecode to be shared across multiple instances.
 	 */
-	public static byte[] instrumentAndModifyBytecode(final InputStream classInputStream) {
+	public static byte[] instrumentAndModifyBytecode(final InputStream classInputStream, int instanceId) {
 		try {
 			ClassReader cr = new ClassReader(classInputStream);
 			ClassWriter cw = new ClassWriter(0);
-			ClassVisitor cv = new InstrumentationClassVisitor(cw);
+			ClassVisitor cv = new InstrumentationClassVisitor(cw, instanceId);
 			cr.accept(cv, 0);
 			return cw.toByteArray();
 		} catch (IOException e) {

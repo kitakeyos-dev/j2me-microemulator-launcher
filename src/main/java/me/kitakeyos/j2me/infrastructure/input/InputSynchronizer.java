@@ -146,7 +146,7 @@ public class InputSynchronizer {
 
         // Make component focusable for keyboard events
         if (component instanceof JComponent) {
-            ((JComponent) component).setFocusable(true);
+            component.setFocusable(true);
         }
 
         // Recursively attach to all child components

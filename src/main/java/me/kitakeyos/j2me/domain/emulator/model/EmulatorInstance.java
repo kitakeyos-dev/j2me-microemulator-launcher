@@ -147,18 +147,14 @@ public class EmulatorInstance {
 
     /**
      * Add a thread to this instance's resource manager
-     * Deprecated: Use getResourceManager().addThread() instead
      */
-    @Deprecated
     public void addThread(XThread thread) {
         resourceManager.addThread(thread);
     }
 
     /**
      * Add a socket to this instance's resource manager
-     * Deprecated: Use getResourceManager().addSocket() instead
      */
-    @Deprecated
     public void addSocket(Socket socket) {
         resourceManager.addSocket(socket);
     }
