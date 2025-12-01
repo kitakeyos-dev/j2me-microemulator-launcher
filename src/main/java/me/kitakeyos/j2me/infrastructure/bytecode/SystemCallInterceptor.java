@@ -10,15 +10,17 @@ public class SystemCallInterceptor extends MethodAdapter {
 
     private static final Logger logger = Logger.getLogger(SystemCallInterceptor.class.getName());
     private final int instanceId;
+    private final ModificationTracker modificationTracker;
 
     private static final String INJECTED_CLASS = ByteCodeHelper.toInternalName(SystemCallHandler.class);
 
     // Track if we just saw NEW Socket
     private boolean foundNewSocket = false;
 
-    public SystemCallInterceptor(MethodVisitor mv, int instanceId) {
+    public SystemCallInterceptor(MethodVisitor mv, int instanceId, ModificationTracker modificationTracker) {
         super(mv);
         this.instanceId = instanceId;
+        this.modificationTracker = modificationTracker;
     }
 
     @Override
@@ -86,6 +88,7 @@ public class SystemCallInterceptor extends MethodAdapter {
             // Stack: [socket]
 
             foundNewSocket = false;
+            modificationTracker.setModified(true);
             return;
         }
 
@@ -95,12 +98,14 @@ public class SystemCallInterceptor extends MethodAdapter {
                 mv.visitLdcInsn(instanceId);
                 mv.visitInsn(Opcodes.SWAP);
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(II)V");
+                modificationTracker.setModified(true);
                 return;
             }
 
             if ((name.equals("initMEHomePath")) && (owner.equals("org/microemu/app/Config"))) {
                 mv.visitLdcInsn(instanceId);
                 mv.visitMethodInsn(opcode, INJECTED_CLASS, name, "(I)Ljava/io/File;");
+                modificationTracker.setModified(true);
                 return;
             }
         }

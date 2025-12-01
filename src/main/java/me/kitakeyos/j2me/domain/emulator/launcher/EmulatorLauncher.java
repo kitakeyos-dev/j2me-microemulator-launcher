@@ -38,50 +38,6 @@ public class EmulatorLauncher {
     };
 
     /**
-     * Pre-warm the emulator classloader by loading and caching common classes.
-     * This should be called once at application startup to improve instance launch performance.
-     *
-     * @param microemulatorJarPath Path to the microemulator JAR file
-     */
-    public static void prewarmClassLoader(String microemulatorJarPath) {
-        // Check if file exists first
-        File microemulatorJar = new File(microemulatorJarPath);
-        if (!microemulatorJar.exists()) {
-            logger.warning("Cannot prewarm classloader: MicroEmulator JAR not found at " + microemulatorJarPath);
-            return;
-        }
-
-        // Run in background thread to avoid blocking UI
-        new Thread(() -> {
-            try {
-                long startTime = System.currentTimeMillis();
-                logger.info("Pre-warming emulator classloader...");
-
-                // Create a temporary classloader with dummy instanceId = 0
-                EmulatorClassLoader tempClassLoader = initializeEmulatorClassLoader(0, microemulatorJarPath);
-
-                int successCount = 0;
-                int failCount = 0;
-
-                // Load each class to trigger instrumentation and caching
-                for (String className : PRELOAD_CLASSES) {
-                    try {
-                        tempClassLoader.loadClass(className);
-                        successCount++;
-                        logger.fine("Pre-loaded class: " + className);
-                    } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                        failCount++;
-                        logger.fine("Could not pre-load class: " + className + " - " + e.getMessage());
-                    }
-                }
-
-            } catch (Exception e) {
-                logger.warning("Failed to prewarm classloader: " + e.getMessage());
-            }
-        }, "ClassLoader-PreWarmer").start();
-    }
-
-    /**
      * Initialize an emulator classloader for the given instance
      *
      * @param instanceId           Instance ID

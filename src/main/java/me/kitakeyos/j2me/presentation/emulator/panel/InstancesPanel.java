@@ -212,11 +212,6 @@ public class InstancesPanel extends BaseTabPanel {
 
     private void loadApplicationConfiguration() {
         microemulatorPathField.setText(applicationConfig.getMicroemulatorPath());
-
-        // Pre-warm classloader in background if microemulator path is valid
-        if (applicationConfig.isMicroemulatorPathValid()) {
-            EmulatorLauncher.prewarmClassLoader(applicationConfig.getMicroemulatorPath());
-        }
     }
 
     /**
@@ -266,9 +261,6 @@ public class InstancesPanel extends BaseTabPanel {
 
             // Update UI
             microemulatorPathField.setText(selectedPath);
-
-            // Pre-warm classloader in background
-            EmulatorLauncher.prewarmClassLoader(selectedPath);
 
             // Show success message
             showToast("MicroEmulator path updated successfully", ToastNotification.ToastType.SUCCESS);

@@ -40,22 +40,53 @@ import java.io.InputStream;
  */
 public class ClassPreprocessor {
 
+	public static class InstrumentationResult {
+		public final byte[] bytecode;
+		public final boolean isModified;
+
+		public InstrumentationResult(byte[] bytecode, boolean isModified) {
+			this.bytecode = bytecode;
+			this.isModified = isModified;
+		}
+	}
+
 	/**
 	 * Instrument bytecode without baking instanceId into the code.
 	 * The instrumented code will call InstanceContext.getInstanceId() dynamically.
-	 * This allows the same instrumented bytecode to be shared across multiple instances.
+	 * This allows the same instrumented bytecode to be shared across multiple
+	 * instances.
 	 */
-	public static byte[] instrumentAndModifyBytecode(final InputStream classInputStream, int instanceId) {
+	public static InstrumentationResult instrumentAndModifyBytecode(final InputStream classInputStream,
+			int instanceId) {
 		try {
-			ClassReader cr = new ClassReader(classInputStream);
+			// Read original bytecode
+			byte[] originalBytes = readAllBytes(classInputStream);
+
+			ClassReader cr = new ClassReader(originalBytes);
 			ClassWriter cw = new ClassWriter(0);
-			ClassVisitor cv = new InstrumentationClassVisitor(cw, instanceId);
+			me.kitakeyos.j2me.infrastructure.bytecode.ModificationTracker tracker = new me.kitakeyos.j2me.infrastructure.bytecode.ModificationTracker();
+			ClassVisitor cv = new InstrumentationClassVisitor(cw, instanceId, tracker);
 			cr.accept(cv, 0);
-			return cw.toByteArray();
+
+			if (tracker.isModified()) {
+				return new InstrumentationResult(cw.toByteArray(), true);
+			} else {
+				return new InstrumentationResult(originalBytes, false);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
-    }
+	}
+
+	private static byte[] readAllBytes(InputStream inputStream) throws IOException {
+		java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+		int nRead;
+		byte[] data = new byte[16384];
+		while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+			buffer.write(data, 0, nRead);
+		}
+		return buffer.toByteArray();
+	}
 
 }

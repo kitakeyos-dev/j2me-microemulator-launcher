@@ -46,11 +46,13 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 	private final int instanceId;
 	private final String oldSuperclass;
 	private final String newSuperclass;
+	private final ModificationTracker modificationTracker;
 	private boolean shouldChangeSuperCalls = false;
 
-	public InstrumentationClassVisitor(ClassVisitor cv, int instanceId) {
+	public InstrumentationClassVisitor(ClassVisitor cv, int instanceId, ModificationTracker modificationTracker) {
 		super(cv);
 		this.instanceId = instanceId;
+		this.modificationTracker = modificationTracker;
 		this.oldSuperclass = ByteCodeHelper.toInternalName(Thread.class);
 		this.newSuperclass = ByteCodeHelper.toInternalName(XThread.class);
 	}
@@ -67,6 +69,7 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 
 			// Change to new superclass
 			superName = newSuperclass;
+			modificationTracker.setModified(true);
 		}
 
 		cv.visit(version, access, name, signature, superName, interfaces);
@@ -79,7 +82,7 @@ public class InstrumentationClassVisitor extends ClassAdapter {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
 		// Wrap with SystemCallInterceptorMethodVisitor first
-		mv = new SystemCallInterceptor(mv, instanceId);
+		mv = new SystemCallInterceptor(mv, instanceId, modificationTracker);
 
 		// If we changed the superclass and this is a constructor, also redirect super()
 		// calls
