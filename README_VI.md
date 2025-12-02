@@ -25,8 +25,6 @@ Dự án này lý tưởng cho lập trình viên, người đam mê hoặc bấ
 
 ### Tối ưu hóa Hiệu năng ⚡
 - **Cache Bytecode**: Các class đã instrument được cache và chia sẻ giữa các instances, loại bỏ xử lý trùng lặp
-- **Pre-warming ClassLoader**: Các class emulator được pre-load khi khởi động để launch instance đầu tiên cực nhanh
-- **ThreadLocal Context**: Dynamic instance ID injection cho phép chia sẻ bytecode mà không xung đột bộ nhớ
 - **Quản lý Bộ nhớ Thông minh**: Cleanup tài nguyên đúng cách và garbage collection ngăn chặn memory leak
 
 ### Trải nghiệm Người dùng

@@ -25,8 +25,6 @@ This project is ideal for developers, enthusiasts, or anyone working with J2ME a
 
 ### Performance Optimizations ⚡
 - **Bytecode Caching**: Instrumented classes are cached and shared across instances, eliminating redundant processing
-- **ClassLoader Pre-warming**: Emulator classes are pre-loaded at startup for instant first launch
-- **ThreadLocal Context**: Dynamic instance ID injection enables bytecode sharing without memory conflicts
 - **Smart Memory Management**: Proper resource cleanup and garbage collection prevent memory leaks
 
 ### User Experience
