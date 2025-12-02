@@ -40,7 +40,7 @@ public class InstancesPanel extends BaseTabPanel {
     public InstanceManager emulatorInstanceManager;
 
     public InstancesPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
-            ApplicationService j2meApplicationManager) {
+                          ApplicationService j2meApplicationManager) {
         super(mainApplication, applicationConfig, j2meApplicationManager);
     }
 
@@ -327,7 +327,6 @@ public class InstancesPanel extends BaseTabPanel {
                         mainApplication.luaScriptManager.refreshInstanceList();
                     }
                 })
-        // onStarted callback
         )).start();
     }
 

@@ -148,8 +148,16 @@ public class EmulatorInstance {
     /**
      * Add a thread to this instance's resource manager
      */
-    public void addThread(XThread thread) {
+    public void addThread(Thread thread) {
         resourceManager.addThread(thread);
+    }
+
+
+    /**
+     * Remove a thread from this instance's resource manager
+     */
+    public void removeThread(Thread thread) {
+        resourceManager.removeThread(thread);
     }
 
     /**

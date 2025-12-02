@@ -17,7 +17,6 @@ public class SimpleFlowLayout extends FlowLayout {
         synchronized (target.getTreeLock()) {
             Dimension dim = new Dimension(0, 0);
             int nmembers = target.getComponentCount();
-            boolean firstVisibleComponent = true;
             int maxWidth = target.getWidth();
 
             if (maxWidth == 0) {

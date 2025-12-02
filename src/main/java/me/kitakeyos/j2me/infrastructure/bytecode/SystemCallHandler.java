@@ -78,6 +78,7 @@ public final class SystemCallHandler implements Serializable {
     }
 
     public static Socket createSocket(int instanceId, String host, int port) throws IOException {
+        System.out.println("createSocket(" + instanceId + ", " + host + ", " + port + ")");
         Socket socket = new Socket(host, port);
         EmulatorInstance emulatorInstance = MainApplication.INSTANCE.emulatorInstanceManager.findInstance(instanceId);
         if (emulatorInstance != null) {

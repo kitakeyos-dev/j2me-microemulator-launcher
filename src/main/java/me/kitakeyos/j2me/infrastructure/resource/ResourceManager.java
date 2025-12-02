@@ -1,7 +1,5 @@
 package me.kitakeyos.j2me.infrastructure.resource;
 
-import me.kitakeyos.j2me.infrastructure.thread.XThread;
-
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,7 +14,7 @@ public class ResourceManager {
     private static final Logger logger = Logger.getLogger(ResourceManager.class.getName());
 
     private final int instanceId;
-    private final List<XThread> threads;
+    private final List<Thread> threads;
     private final List<Socket> sockets;
 
     public ResourceManager(int instanceId) {
@@ -28,9 +26,17 @@ public class ResourceManager {
     /**
      * Add a thread to be managed by this instance
      */
-    public void addThread(XThread thread) {
+    public void addThread(Thread thread) {
         threads.add(thread);
-        logger.fine("Added thread to instance " + instanceId + ": " + thread.getName());
+        logger.info("Added thread to instance " + instanceId + ": " + thread.getName());
+    }
+
+    /**
+     * Remove a thread from be managed by this instance
+     */
+    public void removeThread(Thread thread) {
+        threads.remove(thread);
+        logger.info("Removed thread from instance " + instanceId + ": " + thread.getName());
     }
 
     /**
@@ -38,13 +44,13 @@ public class ResourceManager {
      */
     public void addSocket(Socket socket) {
         sockets.add(socket);
-        logger.fine("Added socket to instance " + instanceId);
+        logger.info("Added socket to instance " + instanceId);
     }
 
     /**
      * Get all managed threads
      */
-    public List<XThread> getThreads() {
+    public List<Thread> getThreads() {
         return new ArrayList<>(threads);
     }
 
@@ -61,13 +67,12 @@ public class ResourceManager {
     public void cleanupThreads() {
         logger.info("Cleaning up " + threads.size() + " threads for instance " + instanceId);
 
-        for (XThread thread : threads) {
-            if (thread.isAlive()) {
+        for (Thread thread : threads) {
+            if (thread.isAlive() && thread != Thread.currentThread()) {
                 try {
-                    thread.interrupt();
-                    logger.fine("Interrupted thread: " + thread.getName());
+                    thread.stop();
+                    logger.info("Stopped thread: " + thread.getName());
                 } catch (Exception e) {
-                    logger.warning("Error interrupting thread: " + e.getMessage());
                 }
             }
         }
@@ -84,7 +89,7 @@ public class ResourceManager {
             if (socket.isConnected() && !socket.isClosed()) {
                 try {
                     socket.close();
-                    logger.fine("Closed socket: " + socket);
+                    logger.info("Closed socket: " + socket);
                 } catch (Exception e) {
                     logger.warning("Error closing socket: " + e.getMessage());
                 }
