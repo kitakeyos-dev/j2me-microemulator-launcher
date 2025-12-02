@@ -1,12 +1,14 @@
 package me.kitakeyos.j2me.infrastructure.input;
 
-import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
-
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
+import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

@@ -1,15 +1,12 @@
 package me.kitakeyos.j2me.domain.emulator.service;
 
-import me.kitakeyos.j2me.infrastructure.input.InputSynchronizer;
-
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
-import me.kitakeyos.j2me.domain.emulator.service.InstanceIdPool;
+import me.kitakeyos.j2me.infrastructure.input.InputSynchronizer;
 
+import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import javax.swing.JPanel;
 
 /**
  * Manages emulator instances with ID pool for efficient ID reuse

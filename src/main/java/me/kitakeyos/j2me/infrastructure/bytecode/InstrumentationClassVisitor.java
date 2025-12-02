@@ -27,11 +27,7 @@
 package me.kitakeyos.j2me.infrastructure.bytecode;
 
 import me.kitakeyos.j2me.infrastructure.thread.XThread;
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodAdapter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 import java.util.logging.Logger;
 

@@ -6,8 +6,8 @@ import me.kitakeyos.j2me.domain.application.model.J2meApplication;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
-import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
 import me.kitakeyos.j2me.presentation.common.dialog.ConfirmDialog;
+import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

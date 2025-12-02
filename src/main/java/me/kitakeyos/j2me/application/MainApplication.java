@@ -1,13 +1,13 @@
 package me.kitakeyos.j2me.application;
 
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
-import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.application.model.J2meApplication;
-import me.kitakeyos.j2me.presentation.script.LuaScriptManager;
-import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
+import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
+import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
 import me.kitakeyos.j2me.presentation.emulator.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.InstancesPanel;
+import me.kitakeyos.j2me.presentation.script.LuaScriptManager;
 
 import javax.swing.*;
 

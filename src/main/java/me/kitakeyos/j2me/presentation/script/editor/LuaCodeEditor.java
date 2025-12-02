@@ -1,8 +1,8 @@
 package me.kitakeyos.j2me.presentation.script.editor;
 
-import me.kitakeyos.j2me.presentation.script.syntax.LuaSyntaxHighlighter;
-import me.kitakeyos.j2me.presentation.script.completion.CodeCompletionProvider;
 import me.kitakeyos.j2me.application.script.state.EditorState;
+import me.kitakeyos.j2me.presentation.script.completion.CodeCompletionProvider;
+import me.kitakeyos.j2me.presentation.script.syntax.LuaSyntaxHighlighter;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

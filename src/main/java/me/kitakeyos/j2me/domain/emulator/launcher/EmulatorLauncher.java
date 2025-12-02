@@ -1,8 +1,8 @@
 package me.kitakeyos.j2me.domain.emulator.launcher;
 
-import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
 import me.kitakeyos.j2me.util.reflection.EmulatorReflectionHelper;
 import me.kitakeyos.j2me.util.reflection.ReflectionHelper;
 
@@ -22,20 +22,6 @@ import java.util.logging.Logger;
 public class EmulatorLauncher {
 
     private static final Logger logger = Logger.getLogger(EmulatorLauncher.class.getName());
-
-    // Common classes to pre-load for better performance
-    private static final String[] PRELOAD_CLASSES = {
-            "org.microemu.app.Main",
-            "org.microemu.app.Config",
-            "org.microemu.app.Common",
-            "org.microemu.device.DeviceFactory",
-            "org.microemu.device.j2se.J2SEDevice",
-            "org.microemu.device.j2se.J2SEDeviceDisplay",
-            "org.microemu.device.j2se.J2SEInputMethod",
-            "org.microemu.MIDletBridge",
-            "org.microemu.DisplayAccess",
-            "org.microemu.MicroEmulator"
-    };
 
     /**
      * Initialize an emulator classloader for the given instance

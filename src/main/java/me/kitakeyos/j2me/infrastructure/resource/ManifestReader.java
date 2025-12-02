@@ -3,13 +3,13 @@ package me.kitakeyos.j2me.infrastructure.resource;
 import me.kitakeyos.j2me.domain.application.model.J2meApplication;
 
 import javax.imageio.ImageIO;
-import java.awt.Image;
+import java.awt.*;
 import java.io.*;
+import java.util.UUID;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.UUID;
 
 /**
  * Utility class to read manifest information from JAR/JAD files

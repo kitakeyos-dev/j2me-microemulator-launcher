@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.domain.application.model;
 
-import java.awt.Image;
+import java.awt.*;
 import java.io.Serializable;
 import java.util.Objects;
 
