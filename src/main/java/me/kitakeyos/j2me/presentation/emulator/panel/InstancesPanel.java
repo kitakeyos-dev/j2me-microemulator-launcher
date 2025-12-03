@@ -318,16 +318,22 @@ public class InstancesPanel extends BaseTabPanel {
             return;
         }
 
-        new Thread(() -> EmulatorLauncher.startEmulatorInstance(
-                emulatorInstance,
-                // onComplete callback
-                () -> SwingUtilities.invokeLater(() -> {
-                    if (emulatorInstance.getState() == InstanceState.RUNNING) {
-                        addEmulatorInstanceTab(emulatorInstance);
-                        mainApplication.luaScriptManager.refreshInstanceList();
-                    }
-                })
-        )).start();
+        new Thread(() -> {
+            try {
+                EmulatorLauncher.startEmulatorInstance(
+                        emulatorInstance,
+                        // onComplete callback
+                        () -> SwingUtilities.invokeLater(() -> {
+                            if (emulatorInstance.getState() == InstanceState.RUNNING) {
+                                addEmulatorInstanceTab(emulatorInstance);
+                                mainApplication.luaScriptManager.refreshInstanceList();
+                            }
+                        })
+                );
+            } catch (Exception e) {
+                showErrorMessage("Failed to start instance #" + emulatorInstance.getInstanceId() + ": " + e.getMessage());
+            }
+        }).start();
     }
 
     /**

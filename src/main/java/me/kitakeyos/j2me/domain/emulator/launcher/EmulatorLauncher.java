@@ -52,7 +52,7 @@ public class EmulatorLauncher {
      * @param instance   The instance to start
      * @param onComplete Callback when instance startup completes (success or failure)
      */
-    public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete) {
+    public static void startEmulatorInstance(EmulatorInstance instance, Runnable onComplete) throws Exception {
         // Set state to STARTING
         instance.setState(InstanceState.STARTING);
 
@@ -86,7 +86,7 @@ public class EmulatorLauncher {
             instance.setErrorMessage(e.getMessage());
             instance.setState(InstanceState.STOPPED);
             logger.severe("Failed to start instance #" + instance.getInstanceId() + ": " + e.getMessage());
-            e.printStackTrace();
+            throw e;
         } finally {
             if (onComplete != null) {
                 SwingUtilities.invokeLater(onComplete);
