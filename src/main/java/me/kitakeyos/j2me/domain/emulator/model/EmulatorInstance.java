@@ -34,7 +34,6 @@ public class EmulatorInstance {
 
     // State management
     private InstanceState state;
-    private String errorMessage;
 
     // UI components
     private JPanel devicePanel;
@@ -86,10 +85,6 @@ public class EmulatorInstance {
         return state;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
     public JPanel getDevicePanel() {
         return devicePanel;
     }
@@ -116,9 +111,6 @@ public class EmulatorInstance {
         this.state = state;
     }
 
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
 
     public void setDevicePanel(JPanel devicePanel) {
         this.devicePanel = devicePanel;

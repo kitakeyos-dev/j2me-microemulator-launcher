@@ -17,12 +17,15 @@ import me.kitakeyos.j2me.presentation.common.layout.SimpleFlowLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.logging.Logger;
 
 /**
  * Instances tab panel for managing emulator instances.
  * Allows users to create, configure, and manage multiple emulator instances.
  */
 public class InstancesPanel extends BaseTabPanel {
+
+    private static final Logger logger = Logger.getLogger(InstancesPanel.class.getName());
 
     // UI Components
     private JComboBox<J2meApplication> applicationComboBox;
@@ -331,7 +334,8 @@ public class InstancesPanel extends BaseTabPanel {
                         })
                 );
             } catch (Exception e) {
-                showErrorMessage("Failed to start instance #" + emulatorInstance.getInstanceId() + ": " + e.getMessage());
+                showErrorMessage(e.getMessage());
+                logger.severe(e.getMessage());
             }
         }).start();
     }

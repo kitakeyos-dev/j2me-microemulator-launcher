@@ -83,10 +83,8 @@ public class EmulatorLauncher {
             logger.info(String.format("Instance #%d started in %d ms", instance.getInstanceId(), instanceDuration));
 
         } catch (Exception e) {
-            instance.setErrorMessage(e.getMessage());
             instance.setState(InstanceState.STOPPED);
-            logger.severe("Failed to start instance #" + instance.getInstanceId() + ": " + e.getMessage());
-            throw e;
+            throw new Exception("Failed to start instance #" + instance.getInstanceId() + ": " + e.getMessage());
         } finally {
             if (onComplete != null) {
                 SwingUtilities.invokeLater(onComplete);
