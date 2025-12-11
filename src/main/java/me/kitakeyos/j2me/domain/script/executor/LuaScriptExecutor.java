@@ -62,7 +62,9 @@ public class LuaScriptExecutor {
             globals.load(new JseMathLib());
             globals.load(new JseIoLib());
             globals.load(new JseOsLib());
+            globals.load(new JseOsLib());
             globals.load(dynamicJavaLib);
+            globals.load(new NetworkLib());
 
             // Redirect Lua print to output consumer
             globals.set("print", new VarArgFunction() {
@@ -95,6 +97,38 @@ public class LuaScriptExecutor {
         } catch (Exception e) {
             outputConsumer.accept(separator);
             errorConsumer.accept("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Library to expose NetworkService to Lua
+     */
+    private static class NetworkLib extends TwoArgFunction {
+        @Override
+        public LuaValue call(LuaValue modname, LuaValue env) {
+            LuaValue library = tableOf();
+            library.set("getSentData", new OneArgFunction() {
+                @Override
+                public LuaValue call(LuaValue socketId) {
+                    if (!socketId.isint())
+                        return LuaValue.NIL;
+                    byte[] data = me.kitakeyos.j2me.domain.network.service.NetworkService.getInstance()
+                            .getSentData(socketId.checkint());
+                    return LuaValue.valueOf(data);
+                }
+            });
+            library.set("getReceivedData", new OneArgFunction() {
+                @Override
+                public LuaValue call(LuaValue socketId) {
+                    if (!socketId.isint())
+                        return LuaValue.NIL;
+                    byte[] data = me.kitakeyos.j2me.domain.network.service.NetworkService.getInstance()
+                            .getReceivedData(socketId.checkint());
+                    return LuaValue.valueOf(data);
+                }
+            });
+            env.set("network", library);
+            return library;
         }
     }
 }

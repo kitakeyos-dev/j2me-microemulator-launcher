@@ -169,12 +169,26 @@ public class NetworkService {
 
     public byte[] getSentData(int socketId) {
         ByteArrayOutputStream stream = sentDataPools.get(socketId);
-        return stream != null ? stream.toByteArray() : new byte[0];
+        if (stream == null) {
+            return new byte[0];
+        }
+        synchronized (stream) {
+            byte[] data = stream.toByteArray();
+            stream.reset();
+            return data;
+        }
     }
 
     public byte[] getReceivedData(int socketId) {
         ByteArrayOutputStream stream = receivedDataPools.get(socketId);
-        return stream != null ? stream.toByteArray() : new byte[0];
+        if (stream == null) {
+            return new byte[0];
+        }
+        synchronized (stream) {
+            byte[] data = stream.toByteArray();
+            stream.reset();
+            return data;
+        }
     }
 
     public long getTotalBytesSent() {
