@@ -16,6 +16,7 @@ public class PacketLog {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
     private final int instanceId;
+    private final int socketId;
     private final Direction direction;
     private final LocalDateTime timestamp;
     private final String host;
@@ -23,8 +24,10 @@ public class PacketLog {
     private final byte[] data;
     private final int length;
 
-    public PacketLog(int instanceId, Direction direction, String host, int port, byte[] data, int offset, int length) {
+    public PacketLog(int instanceId, int socketId, Direction direction, String host, int port, byte[] data, int offset,
+            int length) {
         this.instanceId = instanceId;
+        this.socketId = socketId;
         this.direction = direction;
         this.timestamp = LocalDateTime.now();
         this.host = host;
@@ -38,6 +41,10 @@ public class PacketLog {
 
     public int getInstanceId() {
         return instanceId;
+    }
+
+    public int getSocketId() {
+        return socketId;
     }
 
     public Direction getDirection() {
@@ -101,8 +108,8 @@ public class PacketLog {
 
     @Override
     public String toString() {
-        return String.format("[%s] #%d %s %s:%d (%d bytes)",
-                getFormattedTimestamp(), instanceId,
+        return String.format("[%s] #%d:%d %s %s:%d (%d bytes)",
+                getFormattedTimestamp(), instanceId, socketId,
                 direction == Direction.IN ? "<<" : ">>",
                 host, port, length);
     }

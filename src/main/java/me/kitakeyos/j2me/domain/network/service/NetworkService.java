@@ -12,8 +12,11 @@ import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Service to manage network redirection rules, proxy rules, and connection
@@ -32,6 +35,10 @@ public class NetworkService {
     private final List<ConnectionLog> connectionLogs = new CopyOnWriteArrayList<>();
     private final List<NetworkChangeListener> listeners = new CopyOnWriteArrayList<>();
     private final List<PacketLog> packetLogs = new CopyOnWriteArrayList<>();
+
+    // Data pools per socketId
+    private final Map<Integer, ByteArrayOutputStream> sentDataPools = new ConcurrentHashMap<>();
+    private final Map<Integer, ByteArrayOutputStream> receivedDataPools = new ConcurrentHashMap<>();
 
     private static final int MAX_LOG_SIZE = 1000;
     private static final int MAX_PACKET_LOG_SIZE = 5000;
@@ -126,11 +133,13 @@ public class NetworkService {
     public void addPacketLog(PacketLog log) {
         packetLogs.add(log);
 
-        // Update statistics
+        // Update statistics and accumulate data
         if (log.getDirection() == PacketLog.Direction.OUT) {
             totalBytesSent += log.getLength();
+            accumulateData(sentDataPools, log);
         } else {
             totalBytesReceived += log.getLength();
+            accumulateData(receivedDataPools, log);
         }
 
         // Trim if too large
@@ -140,15 +149,32 @@ public class NetworkService {
         notifyPacketLogAdded(log);
     }
 
+    private void accumulateData(Map<Integer, ByteArrayOutputStream> pool, PacketLog log) {
+        pool.computeIfAbsent(log.getSocketId(), k -> new ByteArrayOutputStream())
+                .write(log.getData(), 0, log.getLength());
+    }
+
     public List<PacketLog> getPacketLogs() {
         return Collections.unmodifiableList(packetLogs);
     }
 
     public void clearPacketLogs() {
         packetLogs.clear();
+        sentDataPools.clear();
+        receivedDataPools.clear();
         totalBytesSent = 0;
         totalBytesReceived = 0;
         notifyPacketLogsCleared();
+    }
+
+    public byte[] getSentData(int socketId) {
+        ByteArrayOutputStream stream = sentDataPools.get(socketId);
+        return stream != null ? stream.toByteArray() : new byte[0];
+    }
+
+    public byte[] getReceivedData(int socketId) {
+        ByteArrayOutputStream stream = receivedDataPools.get(socketId);
+        return stream != null ? stream.toByteArray() : new byte[0];
     }
 
     public long getTotalBytesSent() {
@@ -299,7 +325,10 @@ public class NetworkService {
     /**
      * Save all rules to properties file
      */
-    private void saveRules() {
+    /**
+     * Save all rules to properties file
+     */
+    public void saveRules() {
         java.util.Properties props = new java.util.Properties();
 
         // Save redirection rules count

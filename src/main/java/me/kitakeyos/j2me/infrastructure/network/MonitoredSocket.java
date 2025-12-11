@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Monitored socket that wraps a real socket and provides monitored I/O streams.
@@ -15,8 +16,11 @@ import java.nio.channels.SocketChannel;
  */
 public class MonitoredSocket extends Socket {
 
+    private static final AtomicInteger SOCKET_ID_COUNTER = new AtomicInteger(1);
+
     private final Socket wrapped;
     private final int instanceId;
+    private final int socketId;
     private final String host;
     private final int port;
 
@@ -26,6 +30,7 @@ public class MonitoredSocket extends Socket {
     public MonitoredSocket(Socket wrapped, int instanceId, String host, int port) {
         this.wrapped = wrapped;
         this.instanceId = instanceId;
+        this.socketId = SOCKET_ID_COUNTER.getAndIncrement();
         this.host = host;
         this.port = port;
     }
@@ -33,7 +38,7 @@ public class MonitoredSocket extends Socket {
     @Override
     public InputStream getInputStream() throws IOException {
         if (monitoredInputStream == null) {
-            monitoredInputStream = new MonitoredInputStream(wrapped.getInputStream(), instanceId, host, port);
+            monitoredInputStream = new MonitoredInputStream(wrapped.getInputStream(), instanceId, socketId, host, port);
         }
         return monitoredInputStream;
     }
@@ -41,7 +46,8 @@ public class MonitoredSocket extends Socket {
     @Override
     public OutputStream getOutputStream() throws IOException {
         if (monitoredOutputStream == null) {
-            monitoredOutputStream = new MonitoredOutputStream(wrapped.getOutputStream(), instanceId, host, port);
+            monitoredOutputStream = new MonitoredOutputStream(wrapped.getOutputStream(), instanceId, socketId, host,
+                    port);
         }
         return monitoredOutputStream;
     }
@@ -210,7 +216,7 @@ public class MonitoredSocket extends Socket {
 
     @Override
     public String toString() {
-        return "MonitoredSocket[" + wrapped.toString() + "]";
+        return "MonitoredSocket[#" + instanceId + ":" + socketId + ", " + wrapped.toString() + "]";
     }
 
     @Override

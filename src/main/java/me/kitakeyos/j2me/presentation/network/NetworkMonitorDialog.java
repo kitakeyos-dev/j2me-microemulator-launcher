@@ -1,6 +1,7 @@
 package me.kitakeyos.j2me.presentation.network;
 
 import me.kitakeyos.j2me.domain.network.model.ConnectionLog;
+import me.kitakeyos.j2me.domain.network.model.PacketLog;
 import me.kitakeyos.j2me.domain.network.model.ProxyRule;
 import me.kitakeyos.j2me.domain.network.model.RedirectionRule;
 import me.kitakeyos.j2me.domain.network.service.NetworkService;
@@ -31,6 +32,11 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
     private DefaultTableModel proxyTableModel;
     private JTable proxyTable;
 
+    // Packet logs tab
+    private DefaultTableModel packetLogsTableModel;
+    private JTable packetLogsTable;
+    private JLabel packetStatsLabel;
+
     public NetworkMonitorDialog(Frame owner) {
         super(owner, "Network Monitor", false);
         this.networkService = NetworkService.getInstance();
@@ -57,6 +63,9 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
 
         // Proxy rules tab
         tabbedPane.addTab("Proxy Rules", createProxyPanel());
+
+        // Packet logs tab
+        tabbedPane.addTab("Packet Logs", createPacketLogsPanel());
 
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -127,6 +136,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 List<RedirectionRule> rules = networkService.getRedirectionRules();
                 if (row < rules.size()) {
                     rules.get(row).setEnabled(enabled);
+                    networkService.saveRules();
                 }
             }
         });
@@ -191,6 +201,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 List<ProxyRule> rules = networkService.getProxyRules();
                 if (row < rules.size()) {
                     rules.get(row).setEnabled(enabled);
+                    networkService.saveRules();
                 }
             }
         });
@@ -227,6 +238,63 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         return panel;
     }
 
+    private JPanel createPacketLogsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        String[] columns = { "Time", "Inst:Socket", "Dir", "Host:Port", "Size", "Data Preview" };
+        packetLogsTableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        packetLogsTable = new JTable(packetLogsTableModel);
+        packetLogsTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        packetLogsTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        packetLogsTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+        packetLogsTable.getColumnModel().getColumn(2).setPreferredWidth(40);
+        packetLogsTable.getColumnModel().getColumn(3).setPreferredWidth(150);
+        packetLogsTable.getColumnModel().getColumn(4).setPreferredWidth(60);
+        packetLogsTable.getColumnModel().getColumn(5).setPreferredWidth(200);
+
+        // Set monospace font for data preview
+        packetLogsTable.getColumnModel().getColumn(5).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+                        column);
+                c.setFont(new Font("Monospaced", Font.PLAIN, 12));
+                return c;
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(packetLogsTable);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+
+        packetStatsLabel = new JLabel("Sent: 0 B | Received: 0 B");
+        packetStatsLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+
+        JButton clearButton = new JButton("Clear Packets");
+        clearButton.addActionListener(e -> {
+            networkService.clearPacketLogs();
+            packetLogsTableModel.setRowCount(0);
+            updatePacketStats();
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(clearButton);
+
+        bottomPanel.add(packetStatsLabel, BorderLayout.WEST);
+        bottomPanel.add(buttonPanel, BorderLayout.EAST);
+
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
     private void loadData() {
         // Load logs
         for (ConnectionLog log : networkService.getConnectionLogs()) {
@@ -243,6 +311,12 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         for (ProxyRule rule : networkService.getProxyRules()) {
             addProxyRuleToTable(rule);
         }
+
+        // Load packet logs
+        for (PacketLog log : networkService.getPacketLogs()) {
+            addPacketLogToTable(log);
+        }
+        updatePacketStats();
     }
 
     private void addLogToTable(ConnectionLog log) {
@@ -292,6 +366,30 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 rule.getProxyPort(),
                 authStr
         });
+    }
+
+    private void addPacketLogToTable(PacketLog log) {
+        String dir = log.getDirection() == PacketLog.Direction.IN ? "<<" : ">>";
+        packetLogsTableModel.addRow(new Object[] {
+                log.getFormattedTimestamp(),
+                "#" + log.getInstanceId() + ":" + log.getSocketId(),
+                dir,
+                log.getHost() + ":" + log.getPort(),
+                log.getLength() + " B",
+                log.getAsciiPreview()
+        });
+
+        // Scroll to bottom
+        SwingUtilities.invokeLater(() -> {
+            int lastRow = packetLogsTable.getRowCount() - 1;
+            if (lastRow >= 0) {
+                packetLogsTable.scrollRectToVisible(packetLogsTable.getCellRect(lastRow, 0, true));
+            }
+        });
+    }
+
+    private void updatePacketStats() {
+        packetStatsLabel.setText(networkService.getFormattedStats());
     }
 
     private void showAddRedirectionDialog() {
@@ -582,6 +680,22 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         SwingUtilities.invokeLater(() -> {
             logsTableModel.setRowCount(0);
             logsList.clear();
+        });
+    }
+
+    @Override
+    public void onPacketLogAdded(PacketLog log) {
+        SwingUtilities.invokeLater(() -> {
+            addPacketLogToTable(log);
+            updatePacketStats();
+        });
+    }
+
+    @Override
+    public void onPacketLogsCleared() {
+        SwingUtilities.invokeLater(() -> {
+            packetLogsTableModel.setRowCount(0);
+            updatePacketStats();
         });
     }
 

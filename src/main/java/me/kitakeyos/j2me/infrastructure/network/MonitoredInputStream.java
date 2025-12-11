@@ -13,12 +13,14 @@ public class MonitoredInputStream extends InputStream {
 
     private final InputStream wrapped;
     private final int instanceId;
+    private final int socketId;
     private final String host;
     private final int port;
 
-    public MonitoredInputStream(InputStream wrapped, int instanceId, String host, int port) {
+    public MonitoredInputStream(InputStream wrapped, int instanceId, int socketId, String host, int port) {
         this.wrapped = wrapped;
         this.instanceId = instanceId;
+        this.socketId = socketId;
         this.host = host;
         this.port = port;
     }
@@ -52,7 +54,7 @@ public class MonitoredInputStream extends InputStream {
     }
 
     private void logPacket(byte[] data, int offset, int length) {
-        PacketLog log = new PacketLog(instanceId, PacketLog.Direction.IN, host, port, data, offset, length);
+        PacketLog log = new PacketLog(instanceId, socketId, PacketLog.Direction.IN, host, port, data, offset, length);
         NetworkService.getInstance().addPacketLog(log);
     }
 
