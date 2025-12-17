@@ -67,6 +67,9 @@ public class EmulatorLauncher {
                     instance.getInstanceId(),
                     instance.getMicroemulatorPath());
 
+            // Store classloader reference for cleanup during shutdown
+            instance.setEmulatorClassLoader(emulatorClassLoader);
+
             // Ensure emulator runs with its own context ClassLoader
             Thread.currentThread().setContextClassLoader(emulatorClassLoader);
 
@@ -111,7 +114,7 @@ public class EmulatorLauncher {
      * Configure instance components after successful launch
      */
     private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame,
-            EmulatorClassLoader emulatorClassLoader) throws Exception {
+                                                    EmulatorClassLoader emulatorClassLoader) throws Exception {
         ActionListener exitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
         JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
 
@@ -125,10 +128,8 @@ public class EmulatorLauncher {
         }
         instance.setDevicePanel(devicePanel);
 
-        Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader,
-                "org.microemu.app.util.MIDletResourceLoader");
-        ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader,
-                "classLoader");
+        Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader, "org.microemu.app.util.MIDletResourceLoader");
+        ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader, "classLoader");
         instance.setAppClassLoader(classLoader);
 
         frame.setResizable(false);

@@ -2,6 +2,7 @@ package me.kitakeyos.j2me.domain.emulator.model;
 
 import me.kitakeyos.j2me.domain.emulator.resource.ResourceManager;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceLifecycleManager;
+import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -40,6 +41,7 @@ public class EmulatorInstance {
     private JComponent emulatorDisplay;
     private ActionListener menuExitListener;
     private ClassLoader appClassLoader;
+    private EmulatorClassLoader emulatorClassLoader;
 
     // Resource management
     private final ResourceManager resourceManager;
@@ -102,6 +104,10 @@ public class EmulatorInstance {
         return appClassLoader;
     }
 
+    public EmulatorClassLoader getEmulatorClassLoader() {
+        return emulatorClassLoader;
+    }
+
     public ResourceManager getResourceManager() {
         return resourceManager;
     }
@@ -126,6 +132,10 @@ public class EmulatorInstance {
 
     public void setAppClassLoader(ClassLoader appClassLoader) {
         this.appClassLoader = appClassLoader;
+    }
+
+    public void setEmulatorClassLoader(EmulatorClassLoader emulatorClassLoader) {
+        this.emulatorClassLoader = emulatorClassLoader;
     }
 
     // === Business Logic ===

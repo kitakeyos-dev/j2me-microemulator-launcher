@@ -14,7 +14,8 @@ import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ScrollablePanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
-import me.kitakeyos.j2me.presentation.common.layout.SimpleFlowLayout;
+import me.kitakeyos.j2me.presentation.monitor.SystemMonitorDialog;
+import me.kitakeyos.j2me.presentation.network.NetworkMonitorDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -100,9 +101,10 @@ public class InstancesPanel extends BaseTabPanel {
 
     @Override
     protected JComponent createContent() {
-        // Running instances panel in center (using SimpleFlowLayout for auto-wrapping)
+        // Running instances panel in center (using WrapLayout for auto-wrapping)
         // Use ScrollablePanel to ensure it tracks viewport width
-        runningInstancesPanel = new ScrollablePanel(new SimpleFlowLayout(FlowLayout.LEFT, 10, 10));
+        runningInstancesPanel = new ScrollablePanel(
+                new me.kitakeyos.j2me.presentation.common.layout.WrapLayout(FlowLayout.LEFT, 10, 10));
         emulatorInstanceManager = new InstanceManager(runningInstancesPanel);
 
         // Create empty state label
@@ -143,29 +145,38 @@ public class InstancesPanel extends BaseTabPanel {
         JButton createButton = new JButton("Create & Run");
         createButton.setToolTipText("Create and automatically start instances");
         createButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        createButton.setPreferredSize(new Dimension(130, 35));
-        createButton.setMaximumSize(new Dimension(130, 35));
+        createButton.setPreferredSize(new Dimension(130, 30));
+        createButton.setMaximumSize(new Dimension(130, 30));
         createButton.addActionListener(e -> createEmulatorInstances());
 
         JButton stopAllButton = new JButton("Stop All");
         stopAllButton.setToolTipText("Stop all running instances");
         stopAllButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        stopAllButton.setPreferredSize(new Dimension(130, 35));
-        stopAllButton.setMaximumSize(new Dimension(130, 35));
+        stopAllButton.setPreferredSize(new Dimension(130, 30));
+        stopAllButton.setMaximumSize(new Dimension(130, 30));
         stopAllButton.addActionListener(e -> stopAllInstances());
 
         JButton networkMonitorButton = new JButton("Network Monitor");
         networkMonitorButton.setToolTipText("Open network monitor to view connections, redirection and proxy rules");
         networkMonitorButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        networkMonitorButton.setPreferredSize(new Dimension(130, 35));
-        networkMonitorButton.setMaximumSize(new Dimension(130, 35));
+        networkMonitorButton.setPreferredSize(new Dimension(130, 30));
+        networkMonitorButton.setMaximumSize(new Dimension(130, 30));
         networkMonitorButton.addActionListener(e -> openNetworkMonitor());
+
+        JButton systemMonitorButton = new JButton("System Monitor");
+        systemMonitorButton.setToolTipText("Open system monitor to view RAM, CPU usage and Threads");
+        systemMonitorButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        systemMonitorButton.setPreferredSize(new Dimension(130, 30));
+        systemMonitorButton.setMaximumSize(new Dimension(130, 30));
+        systemMonitorButton.addActionListener(e -> openSystemMonitor());
 
         panel.add(createButton);
         panel.add(Box.createVerticalStrut(8));
         panel.add(stopAllButton);
         panel.add(Box.createVerticalStrut(8));
         panel.add(networkMonitorButton);
+        panel.add(Box.createVerticalStrut(8));
+        panel.add(systemMonitorButton);
 
         return panel;
     }
@@ -520,8 +531,16 @@ public class InstancesPanel extends BaseTabPanel {
      */
     private void openNetworkMonitor() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        me.kitakeyos.j2me.presentation.network.NetworkMonitorDialog dialog = new me.kitakeyos.j2me.presentation.network.NetworkMonitorDialog(
-                owner);
+        NetworkMonitorDialog dialog = new NetworkMonitorDialog(owner);
+        dialog.setVisible(true);
+    }
+
+    /**
+     * Open the System Monitor dialog
+     */
+    private void openSystemMonitor() {
+        Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+        SystemMonitorDialog dialog = new SystemMonitorDialog(owner);
         dialog.setVisible(true);
     }
 }

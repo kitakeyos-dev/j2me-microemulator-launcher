@@ -3,6 +3,7 @@ package me.kitakeyos.j2me.domain.emulator.service;
 import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.resource.ResourceManager;
+import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -51,7 +52,8 @@ public class InstanceLifecycleManager {
     }
 
     /**
-     * Clean up all resources (threads and sockets) managed by the instance
+     * Clean up all resources (threads, sockets, and classloader) managed by the
+     * instance
      */
     private static void cleanupResources(EmulatorInstance instance) {
         try {
@@ -59,6 +61,22 @@ public class InstanceLifecycleManager {
             if (resourceManager != null) {
                 resourceManager.cleanupAll();
             }
+
+            // Close EmulatorClassLoader to release JAR handles and loaded classes
+            EmulatorClassLoader emulatorClassLoader = instance.getEmulatorClassLoader();
+            if (emulatorClassLoader != null) {
+                try {
+                    emulatorClassLoader.close();
+                    logger.info("Closed EmulatorClassLoader for instance #" + instance.getInstanceId());
+                } catch (Exception e) {
+                    logger.warning("Error closing EmulatorClassLoader: " + e.getMessage());
+                }
+            }
+
+            // Nullify classloader references to allow GC
+            instance.setAppClassLoader(null);
+            instance.setEmulatorClassLoader(null);
+
         } catch (Exception e) {
             logger.warning("Error cleaning up resources: " + e.getMessage());
         }
