@@ -40,8 +40,13 @@ public class InstancesPanel extends BaseTabPanel {
     private JCheckBox syncInputCheckBox;
     private JCheckBox scaleInputBySizeCheckBox;
     private JCheckBox fullDisplayModeCheckBox;
+    private JComboBox<String> defaultSpeedComboBox;
     private ScrollablePanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
+
+    // Speed options
+    private static final String[] SPEED_OPTIONS = { "0.5x", "1x", "2x", "3x", "5x", "10x", "20x" };
+    private static final double[] SPEED_VALUES = { 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0 };
 
     // Services and managers
     public InstanceManager emulatorInstanceManager;
@@ -227,11 +232,23 @@ public class InstancesPanel extends BaseTabPanel {
                 "Show emulator with full interface (menubar, toolbar) instead of simple device panel only");
         fullDisplayModeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // Default speed option
+        JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        speedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel speedLabel = new JLabel("Default Speed: ");
+        defaultSpeedComboBox = new JComboBox<>(SPEED_OPTIONS);
+        defaultSpeedComboBox.setSelectedIndex(1); // Default 1x
+        defaultSpeedComboBox.setToolTipText("Default speed for new instances");
+        speedPanel.add(speedLabel);
+        speedPanel.add(defaultSpeedComboBox);
+
         panel.add(syncInputCheckBox);
         panel.add(Box.createVerticalStrut(5));
         panel.add(scaleInputBySizeCheckBox);
         panel.add(Box.createVerticalStrut(5));
         panel.add(fullDisplayModeCheckBox);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(speedPanel);
 
         return panel;
     }
@@ -350,6 +367,9 @@ public class InstancesPanel extends BaseTabPanel {
             return;
         }
 
+        // Get default speed from UI (capture before async call)
+        final double defaultSpeed = getDefaultSpeed();
+
         instanceLauncherPool.submit(() -> {
             try {
                 EmulatorLauncher.startEmulatorInstance(
@@ -357,7 +377,9 @@ public class InstancesPanel extends BaseTabPanel {
                         // onComplete callback
                         () -> SwingUtilities.invokeLater(() -> {
                             if (emulatorInstance.getState() == InstanceState.RUNNING) {
-                                addEmulatorInstanceTab(emulatorInstance);
+                                // Apply default speed
+                                emulatorInstance.setSpeedMultiplier(defaultSpeed);
+                                addEmulatorInstanceTab(emulatorInstance, defaultSpeed);
                                 mainApplication.luaScriptManager.refreshInstanceList();
                             }
                         }));
@@ -366,6 +388,17 @@ public class InstancesPanel extends BaseTabPanel {
                 logger.severe(e.getMessage());
             }
         });
+    }
+
+    /**
+     * Get default speed from UI selection
+     */
+    private double getDefaultSpeed() {
+        int index = defaultSpeedComboBox.getSelectedIndex();
+        if (index >= 0 && index < SPEED_VALUES.length) {
+            return SPEED_VALUES[index];
+        }
+        return 1.0; // Default 1x
     }
 
     /**
@@ -409,32 +442,19 @@ public class InstancesPanel extends BaseTabPanel {
      * Add emulator display to running instances panel
      * Instances are arranged using SimpleFlowLayout with auto-wrapping
      * Instances are sorted by instanceId in ascending order
+     * 
+     * @param defaultSpeed Default speed multiplier to show in menu
      */
-    public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance) {
+    public void addEmulatorInstanceTab(EmulatorInstance emulatorInstance, double defaultSpeed) {
         if (emulatorInstance.getEmulatorDisplay() != null) {
             // Create wrapper panel with BorderLayout
             JPanel wrapperPanel = new JPanel(new BorderLayout());
 
-            // Create header panel with title and stop button
-            JPanel headerPanel = new JPanel(new BorderLayout());
-            headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            // Create menu bar for instance controls
+            JMenuBar menuBar = createInstanceMenuBar(emulatorInstance, defaultSpeed);
 
-            // Title label
-            JLabel titleLabel = new JLabel("Instance #" + emulatorInstance.getInstanceId());
-            headerPanel.add(titleLabel, BorderLayout.WEST);
-
-            // Stop button
-            JButton stopButton = new JButton("Stop");
-            stopButton.setPreferredSize(new Dimension(70, 25));
-            stopButton.addActionListener(e -> {
-                removeEmulatorInstanceTab(emulatorInstance);
-                emulatorInstance.shutdown();
-                showToast("Stopped Instance #" + emulatorInstance.getInstanceId(), ToastNotification.ToastType.INFO);
-            });
-            headerPanel.add(stopButton, BorderLayout.EAST);
-
-            // Add header and display to wrapper
-            wrapperPanel.add(headerPanel, BorderLayout.NORTH);
+            // Add menu bar and display to wrapper
+            wrapperPanel.add(menuBar, BorderLayout.NORTH);
             wrapperPanel.add(emulatorInstance.getEmulatorDisplay(), BorderLayout.CENTER);
             wrapperPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
 
@@ -457,6 +477,82 @@ public class InstancesPanel extends BaseTabPanel {
             // Notify instance manager that instance has been started (for input sync)
             emulatorInstanceManager.notifyInstanceStarted(emulatorInstance);
         }
+    }
+
+    /**
+     * Create menu bar for instance controls
+     * 
+     * @param defaultSpeed Default speed to show as selected
+     */
+    private JMenuBar createInstanceMenuBar(EmulatorInstance emulatorInstance, double defaultSpeed) {
+        JMenuBar menuBar = new JMenuBar();
+
+        // Instance title/info as a non-clickable label
+        JLabel titleLabel = new JLabel("  Instance #" + emulatorInstance.getInstanceId() + "  ");
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
+        menuBar.add(titleLabel);
+
+        // Push Actions menu to the right
+        menuBar.add(Box.createHorizontalGlue());
+
+        // Actions menu (contains all instance controls)
+        JMenu actionsMenu = new JMenu("Actions");
+        actionsMenu.setToolTipText("Instance actions");
+
+        // Speed submenu - find initial text based on defaultSpeed
+        String initialSpeedText = "Speed";
+        for (int i = 0; i < SPEED_VALUES.length; i++) {
+            if (Math.abs(SPEED_VALUES[i] - defaultSpeed) < 0.01) {
+                initialSpeedText = "Speed (" + SPEED_OPTIONS[i] + ")";
+                break;
+            }
+        }
+        JMenu speedSubmenu = new JMenu(initialSpeedText);
+        speedSubmenu.setToolTipText("Set emulator speed");
+
+        ButtonGroup speedGroup = new ButtonGroup();
+        for (int i = 0; i < SPEED_OPTIONS.length; i++) {
+            final int index = i;
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(SPEED_OPTIONS[i]);
+            // Select based on defaultSpeed
+            if (Math.abs(SPEED_VALUES[i] - defaultSpeed) < 0.01) {
+                item.setSelected(true);
+            }
+
+            item.addActionListener(e -> {
+                double speed = SPEED_VALUES[index];
+                emulatorInstance.setSpeedMultiplier(speed);
+                speedSubmenu.setText("Speed (" + SPEED_OPTIONS[index] + ")");
+                showToast("Instance #" + emulatorInstance.getInstanceId() + " speed: " + SPEED_OPTIONS[index],
+                        ToastNotification.ToastType.INFO);
+            });
+
+            speedGroup.add(item);
+            speedSubmenu.add(item);
+        }
+        actionsMenu.add(speedSubmenu);
+
+        actionsMenu.addSeparator();
+
+        // Stop instance
+        JMenuItem stopItem = new JMenuItem("Stop Instance");
+        stopItem.addActionListener(e -> {
+            removeEmulatorInstanceTab(emulatorInstance);
+            emulatorInstance.shutdown();
+            showToast("Stopped Instance #" + emulatorInstance.getInstanceId(), ToastNotification.ToastType.INFO);
+        });
+        actionsMenu.add(stopItem);
+
+        actionsMenu.addSeparator();
+
+        // Placeholder for future features
+        JMenuItem screenshotItem = new JMenuItem("Take Screenshot");
+        screenshotItem.setEnabled(false); // TODO: Implement
+        actionsMenu.add(screenshotItem);
+
+        menuBar.add(actionsMenu);
+
+        return menuBar;
     }
 
     /**

@@ -60,6 +60,23 @@ public class ApplicationService {
 
         try {
             File clonedFile = repository.copyFileToAppsDirectory(file, clonedFileName);
+
+            // Transform JAR for speed control (inject SpeedHelper class)
+            if (clonedFileName.toLowerCase().endsWith(".jar")) {
+                try {
+                    java.nio.file.Path transformedJar = me.kitakeyos.j2me.infrastructure.bytecode.JarTransformer
+                            .transformJar(
+                                    clonedFile.toPath());
+                    // Delete original and rename transformed
+                    java.nio.file.Files.delete(clonedFile.toPath());
+                    java.nio.file.Files.move(transformedJar, clonedFile.toPath());
+                } catch (Exception e) {
+                    // Log but don't fail - speed control just won't work
+                    java.util.logging.Logger.getLogger(getClass().getName())
+                            .warning("JAR transformation failed: " + e.getMessage() + " - speed control may not work");
+                }
+            }
+
             app.setFilePath(clonedFile.getAbsolutePath());
         } catch (IOException e) {
             throw new IOException("Failed to copy application file: " + e.getMessage(), e);

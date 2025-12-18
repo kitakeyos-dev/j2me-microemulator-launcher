@@ -34,6 +34,10 @@ public class InstanceLifecycleManager {
         // Set state to stopped first to prevent concurrent shutdowns
         instance.setState(EmulatorInstance.InstanceState.STOPPED);
 
+        // Clean up speed settings
+        me.kitakeyos.j2me.domain.speed.service.SpeedService.getInstance()
+                .removeInstance(instance.getInstanceId());
+
         MainApplication.INSTANCE.emulatorInstanceManager.removeInstance(instance);
 
         // Clean up managed resources (threads and sockets)
@@ -76,6 +80,13 @@ public class InstanceLifecycleManager {
             // Nullify classloader references to allow GC
             instance.setAppClassLoader(null);
             instance.setEmulatorClassLoader(null);
+
+            // Cleanup transformed JAR file
+            java.nio.file.Path transformedJar = instance.getTransformedJarPath();
+            if (transformedJar != null) {
+                me.kitakeyos.j2me.infrastructure.bytecode.JarTransformer.cleanupTransformedJar(transformedJar);
+                instance.setTransformedJarPath(null);
+            }
 
         } catch (Exception e) {
             logger.warning("Error cleaning up resources: " + e.getMessage());

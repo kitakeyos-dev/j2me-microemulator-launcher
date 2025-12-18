@@ -73,7 +73,7 @@ public class EmulatorLauncher {
             // Ensure emulator runs with its own context ClassLoader
             Thread.currentThread().setContextClassLoader(emulatorClassLoader);
 
-            // Build parameters
+            // Build parameters - JAR is already transformed at install time
             List<String> params = buildEmulatorParameters(instance);
 
             // Launch the emulator
@@ -99,7 +99,7 @@ public class EmulatorLauncher {
     }
 
     /**
-     * Build emulator launch parameters
+     * Build emulator launch parameters.
      */
     private static List<String> buildEmulatorParameters(EmulatorInstance instance) {
         List<String> params = new ArrayList<>();
@@ -114,7 +114,7 @@ public class EmulatorLauncher {
      * Configure instance components after successful launch
      */
     private static void configureInstanceComponents(EmulatorInstance instance, JFrame frame,
-                                                    EmulatorClassLoader emulatorClassLoader) throws Exception {
+            EmulatorClassLoader emulatorClassLoader) throws Exception {
         ActionListener exitListener = ReflectionHelper.getFieldValue(frame, "menuExitListener", ActionListener.class);
         JPanel devicePanel = ReflectionHelper.getFieldValue(frame, "devicePanel", JPanel.class);
 
@@ -128,8 +128,10 @@ public class EmulatorLauncher {
         }
         instance.setDevicePanel(devicePanel);
 
-        Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader, "org.microemu.app.util.MIDletResourceLoader");
-        ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader, "classLoader");
+        Class<?> mIDletResourceLoader = ReflectionHelper.loadClass(emulatorClassLoader,
+                "org.microemu.app.util.MIDletResourceLoader");
+        ClassLoader classLoader = (ClassLoader) ReflectionHelper.getStaticFieldValue(mIDletResourceLoader,
+                "classLoader");
         instance.setAppClassLoader(classLoader);
 
         frame.setResizable(false);

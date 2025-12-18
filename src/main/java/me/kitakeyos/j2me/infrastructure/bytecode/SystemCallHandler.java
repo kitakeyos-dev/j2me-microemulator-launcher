@@ -98,4 +98,22 @@ public final class SystemCallHandler implements Serializable {
         }
         return socket;
     }
+
+    /**
+     * Intercepted Thread.sleep call with speed adjustment.
+     * Called instead of Thread.sleep(long) in J2ME apps after JAR transformation.
+     *
+     * @param millis     Original sleep time in milliseconds
+     * @param instanceId Instance ID for speed lookup
+     */
+    public static void sleep(long millis, int instanceId) throws InterruptedException {
+        me.kitakeyos.j2me.domain.speed.service.SpeedService speedService = me.kitakeyos.j2me.domain.speed.service.SpeedService
+                .getInstance();
+        long adjustedMillis = speedService.adjustSleepTime(instanceId, millis);
+
+        if (adjustedMillis > 0) {
+            Thread.sleep(adjustedMillis);
+        }
+        // If 0 or negative (very high speed), skip sleep entirely
+    }
 }

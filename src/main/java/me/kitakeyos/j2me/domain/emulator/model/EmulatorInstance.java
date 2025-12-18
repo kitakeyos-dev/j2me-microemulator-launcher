@@ -42,6 +42,7 @@ public class EmulatorInstance {
     private ActionListener menuExitListener;
     private ClassLoader appClassLoader;
     private EmulatorClassLoader emulatorClassLoader;
+    private java.nio.file.Path transformedJarPath; // Speed control: transformed JAR
 
     // Resource management
     private final ResourceManager resourceManager;
@@ -136,6 +137,37 @@ public class EmulatorInstance {
 
     public void setEmulatorClassLoader(EmulatorClassLoader emulatorClassLoader) {
         this.emulatorClassLoader = emulatorClassLoader;
+    }
+
+    public java.nio.file.Path getTransformedJarPath() {
+        return transformedJarPath;
+    }
+
+    public void setTransformedJarPath(java.nio.file.Path transformedJarPath) {
+        this.transformedJarPath = transformedJarPath;
+    }
+
+    // === Speed Control ===
+
+    /**
+     * Get the current speed multiplier for this instance.
+     * 
+     * @return Speed multiplier (1.0 = normal, 2.0 = 2x faster)
+     */
+    public double getSpeedMultiplier() {
+        return me.kitakeyos.j2me.domain.speed.service.SpeedService.getInstance()
+                .getSpeedMultiplier(instanceId);
+    }
+
+    /**
+     * Set speed multiplier for this instance.
+     * Takes effect immediately for Thread.sleep() calls.
+     * 
+     * @param multiplier Speed multiplier (1.0 = normal, 2.0 = 2x faster)
+     */
+    public void setSpeedMultiplier(double multiplier) {
+        me.kitakeyos.j2me.domain.speed.service.SpeedService.getInstance()
+                .setSpeedMultiplier(instanceId, multiplier);
     }
 
     // === Business Logic ===

@@ -33,4 +33,8 @@ public class XThread extends Thread {
             logger.info("Emulator Instance Not Found");
         }
     }
+
+    public int getInstanceId() {
+        return instanceId;
+    }
 }
