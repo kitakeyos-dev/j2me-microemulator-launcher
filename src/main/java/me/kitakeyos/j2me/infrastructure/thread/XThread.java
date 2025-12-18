@@ -15,14 +15,12 @@ public class XThread extends Thread {
     public XThread(String name, int instanceId) {
         super(name);
         this.instanceId = instanceId;
-        System.out.println("Creating thread " +  name + " with id " + instanceId);
         addToEmulatorInstance();
     }
 
     public XThread(Runnable target, String name, int instanceId) {
         super(target, name);
         this.instanceId = instanceId;
-        System.out.println("Creating thread " +  name + " with id " + instanceId);
         addToEmulatorInstance();
     }
 

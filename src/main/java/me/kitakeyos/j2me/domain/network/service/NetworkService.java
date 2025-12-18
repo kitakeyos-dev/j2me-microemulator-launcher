@@ -5,18 +5,17 @@ import me.kitakeyos.j2me.domain.network.model.PacketLog;
 import me.kitakeyos.j2me.domain.network.model.ProxyRule;
 import me.kitakeyos.j2me.domain.network.model.RedirectionRule;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
-import java.io.IOException;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
-import java.io.ByteArrayOutputStream;
 
 /**
  * Service to manage network redirection rules, proxy rules, and connection
@@ -472,7 +471,6 @@ public class NetworkService {
         }
 
         default void onPacketLogAdded(PacketLog log) {
-            System.out.println(log);
         }
 
         default void onPacketLogsCleared() {
