@@ -137,4 +137,15 @@ public class InstanceManager {
             inputSynchronizer.detachListenersFromInstance(instance);
         }
     }
+
+    /**
+     * Enable or disable graphics rendering for all running instances.
+     */
+    public void setGlobalGraphicsEnabled(boolean enabled) {
+        me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService service = me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService
+                .getInstance();
+        for (EmulatorInstance instance : getRunningInstances()) {
+            service.setGraphicsEnabled(instance, enabled);
+        }
+    }
 }

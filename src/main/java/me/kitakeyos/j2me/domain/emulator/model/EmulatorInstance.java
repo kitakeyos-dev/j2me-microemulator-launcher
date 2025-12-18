@@ -2,6 +2,7 @@ package me.kitakeyos.j2me.domain.emulator.model;
 
 import me.kitakeyos.j2me.domain.emulator.resource.ResourceManager;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceLifecycleManager;
+import me.kitakeyos.j2me.domain.speed.service.SpeedService;
 import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
 
 import javax.swing.*;
@@ -43,6 +44,7 @@ public class EmulatorInstance {
     private ClassLoader appClassLoader;
     private EmulatorClassLoader emulatorClassLoader;
     private java.nio.file.Path transformedJarPath; // Speed control: transformed JAR
+    private boolean graphicsEnabled = true; // Graphics optimization flag
 
     // Resource management
     private final ResourceManager resourceManager;
@@ -155,7 +157,7 @@ public class EmulatorInstance {
      * @return Speed multiplier (1.0 = normal, 2.0 = 2x faster)
      */
     public double getSpeedMultiplier() {
-        return me.kitakeyos.j2me.domain.speed.service.SpeedService.getInstance()
+        return SpeedService.getInstance()
                 .getSpeedMultiplier(instanceId);
     }
 
@@ -166,8 +168,17 @@ public class EmulatorInstance {
      * @param multiplier Speed multiplier (1.0 = normal, 2.0 = 2x faster)
      */
     public void setSpeedMultiplier(double multiplier) {
-        me.kitakeyos.j2me.domain.speed.service.SpeedService.getInstance()
+        SpeedService.getInstance()
                 .setSpeedMultiplier(instanceId, multiplier);
+    }
+
+    // === Graphics Optimization ===
+    public boolean isGraphicsEnabled() {
+        return graphicsEnabled;
+    }
+
+    public void setGraphicsEnabled(boolean graphicsEnabled) {
+        this.graphicsEnabled = graphicsEnabled;
     }
 
     // === Business Logic ===

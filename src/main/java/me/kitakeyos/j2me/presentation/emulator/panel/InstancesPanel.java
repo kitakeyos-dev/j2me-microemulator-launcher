@@ -40,6 +40,7 @@ public class InstancesPanel extends BaseTabPanel {
     private JCheckBox syncInputCheckBox;
     private JCheckBox scaleInputBySizeCheckBox;
     private JCheckBox fullDisplayModeCheckBox;
+    private JCheckBox disableGraphicsCheckBox; // New global toggle
     private JComboBox<String> defaultSpeedComboBox;
     private ScrollablePanel runningInstancesPanel;
     private JLabel instancesEmptyLabel;
@@ -87,9 +88,14 @@ public class InstancesPanel extends BaseTabPanel {
         displayHeightSpinner.setToolTipText("Display height in pixels (128-1000)");
         displayHeightSpinner.setPreferredSize(new Dimension(80, displayHeightSpinner.getPreferredSize().height));
 
+        // Default speed option
+        defaultSpeedComboBox = new JComboBox<>(SPEED_OPTIONS);
+        defaultSpeedComboBox.setSelectedIndex(1); // Default 1x
+        defaultSpeedComboBox.setToolTipText("Default speed for new instances");
+
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, microemulatorPathField,
-                displayWidthSpinner, displayHeightSpinner,
+                displayWidthSpinner, displayHeightSpinner, defaultSpeedComboBox,
                 this::browseMicroemulatorJar);
         topPanel.add(configurationPanel, BorderLayout.WEST);
 
@@ -232,15 +238,17 @@ public class InstancesPanel extends BaseTabPanel {
                 "Show emulator with full interface (menubar, toolbar) instead of simple device panel only");
         fullDisplayModeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Default speed option
-        JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        speedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel speedLabel = new JLabel("Default Speed: ");
-        defaultSpeedComboBox = new JComboBox<>(SPEED_OPTIONS);
-        defaultSpeedComboBox.setSelectedIndex(1); // Default 1x
-        defaultSpeedComboBox.setToolTipText("Default speed for new instances");
-        speedPanel.add(speedLabel);
-        speedPanel.add(defaultSpeedComboBox);
+        // Disable Graphics Toggle
+        disableGraphicsCheckBox = new JCheckBox("Disable All Graphics");
+        disableGraphicsCheckBox.setToolTipText("Toggle graphics rendering for ALL instances");
+        disableGraphicsCheckBox.addActionListener(e -> {
+            boolean disable = disableGraphicsCheckBox.isSelected();
+            if (emulatorInstanceManager != null) {
+                // !disable because service takes "enabled"
+                emulatorInstanceManager.setGlobalGraphicsEnabled(!disable);
+                statusBar.setInfo(disable ? "Graphics DISABLED (All)" : "Graphics ENABLED (All)");
+            }
+        });
 
         panel.add(syncInputCheckBox);
         panel.add(Box.createVerticalStrut(5));
@@ -248,7 +256,7 @@ public class InstancesPanel extends BaseTabPanel {
         panel.add(Box.createVerticalStrut(5));
         panel.add(fullDisplayModeCheckBox);
         panel.add(Box.createVerticalStrut(5));
-        panel.add(speedPanel);
+        panel.add(disableGraphicsCheckBox);
 
         return panel;
     }
@@ -531,6 +539,20 @@ public class InstancesPanel extends BaseTabPanel {
             speedSubmenu.add(item);
         }
         actionsMenu.add(speedSubmenu);
+
+        // Graphics optimization (Stop Painting)
+        JCheckBoxMenuItem graphicsItem = new JCheckBoxMenuItem("Disable Graphics");
+        graphicsItem.setToolTipText("Stop rendering graphics to save resources (CPU/GPU)");
+        graphicsItem.addActionListener(e -> {
+            boolean disableGraphics = graphicsItem.isSelected();
+            me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService.getInstance()
+                    .setGraphicsEnabled(emulatorInstance, !disableGraphics);
+
+            String status = disableGraphics ? "DISABLED" : "ENABLED";
+            showToast("Graphics " + status + " for Instance #" + emulatorInstance.getInstanceId(),
+                    ToastNotification.ToastType.INFO);
+        });
+        actionsMenu.add(graphicsItem);
 
         actionsMenu.addSeparator();
 

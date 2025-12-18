@@ -12,8 +12,8 @@ public class ConfigurationPanelBuilder {
      * Create configuration panel with display size configuration
      */
     public static JPanel createConfigurationPanel(JComboBox<?> applicationComboBox, JSpinner instanceCountSpinner,
-                                           JTextField microemulatorPathField, JSpinner displayWidthSpinner,
-                                           JSpinner displayHeightSpinner, Runnable onOpenSettings) {
+                                                  JTextField microemulatorPathField, JSpinner displayWidthSpinner,
+                                                  JSpinner displayHeightSpinner, JComboBox<String> defaultSpeedComboBox, Runnable onOpenSettings) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Configuration"));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -78,6 +78,14 @@ public class ConfigurationPanelBuilder {
         gbc.gridx = 2;
         gbc.weightx = 0.0;
         panel.add(browseButton, gbc);
+
+        gbc.gridy++;
+        JLabel speedLabel = new JLabel("Default Speed: ");
+        gbc.gridx = 0;
+        panel.add(speedLabel, gbc);
+
+        gbc.gridx = 1;
+        panel.add(defaultSpeedComboBox, gbc);
 
         return panel;
     }
