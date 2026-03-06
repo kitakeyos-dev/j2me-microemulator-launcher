@@ -9,11 +9,12 @@ import java.awt.*;
 public class ConfigurationPanelBuilder {
 
     /**
-     * Create configuration panel with display size configuration
+     * Create configuration panel with emulator selector and display size
+     * configuration
      */
     public static JPanel createConfigurationPanel(JComboBox<?> applicationComboBox, JSpinner instanceCountSpinner,
-                                                  JTextField microemulatorPathField, JSpinner displayWidthSpinner,
-                                                  JSpinner displayHeightSpinner, JComboBox<String> defaultSpeedComboBox, Runnable onOpenSettings) {
+            JComboBox<?> emulatorComboBox, JSpinner displayWidthSpinner,
+            JSpinner displayHeightSpinner, JComboBox<String> defaultSpeedComboBox) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Configuration"));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -61,27 +62,24 @@ public class ConfigurationPanelBuilder {
             panel.add(sizePanel, gbc);
         }
 
-        // MicroEmulator Path
+        // Emulator selector
         gbc.gridx = 0;
         gbc.gridy = displayWidthSpinner != null ? 3 : 2;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
-        panel.add(new JLabel("MicroEmulator Path:"), gbc);
-        microemulatorPathField.setText("microemulator.jar");
-        microemulatorPathField.setPreferredSize(new Dimension(200, microemulatorPathField.getPreferredSize().height));
+        panel.add(new JLabel("Emulator:"), gbc);
+        emulatorComboBox.setPreferredSize(new Dimension(200, emulatorComboBox.getPreferredSize().height));
         gbc.gridx = 1;
-        gbc.weightx = 0.0;
-        panel.add(microemulatorPathField, gbc);
-        JButton browseButton = new JButton("Browse");
-        browseButton.setToolTipText("Browse to select MicroEmulator JAR file");
-        browseButton.addActionListener(e -> onOpenSettings.run());
-        gbc.gridx = 2;
-        gbc.weightx = 0.0;
-        panel.add(browseButton, gbc);
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        panel.add(emulatorComboBox, gbc);
 
+        // Default Speed
         gbc.gridy++;
+        gbc.gridwidth = 1;
         JLabel speedLabel = new JLabel("Default Speed: ");
         gbc.gridx = 0;
+        gbc.weightx = 0.0;
         panel.add(speedLabel, gbc);
 
         gbc.gridx = 1;

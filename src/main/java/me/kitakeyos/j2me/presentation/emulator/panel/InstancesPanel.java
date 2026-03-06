@@ -5,8 +5,10 @@ import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.application.model.J2meApplication;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.application.emulator.EmulatorLauncher;
+import me.kitakeyos.j2me.domain.emulator.model.EmulatorConfig;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.domain.emulator.repository.EmulatorConfigRepository;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
 import me.kitakeyos.j2me.infrastructure.input.InputSynchronizerImpl;
 import me.kitakeyos.j2me.presentation.common.builder.ConfigurationPanelBuilder;
@@ -33,7 +35,7 @@ public class InstancesPanel extends BaseTabPanel {
 
     // UI Components
     private JComboBox<J2meApplication> applicationComboBox;
-    private JTextField microemulatorPathField;
+    private JComboBox<EmulatorConfig> emulatorComboBox;
     private JSpinner instanceCountSpinner;
     private JSpinner displayWidthSpinner;
     private JSpinner displayHeightSpinner;
@@ -52,12 +54,25 @@ public class InstancesPanel extends BaseTabPanel {
     // Services and managers
     public InstanceManager emulatorInstanceManager;
 
+    // Emulator config repository
+    private EmulatorConfigRepository emulatorConfigRepository;
+
     // Thread pool for launching emulator instances
     private final ExecutorService instanceLauncherPool = Executors.newCachedThreadPool();
 
     public InstancesPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
             ApplicationService j2meApplicationManager) {
         super(mainApplication, applicationConfig, j2meApplicationManager);
+    }
+
+    /**
+     * Set the emulator config repository and refresh the combo box.
+     * Called after construction since the repository may not be available at
+     * constructor time.
+     */
+    public void setEmulatorConfigRepository(EmulatorConfigRepository repository) {
+        this.emulatorConfigRepository = repository;
+        refreshEmulatorComboBox();
     }
 
     @Override
@@ -73,9 +88,11 @@ public class InstancesPanel extends BaseTabPanel {
         applicationComboBox.setToolTipText("Select J2ME application to create instances");
         refreshApplicationComboBox();
 
-        microemulatorPathField = new JTextField();
-        microemulatorPathField.setEditable(false);
-        microemulatorPathField.setToolTipText("Path to MicroEmulator JAR (configure in Settings)");
+        // Emulator selector dropdown
+        emulatorComboBox = new JComboBox<>();
+        emulatorComboBox.setToolTipText("Select emulator (manage in Emulators tab)");
+        emulatorComboBox.addActionListener(e -> onEmulatorSelectionChanged());
+
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         instanceCountSpinner.setToolTipText("Number of instances to create (1-100)");
 
@@ -94,9 +111,8 @@ public class InstancesPanel extends BaseTabPanel {
         defaultSpeedComboBox.setToolTipText("Default speed for new instances");
 
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
-                applicationComboBox, instanceCountSpinner, microemulatorPathField,
-                displayWidthSpinner, displayHeightSpinner, defaultSpeedComboBox,
-                this::browseMicroemulatorJar);
+                applicationComboBox, instanceCountSpinner, emulatorComboBox,
+                displayWidthSpinner, displayHeightSpinner, defaultSpeedComboBox);
         topPanel.add(configurationPanel, BorderLayout.WEST);
 
         // Options panel in center
@@ -143,8 +159,6 @@ public class InstancesPanel extends BaseTabPanel {
         // Wire InputSynchronizer implementation
         emulatorInstanceManager.setInputSynchronizer(new InputSynchronizerImpl(emulatorInstanceManager));
 
-        // Load configuration
-        loadApplicationConfiguration();
         updateInstancesEmptyState();
     }
 
@@ -261,61 +275,36 @@ public class InstancesPanel extends BaseTabPanel {
         return panel;
     }
 
-    private void loadApplicationConfiguration() {
-        microemulatorPathField.setText(applicationConfig.getMicroemulatorPath());
+    /**
+     * When emulator selection changes, auto-populate display size spinners
+     */
+    private void onEmulatorSelectionChanged() {
+        EmulatorConfig selected = (EmulatorConfig) emulatorComboBox.getSelectedItem();
+        if (selected != null) {
+            displayWidthSpinner.setValue(selected.getDefaultDisplayWidth());
+            displayHeightSpinner.setValue(selected.getDefaultDisplayHeight());
+        }
     }
 
     /**
-     * Browse for MicroEmulator JAR file
+     * Refresh the emulator combo box with latest emulator configs
      */
-    private void browseMicroemulatorJar() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select MicroEmulator JAR File");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-        // Set file filter for JAR files
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
-            @Override
-            public boolean accept(java.io.File f) {
-                return f.isDirectory() || f.getName().toLowerCase().endsWith(".jar");
-            }
-
-            @Override
-            public String getDescription() {
-                return "JAR Files (*.jar)";
-            }
-        });
-
-        // Set current directory based on existing path if valid
-        String currentPath = applicationConfig.getMicroemulatorPath();
-        if (currentPath != null && !currentPath.isEmpty()) {
-            java.io.File currentFile = new java.io.File(currentPath);
-            if (currentFile.getParentFile() != null && currentFile.getParentFile().exists()) {
-                fileChooser.setCurrentDirectory(currentFile.getParentFile());
-            }
+    public void refreshEmulatorComboBox() {
+        if (emulatorConfigRepository == null)
+            return;
+        EmulatorConfig previousSelection = (EmulatorConfig) emulatorComboBox.getSelectedItem();
+        emulatorComboBox.removeAllItems();
+        for (EmulatorConfig config : emulatorConfigRepository.getAll()) {
+            emulatorComboBox.addItem(config);
         }
-
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            java.io.File selectedFile = fileChooser.getSelectedFile();
-            String selectedPath = selectedFile.getAbsolutePath();
-
-            // Validate that it's a JAR file
-            if (!selectedPath.toLowerCase().endsWith(".jar")) {
-                showErrorMessage("Please select a valid JAR file.");
-                return;
+        // Restore previous selection if still available
+        if (previousSelection != null) {
+            for (int i = 0; i < emulatorComboBox.getItemCount(); i++) {
+                if (emulatorComboBox.getItemAt(i).getId().equals(previousSelection.getId())) {
+                    emulatorComboBox.setSelectedIndex(i);
+                    break;
+                }
             }
-
-            // Save to configuration
-            applicationConfig.setMicroemulatorPath(selectedPath);
-            applicationConfig.saveConfiguration();
-
-            // Update UI
-            microemulatorPathField.setText(selectedPath);
-
-            // Show success message
-            showToast("MicroEmulator path updated successfully", ToastNotification.ToastType.SUCCESS);
-            statusBar.setSuccess("MicroEmulator path saved: " + selectedFile.getName());
         }
     }
 
@@ -339,13 +328,19 @@ public class InstancesPanel extends BaseTabPanel {
             return;
         }
 
-        if (!applicationConfig.isMicroemulatorPathValid()) {
-            showErrorMessage("MicroEmulator path is invalid. Please check settings.");
+        EmulatorConfig selectedEmulator = (EmulatorConfig) emulatorComboBox.getSelectedItem();
+        if (selectedEmulator == null) {
+            showErrorMessage("Please select an emulator from the Emulators tab");
+            return;
+        }
+
+        if (!selectedEmulator.isValid()) {
+            showErrorMessage("Selected emulator JAR is invalid: " + selectedEmulator.getJarPath());
             return;
         }
 
         int numberOfInstances = (Integer) instanceCountSpinner.getValue();
-        String microemulatorPath = applicationConfig.getMicroemulatorPath();
+        String microemulatorPath = selectedEmulator.getJarPath();
         String j2meFilePath = selectedApp.getFilePath();
         int displayWidth = (Integer) displayWidthSpinner.getValue();
         int displayHeight = (Integer) displayHeightSpinner.getValue();

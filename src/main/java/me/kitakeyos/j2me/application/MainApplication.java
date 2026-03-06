@@ -7,7 +7,9 @@ import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
 import me.kitakeyos.j2me.infrastructure.persistence.application.ApplicationRepositoryImpl;
+import me.kitakeyos.j2me.infrastructure.persistence.emulator.EmulatorConfigRepositoryImpl;
 import me.kitakeyos.j2me.presentation.emulator.panel.ApplicationsPanel;
+import me.kitakeyos.j2me.presentation.emulator.panel.EmulatorsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.InstancesPanel;
 import me.kitakeyos.j2me.presentation.script.LuaScriptManager;
 
@@ -23,7 +25,9 @@ public class MainApplication extends JFrame {
     private final ApplicationConfig applicationConfig;
     private final ApplicationRepository applicationRepository;
     private final ApplicationService applicationService;
+    private final EmulatorConfigRepositoryImpl emulatorConfigRepository;
     private InstancesPanel instancesPanel;
+    private EmulatorsPanel emulatorsPanel;
     public InstanceManager emulatorInstanceManager;
     public LuaScriptManager luaScriptManager;
     public ApplicationsPanel applicationsPanel;
@@ -38,9 +42,15 @@ public class MainApplication extends JFrame {
         applicationConfig = new ApplicationConfig();
         applicationRepository = new ApplicationRepositoryImpl(applicationConfig);
         applicationService = new ApplicationService(applicationRepository);
+        emulatorConfigRepository = new EmulatorConfigRepositoryImpl(applicationConfig);
+
         applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
+        emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, emulatorConfigRepository);
         instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
         luaScriptManager = new LuaScriptManager(this, applicationConfig, applicationService);
+
+        // Wire emulator config repository to instances panel
+        instancesPanel.setEmulatorConfigRepository(emulatorConfigRepository);
 
         emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
 
@@ -54,10 +64,13 @@ public class MainApplication extends JFrame {
         // Tab 1: Applications
         tabbedPane.addTab("Applications", applicationsPanel);
 
-        // Tab 2: Instances
+        // Tab 2: Emulators
+        tabbedPane.addTab("Emulators", emulatorsPanel);
+
+        // Tab 3: Instances
         tabbedPane.addTab("Instances", instancesPanel);
 
-        // Tab 3: Scripts (if enabled)
+        // Tab 4: Scripts (if enabled)
         if (applicationConfig.isScriptTabEnabled()) {
             tabbedPane.addTab("Scripts", luaScriptManager);
         }
@@ -76,6 +89,9 @@ public class MainApplication extends JFrame {
                 instancesPanel.refreshApplicationComboBox();
             }
         });
+
+        // Listen for emulator config changes to update combo box in instances panel
+        emulatorConfigRepository.addChangeListener(() -> instancesPanel.refreshEmulatorComboBox());
     }
 
     /**
