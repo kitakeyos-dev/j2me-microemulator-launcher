@@ -59,7 +59,8 @@ presentation/
 │
 ├── emulator/panel/
 │   ├── ApplicationsPanel.java   # Tab 1: Manage J2ME apps
-│   └── InstancesPanel.java      # Tab 2: Running instances
+│   ├── EmulatorsPanel.java      # Tab 2: Manage emulator configs
+│   └── InstancesPanel.java      # Tab 3: Running instances
 │
 ├── monitor/
 │   └── SystemMonitorDialog.java # RAM/CPU/Thread monitor
@@ -76,6 +77,7 @@ presentation/
 | Class | Purpose |
 |-------|---------|
 | `ApplicationsPanel` | Grid of installed J2ME apps with install/remove |
+| `EmulatorsPanel` | Add/edit/remove emulator JAR configurations |
 | `InstancesPanel` | Shows running emulator instances, start/stop controls |
 | `NetworkMonitorDialog` | View connection logs, manage rules |
 | `LuaScriptManager` | File tree, code editor, output console |
@@ -174,7 +176,10 @@ domain/
 │
 ├── emulator/                    # Emulator instance management
 │   ├── model/
+│   │   ├── EmulatorConfig.java        # Emulator configuration
 │   │   └── EmulatorInstance.java
+│   ├── repository/
+│   │   └── EmulatorConfigRepository.java  # Interface
 │   ├── resource/
 │   │   └── ResourceManager.java
 │   ├── input/
@@ -206,6 +211,7 @@ domain/
 
 | Class | Purpose |
 |-------|---------|
+| `EmulatorConfig` | Model representing an installed emulator configuration |
 | `EmulatorInstance` | Model representing a running emulator |
 | `NetworkService` | Singleton managing network rules and logging |
 | `InstanceManager` | Manages lifecycle of all instances |
@@ -310,6 +316,8 @@ infrastructure/
 ├── persistence/                 # File storage
 │   ├── application/
 │   │   └── ApplicationRepositoryImpl.java
+│   ├── emulator/
+│   │   └── EmulatorConfigRepositoryImpl.java
 │   └── script/
 │       └── ScriptFileManager.java
 │
@@ -329,6 +337,7 @@ infrastructure/
 | `SystemCallHandler` | Receives intercepted system calls |
 | `MonitoredSocket` | Socket wrapper for packet capture |
 | `ApplicationRepositoryImpl` | Saves apps to properties file |
+| `EmulatorConfigRepositoryImpl` | Saves emulator configs to properties file |
 
 ---
 
@@ -454,6 +463,26 @@ NetworkService
       │ saveRules()
       ▼
 data/network_rules.properties
+```
+
+### Emulator Storage
+
+```
+EmulatorConfig
+      │
+      │ save via EmulatorConfigRepository
+      ▼
+EmulatorConfigRepositoryImpl
+      │
+      │ write to
+      ▼
+data/emulators.properties
+      │
+      ├── emulator.0.id=uuid
+      ├── emulator.0.name=MicroEmulator Default
+      ├── emulator.0.jarPath=microemulator.jar
+      ├── emulator.0.displayWidth=240
+      └── emulator.0.displayHeight=320
 ```
 
 ---

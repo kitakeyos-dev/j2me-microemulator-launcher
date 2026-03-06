@@ -19,6 +19,12 @@ J2ME MicroEmulator Launcher is a powerful desktop application that enables runni
 - Input synchronization across all instances
 - Individual instance control
 
+### ⚙️ Emulator Management
+- Install and manage multiple emulator JARs
+- Per-emulator default display size configuration
+- Select emulator from dropdown when creating instances
+- Auto-creates default emulator from bundled `microemulator.jar`
+
 ### 🌐 Network Monitor
 - **Connection Logging**: Monitor all socket connections with timestamps
 - **Host/Port Redirection**: Redirect connections from one host:port to another
@@ -59,7 +65,9 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ## Usage
 
 ### First-Time Setup
-1. In the Instances tab, click **Browse** to select your `microemulator.jar` file
+1. Go to the **Emulators** tab
+2. The default `microemulator.jar` is auto-configured
+3. To add more emulators, enter a name, browse for the JAR file, and click **Add Emulator**
 
 ### Managing Applications
 1. Go to **Applications** tab
@@ -68,8 +76,8 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 
 ### Running Instances
 1. Go to **Instances** tab
-2. Select an application and set the number of instances
-3. Configure display size (default: 240x320)
+2. Select an application and an emulator from the dropdowns
+3. Set the number of instances and display size (auto-populated from emulator defaults)
 4. Click **Create & Run**
 
 ### Network Monitor
@@ -85,6 +93,7 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ./data/
 ├── j2me_launcher.properties    # Main configuration
 ├── j2me_apps.properties        # Installed applications
+├── emulators.properties        # Emulator configurations
 ├── network_rules.properties    # Network redirection/proxy rules
 ├── apps/                       # Cloned JAR/JAD files
 ├── icons/                      # Application icons

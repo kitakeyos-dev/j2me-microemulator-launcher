@@ -19,6 +19,12 @@ J2ME MicroEmulator Launcher là ứng dụng desktop mạnh mẽ cho phép chạ
 - Đồng bộ input giữa tất cả instances
 - Điều khiển từng instance riêng lẻ
 
+### ⚙️ Quản Lý Emulator
+- Cài đặt và quản lý nhiều emulator JAR
+- Cấu hình kích thước màn hình mặc định cho từng emulator
+- Chọn emulator từ dropdown khi tạo instances
+- Tự động tạo emulator mặc định từ `microemulator.jar`
+
 ### 🌐 Network Monitor
 - **Ghi Log Kết Nối**: Theo dõi tất cả kết nối socket với timestamp
 - **Chuyển Hướng Host/Port**: Chuyển hướng kết nối từ host:port này sang host:port khác
@@ -59,7 +65,9 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ## Hướng Dẫn Sử Dụng
 
 ### Thiết Lập Lần Đầu
-1. Trong tab Instances, click **Browse** để chọn file `microemulator.jar`
+1. Vào tab **Emulators**
+2. Emulator mặc định `microemulator.jar` đã được tự động cấu hình
+3. Để thêm emulator khác, nhập tên, chọn file JAR, và click **Add Emulator**
 
 ### Quản Lý Ứng Dụng
 1. Vào tab **Applications**
@@ -68,8 +76,8 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 
 ### Chạy Instances
 1. Vào tab **Instances**
-2. Chọn ứng dụng và số lượng instances
-3. Cấu hình kích thước màn hình (mặc định: 240x320)
+2. Chọn ứng dụng và emulator từ dropdown
+3. Đặt số lượng instances và kích thước màn hình (tự động từ emulator defaults)
 4. Click **Create & Run**
 
 ### Network Monitor
@@ -85,6 +93,7 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ./data/
 ├── j2me_launcher.properties    # Cấu hình chính
 ├── j2me_apps.properties        # Danh sách ứng dụng
+├── emulators.properties        # Cấu hình emulators
 ├── network_rules.properties    # Rules redirection/proxy
 ├── apps/                       # Files JAR/JAD đã sao chép
 ├── icons/                      # Icons ứng dụng

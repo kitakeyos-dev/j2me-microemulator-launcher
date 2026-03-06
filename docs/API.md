@@ -6,6 +6,60 @@
 
 ## 📦 Domain Layer
 
+### EmulatorConfig
+
+Represents an installed emulator configuration.
+
+**Package**: `me.kitakeyos.j2me.domain.emulator.model`
+
+```java
+public class EmulatorConfig {
+    
+    // === CONSTRUCTORS ===
+    
+    public EmulatorConfig(String name, String jarPath, int defaultDisplayWidth, int defaultDisplayHeight);
+    public EmulatorConfig(String id, String name, String jarPath, int defaultDisplayWidth, int defaultDisplayHeight);
+    
+    // === GETTERS ===
+    
+    String getId();
+    String getName();
+    String getJarPath();
+    int getDefaultDisplayWidth();
+    int getDefaultDisplayHeight();
+    
+    // === SETTERS ===
+    
+    void setName(String name);
+    void setJarPath(String jarPath);
+    void setDefaultDisplayWidth(int width);
+    void setDefaultDisplayHeight(int height);
+    
+    // === VALIDATION ===
+    
+    boolean isValid();  // true if JAR file exists and has .jar extension
+}
+```
+
+---
+
+### EmulatorConfigRepository
+
+Interface for managing emulator configurations.
+
+**Package**: `me.kitakeyos.j2me.domain.emulator.repository`
+
+```java
+public interface EmulatorConfigRepository {
+    
+    List<EmulatorConfig> getAll();
+    void save(EmulatorConfig config);
+    void remove(String id);
+}
+```
+
+---
+
 ### EmulatorInstance
 
 Represents a running emulator instance.
