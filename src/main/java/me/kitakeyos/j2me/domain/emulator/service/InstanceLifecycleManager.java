@@ -43,7 +43,7 @@ public class InstanceLifecycleManager {
 
         // 2. Give emulator time to clean up its internal state
         try {
-            Thread.sleep(500);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
