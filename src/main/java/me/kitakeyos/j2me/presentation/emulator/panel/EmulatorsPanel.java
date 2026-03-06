@@ -4,7 +4,7 @@ import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorConfig;
-import me.kitakeyos.j2me.domain.emulator.repository.EmulatorConfigRepository;
+import me.kitakeyos.j2me.infrastructure.persistence.emulator.EmulatorConfigRepositoryImpl;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.ConfirmDialog;
@@ -22,7 +22,7 @@ import java.io.File;
  */
 public class EmulatorsPanel extends BaseTabPanel {
 
-    private EmulatorConfigRepository emulatorConfigRepository;
+    private EmulatorConfigRepositoryImpl emulatorConfigRepository;
 
     // Form fields
     private JTextField nameField;
@@ -40,7 +40,7 @@ public class EmulatorsPanel extends BaseTabPanel {
     private EmulatorConfig editingConfig;
 
     public EmulatorsPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
-            ApplicationService applicationService, EmulatorConfigRepository emulatorConfigRepository) {
+            ApplicationService applicationService, EmulatorConfigRepositoryImpl emulatorConfigRepository) {
         super(mainApplication, applicationConfig, applicationService);
         // Assign after super() — onInitialized() will skip refresh due to null guard
         this.emulatorConfigRepository = emulatorConfigRepository;
@@ -212,7 +212,16 @@ public class EmulatorsPanel extends BaseTabPanel {
         int width = (Integer) defaultWidthSpinner.getValue();
         int height = (Integer) defaultHeightSpinner.getValue();
 
-        EmulatorConfig config = new EmulatorConfig(name, jarPath, width, height);
+        // Clone JAR to data/emulators/ directory
+        String clonedPath;
+        try {
+            clonedPath = emulatorConfigRepository.cloneJarFile(jarPath);
+        } catch (java.io.IOException ex) {
+            MessageDialog.showError(this, "Error", "Failed to clone JAR file: " + ex.getMessage());
+            return;
+        }
+
+        EmulatorConfig config = new EmulatorConfig(name, clonedPath, width, height);
         emulatorConfigRepository.save(config);
         refreshEmulatorsList();
         clearForm();
@@ -238,9 +247,19 @@ public class EmulatorsPanel extends BaseTabPanel {
         }
 
         editingConfig.setName(name);
-        editingConfig.setJarPath(jarPath);
         editingConfig.setDefaultDisplayWidth((Integer) defaultWidthSpinner.getValue());
         editingConfig.setDefaultDisplayHeight((Integer) defaultHeightSpinner.getValue());
+
+        // If JAR path changed, clone the new JAR
+        if (!jarPath.equals(editingConfig.getJarPath())) {
+            try {
+                String clonedPath = emulatorConfigRepository.cloneJarFile(jarPath);
+                editingConfig.setJarPath(clonedPath);
+            } catch (java.io.IOException ex) {
+                MessageDialog.showError(this, "Error", "Failed to clone JAR file: " + ex.getMessage());
+                return;
+            }
+        }
 
         emulatorConfigRepository.save(editingConfig);
         refreshEmulatorsList();
