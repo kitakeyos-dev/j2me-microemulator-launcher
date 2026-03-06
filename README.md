@@ -37,6 +37,13 @@ J2ME MicroEmulator Launcher is a powerful desktop application that enables runni
 - Built-in code editor with syntax highlighting
 - Folder organization for scripts
 
+### 🔌 Java Injection
+- Load external JAR files to execute code against running instances
+- Direct access to MIDlet classes via custom classloader chain
+- Built-in logging system with real-time output
+- Hot-reload support for rapid development
+- See [docs/INJECTION.md](docs/INJECTION.md) for full guide
+
 ### ⚡ Performance
 - Bytecode caching for instant subsequent startups
 - Smart memory management with proper cleanup
@@ -98,6 +105,7 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ├── apps/                       # Cloned JAR/JAD files
 ├── icons/                      # Application icons
 ├── rms/                        # Per-instance data
+├── emulators/                  # Cloned emulator JARs
 └── scripts/                    # Lua scripts
 ```
 

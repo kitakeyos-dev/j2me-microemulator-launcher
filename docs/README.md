@@ -26,7 +26,8 @@ This application allows users to:
 2. **Run multiple instances simultaneously** - each instance is isolated with its own ClassLoader
 3. **Monitor network traffic** - intercept, log, redirect, and proxy all socket connections
 4. **Automate with Lua scripts** - access J2ME app internals via reflection
-5. **Manage J2ME apps** - install, store, and organize J2ME JAR/JAD files
+5. **Inject Java code at runtime** - load external JARs and execute against running instances
+6. **Manage J2ME apps** - install, store, and organize J2ME JAR/JAD files
 
 ### Why Bytecode Manipulation is Needed
 
@@ -53,6 +54,7 @@ J2ME apps make system calls that need to be intercepted:
 |----------|---------|----------|
 | [NETWORK.md](NETWORK.md) | Network monitoring, redirection, proxy system | Using/extending network features |
 | [SCRIPTING.md](SCRIPTING.md) | Lua scripting API and examples | Writing automation scripts |
+| [INJECTION.md](INJECTION.md) | Java injection API and guides | Runtime class injection |
 
 ### Technical Deep-Dives
 
@@ -160,6 +162,11 @@ j2me-microemulator-launcher/
 │   │       ├── model/LuaScript.java
 │   │       ├── executor/LuaScriptExecutor.java
 │   │       └── library/DynamicJavaLib.java
+│   │   └── injection/
+│   │       ├── model/
+│   │       │   ├── InjectionEntry.java
+│   │       │   └── InjectionLogger.java
+│   │       └── service/InjectionService.java
 │   │
 │   ├── infrastructure/              # INFRASTRUCTURE LAYER
 │   │   ├── bytecode/
@@ -211,6 +218,8 @@ j2me-microemulator-launcher/
 │   │   │   └── NetworkMonitorDialog.java
 │   │   └── script/
 │   │       └── LuaScriptManager.java
+│   │   └── injection/panel/
+│   │       └── InjectionPanel.java
 │   │
 │   └── util/
 │       └── reflection/
