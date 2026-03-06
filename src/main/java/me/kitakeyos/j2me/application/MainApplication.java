@@ -98,6 +98,14 @@ public class MainApplication extends JFrame {
 
         // Listen for emulator config changes to update combo box in instances panel
         emulatorConfigRepository.addChangeListener(() -> instancesPanel.refreshEmulatorComboBox());
+
+        // Auto-refresh instance combobox in Injection and Scripts tabs
+        emulatorInstanceManager.addInstanceChangeListener(() -> {
+            injectionPanel.refreshInstanceList();
+            if (luaScriptManager != null) {
+                luaScriptManager.refreshInstanceList();
+            }
+        });
     }
 
     /**

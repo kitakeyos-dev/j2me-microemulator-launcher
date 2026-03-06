@@ -7,6 +7,7 @@ import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages emulator instances with ID pool for efficient ID reuse.
@@ -17,6 +18,7 @@ public class InstanceManager {
     private final JPanel instancesPanel;
     private final InstanceIdPool idPool;
     private InputSynchronizer inputSynchronizer;
+    private final List<Runnable> instanceChangeListeners = new CopyOnWriteArrayList<>();
 
     public InstanceManager(JPanel instancesPanel) {
         this.instances = new ArrayList<>();
@@ -33,11 +35,13 @@ public class InstanceManager {
 
     public void addInstance(EmulatorInstance instance) {
         instances.add(instance);
+        fireInstanceChanged();
     }
 
     public void removeInstance(EmulatorInstance instance) {
         instances.remove(instance);
         idPool.releaseId(instance.getInstanceId());
+        fireInstanceChanged();
     }
 
     public void clearAllInstances() {
@@ -51,6 +55,19 @@ public class InstanceManager {
         instancesPanel.removeAll();
         instancesPanel.revalidate();
         instancesPanel.repaint();
+        fireInstanceChanged();
+    }
+
+    public void addInstanceChangeListener(Runnable listener) {
+        instanceChangeListeners.add(listener);
+    }
+
+    private void fireInstanceChanged() {
+        SwingUtilities.invokeLater(() -> {
+            for (Runnable listener : instanceChangeListeners) {
+                listener.run();
+            }
+        });
     }
 
     public List<EmulatorInstance> getInstances() {
@@ -130,12 +147,14 @@ public class InstanceManager {
         if (inputSynchronizer != null && inputSynchronizer.isEnabled()) {
             inputSynchronizer.attachListenersToInstance(instance);
         }
+        fireInstanceChanged();
     }
 
     public void notifyInstanceStopping(EmulatorInstance instance) {
         if (inputSynchronizer != null && inputSynchronizer.isEnabled()) {
             inputSynchronizer.detachListenersFromInstance(instance);
         }
+        fireInstanceChanged();
     }
 
     /**
