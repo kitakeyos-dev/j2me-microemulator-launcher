@@ -11,6 +11,7 @@ import me.kitakeyos.j2me.infrastructure.persistence.emulator.EmulatorConfigRepos
 import me.kitakeyos.j2me.presentation.emulator.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.EmulatorsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.InstancesPanel;
+import me.kitakeyos.j2me.presentation.injection.panel.InjectionPanel;
 import me.kitakeyos.j2me.presentation.script.LuaScriptManager;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ public class MainApplication extends JFrame {
     public InstanceManager emulatorInstanceManager;
     public LuaScriptManager luaScriptManager;
     public ApplicationsPanel applicationsPanel;
+    private InjectionPanel injectionPanel;
 
     public MainApplication() {
         setTitle("J2ME MicroEmulator Launcher");
@@ -48,6 +50,7 @@ public class MainApplication extends JFrame {
         emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, emulatorConfigRepository);
         instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
         luaScriptManager = new LuaScriptManager(this, applicationConfig, applicationService);
+        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService);
 
         // Wire emulator config repository to instances panel
         instancesPanel.setEmulatorConfigRepository(emulatorConfigRepository);
@@ -70,7 +73,10 @@ public class MainApplication extends JFrame {
         // Tab 3: Instances
         tabbedPane.addTab("Instances", instancesPanel);
 
-        // Tab 4: Scripts (if enabled)
+        // Tab 4: Injection
+        tabbedPane.addTab("Injection", injectionPanel);
+
+        // Tab 5: Scripts (if enabled)
         if (applicationConfig.isScriptTabEnabled()) {
             tabbedPane.addTab("Scripts", luaScriptManager);
         }
