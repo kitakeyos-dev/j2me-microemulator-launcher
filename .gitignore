@@ -104,6 +104,7 @@ fabric.properties
 
 # Package Files #
 *.jar
+!src/main/resources/defaults/*.jar
 *.war
 *.nar
 *.ear
@@ -156,3 +157,4 @@ buildNumber.properties
 # End of https://www.toptal.com/developers/gitignore/api/maven,java,intellij+all,visualstudiocode
 
 data/
+dist/

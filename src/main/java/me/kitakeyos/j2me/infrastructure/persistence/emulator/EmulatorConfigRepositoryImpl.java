@@ -39,21 +39,36 @@ public class EmulatorConfigRepositoryImpl implements EmulatorConfigRepository {
 
         // Auto-create default emulator if none exist
         if (configs.isEmpty()) {
-            String defaultPath = applicationConfig.getMicroemulatorPath();
-            if (defaultPath != null && !defaultPath.isEmpty()) {
-                try {
-                    String clonedPath = cloneJarFile(defaultPath);
-                    EmulatorConfig defaultConfig = new EmulatorConfig(
-                            "MicroEmulator Default", clonedPath, 240, 320);
-                    save(defaultConfig);
-                } catch (IOException e) {
-                    logger.log(Level.WARNING, "Cannot clone default emulator JAR: " + e.getMessage());
-                    // Fallback: use original path
-                    EmulatorConfig defaultConfig = new EmulatorConfig(
-                            "MicroEmulator Default", defaultPath, 240, 320);
-                    save(defaultConfig);
-                }
+            String extractedPath = extractBundledEmulator();
+            if (extractedPath != null) {
+                EmulatorConfig defaultConfig = new EmulatorConfig(
+                        "MicroEmulator Default", extractedPath, 240, 320);
+                save(defaultConfig);
             }
+        }
+    }
+
+    /**
+     * Extract bundled microemulator.jar from classpath resources to data/emulators/.
+     * Returns the absolute path to the extracted file, or null if not found.
+     */
+    private String extractBundledEmulator() {
+        File targetFile = new File(emulatorsDir, "microemulator.jar");
+        if (targetFile.exists()) {
+            return targetFile.getAbsolutePath();
+        }
+
+        try (java.io.InputStream is = getClass().getResourceAsStream("/defaults/microemulator.jar")) {
+            if (is == null) {
+                logger.warning("Bundled microemulator.jar not found in resources");
+                return null;
+            }
+            Files.copy(is, targetFile.toPath());
+            logger.info("Extracted bundled microemulator.jar to " + targetFile.getAbsolutePath());
+            return targetFile.getAbsolutePath();
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Failed to extract bundled microemulator.jar: " + e.getMessage());
+            return null;
         }
     }
 

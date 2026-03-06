@@ -38,15 +38,23 @@ public class InstanceLifecycleManager {
         me.kitakeyos.j2me.domain.speed.service.SpeedService.getInstance()
                 .removeInstance(instance.getInstanceId());
 
-        MainApplication.INSTANCE.emulatorInstanceManager.removeInstance(instance);
-
-        // Clean up managed resources (threads and sockets)
-        cleanupResources(instance);
-
-        // Trigger emulator exit
+        // 1. Trigger emulator exit FIRST so MIDlet can cleanly shut down
         triggerEmulatorExit(instance);
 
-        // Clean up UI components
+        // 2. Give emulator time to clean up its internal state
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // 3. Force-stop any remaining threads and close sockets
+        cleanupResources(instance);
+
+        // 4. Remove from instance manager LAST (so XThreads created during exit are still tracked)
+        MainApplication.INSTANCE.emulatorInstanceManager.removeInstance(instance);
+
+        // 5. Clean up UI components
         cleanupUIComponents(instance);
 
         logger.info("Instance #" + instance.getInstanceId() + " shutdown completed");
