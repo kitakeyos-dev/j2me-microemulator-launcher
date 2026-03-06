@@ -45,7 +45,6 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
     protected JComponent createContent() {
         applicationsListPanel = new JPanel();
         applicationsListPanel.setLayout(new BoxLayout(applicationsListPanel, BoxLayout.Y_AXIS));
-        applicationsListPanel.setBackground(Color.WHITE);
 
         JScrollPane scrollPane = new JScrollPane(applicationsListPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder(
@@ -54,7 +53,8 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
                 TitledBorder.LEFT,
                 TitledBorder.TOP
         ));
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         return scrollPane;
     }
@@ -73,13 +73,14 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         if (apps.isEmpty()) {
             JLabel emptyLabel = new JLabel("No applications installed. Click 'Add Application' to install one.");
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            emptyLabel.setForeground(Color.GRAY);
             emptyLabel.setBorder(new EmptyBorder(20, 20, 20, 20));
             applicationsListPanel.add(emptyLabel);
         } else {
             for (J2meApplication app : apps) {
                 JPanel appPanel = createApplicationPanel(app);
                 applicationsListPanel.add(appPanel);
-                applicationsListPanel.add(Box.createVerticalStrut(5));
+                applicationsListPanel.add(Box.createVerticalStrut(4));
             }
         }
 
@@ -92,10 +93,9 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         JPanel panel = new JPanel(new BorderLayout(10, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                new EmptyBorder(10, 10, 10, 10)
+                new EmptyBorder(8, 12, 8, 12)
         ));
-        panel.setBackground(Color.WHITE);
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
         // Icon
         JLabel iconLabel = new JLabel();
@@ -111,34 +111,34 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         // Info panel
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setOpaque(false);
 
         JLabel nameLabel = new JLabel(app.getName());
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD));
         infoPanel.add(nameLabel);
 
         if (app.getVendor() != null) {
             JLabel vendorLabel = new JLabel("Vendor: " + app.getVendor());
-            vendorLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+            vendorLabel.setFont(vendorLabel.getFont().deriveFont(Font.PLAIN, 11f));
             vendorLabel.setForeground(Color.GRAY);
             infoPanel.add(vendorLabel);
         }
 
         if (app.getVersion() != null) {
             JLabel versionLabel = new JLabel("Version: " + app.getVersion());
-            versionLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+            versionLabel.setFont(versionLabel.getFont().deriveFont(Font.PLAIN, 11f));
             versionLabel.setForeground(Color.GRAY);
             infoPanel.add(versionLabel);
         }
 
         JLabel pathLabel = new JLabel("Path: " + app.getFilePath());
-        pathLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        pathLabel.setFont(pathLabel.getFont().deriveFont(Font.PLAIN, 10f));
         pathLabel.setForeground(Color.DARK_GRAY);
         infoPanel.add(pathLabel);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         JLabel dateLabel = new JLabel("Installed: " + dateFormat.format(new Date(app.getInstalledDate())));
-        dateLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        dateLabel.setFont(dateLabel.getFont().deriveFont(Font.PLAIN, 10f));
         dateLabel.setForeground(Color.DARK_GRAY);
         infoPanel.add(dateLabel);
 
@@ -147,7 +147,7 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         // Buttons panel
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
-        buttonsPanel.setBackground(Color.WHITE);
+        buttonsPanel.setOpaque(false);
 
         JButton removeButton = new JButton("Remove");
         removeButton.setToolTipText("Remove this application from the list");
