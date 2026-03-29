@@ -12,7 +12,6 @@ import me.kitakeyos.j2me.presentation.emulator.panel.ApplicationsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.EmulatorsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.InstancesPanel;
 import me.kitakeyos.j2me.presentation.injection.panel.InjectionPanel;
-import me.kitakeyos.j2me.presentation.script.LuaScriptManager;
 
 import javax.swing.*;
 
@@ -30,7 +29,6 @@ public class MainApplication extends JFrame {
     private InstancesPanel instancesPanel;
     private EmulatorsPanel emulatorsPanel;
     public InstanceManager emulatorInstanceManager;
-    public LuaScriptManager luaScriptManager;
     public ApplicationsPanel applicationsPanel;
     private InjectionPanel injectionPanel;
 
@@ -49,7 +47,6 @@ public class MainApplication extends JFrame {
         applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
         emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, emulatorConfigRepository);
         instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
-        luaScriptManager = new LuaScriptManager(this, applicationConfig, applicationService);
         injectionPanel = new InjectionPanel(this, applicationConfig, applicationService);
 
         // Wire emulator config repository to instances panel
@@ -76,11 +73,6 @@ public class MainApplication extends JFrame {
         // Tab 4: Injection
         tabbedPane.addTab("Injection", injectionPanel);
 
-        // Tab 5: Scripts (if enabled)
-        if (applicationConfig.isScriptTabEnabled()) {
-            tabbedPane.addTab("Scripts", luaScriptManager);
-        }
-
         add(tabbedPane);
 
         // Listen for application changes to update combo box in instances panel
@@ -99,12 +91,9 @@ public class MainApplication extends JFrame {
         // Listen for emulator config changes to update combo box in instances panel
         emulatorConfigRepository.addChangeListener(() -> instancesPanel.refreshEmulatorComboBox());
 
-        // Auto-refresh instance combobox in Injection and Scripts tabs
+        // Auto-refresh instance combobox in Injection tab
         emulatorInstanceManager.addInstanceChangeListener(() -> {
             injectionPanel.refreshInstanceList();
-            if (luaScriptManager != null) {
-                luaScriptManager.refreshInstanceList();
-            }
         });
     }
 

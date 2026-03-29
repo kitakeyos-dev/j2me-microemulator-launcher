@@ -19,13 +19,11 @@ public class ApplicationConfig {
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
     private static final String TOAST_NOTIFICATIONS_KEY = "ui.toastNotifications";
-    private static final String SCRIPT_TAB_ENABLED_KEY = "ui.scriptTabEnabled";
     public static final String DATA_DIR = "data";
     public static final String APPS_DIR = "apps";
     public static final String ICONS_DIR = "icons";
     public static final String RMS_DIR = "rms";
     public static final String APPS_CONFIG_FILE = "j2me_apps.properties";
-    public static final String SCRIPTS_DIR = "lua_scripts";
 
     private final Properties properties;
     private final String configFilePath;
@@ -79,7 +77,6 @@ public class ApplicationConfig {
     private void loadDefaultConfiguration() {
         properties.setProperty(MICROEMULATOR_PATH_KEY, DEFAULT_MICROEMULATOR_PATH);
         properties.setProperty(TOAST_NOTIFICATIONS_KEY, "true");
-        properties.setProperty(SCRIPT_TAB_ENABLED_KEY, "false");
     }
 
     /**
@@ -94,20 +91,6 @@ public class ApplicationConfig {
      */
     public void setToastNotificationsEnabled(boolean enabled) {
         properties.setProperty(TOAST_NOTIFICATIONS_KEY, String.valueOf(enabled));
-    }
-
-    /**
-     * Check if script tab is enabled
-     */
-    public boolean isScriptTabEnabled() {
-        return Boolean.parseBoolean(properties.getProperty(SCRIPT_TAB_ENABLED_KEY, "false"));
-    }
-
-    /**
-     * Set script tab enabled
-     */
-    public void setScriptTabEnabled(boolean enabled) {
-        properties.setProperty(SCRIPT_TAB_ENABLED_KEY, String.valueOf(enabled));
     }
 
     /**

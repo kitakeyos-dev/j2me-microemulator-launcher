@@ -383,7 +383,6 @@ public class InstancesPanel extends BaseTabPanel {
                                 // Apply default speed
                                 emulatorInstance.setSpeedMultiplier(defaultSpeed);
                                 addEmulatorInstanceTab(emulatorInstance, defaultSpeed);
-                                mainApplication.luaScriptManager.refreshInstanceList();
                             }
                         }));
             } catch (Exception e) {
@@ -605,7 +604,6 @@ public class InstancesPanel extends BaseTabPanel {
                 // Revalidate to trigger layout recalculation
                 runningInstancesPanel.revalidate();
                 runningInstancesPanel.repaint();
-                mainApplication.luaScriptManager.refreshInstanceList();
                 // Update empty state visibility
                 updateInstancesEmptyState();
             }
