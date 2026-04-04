@@ -13,12 +13,23 @@ import me.kitakeyos.j2me.presentation.emulator.panel.EmulatorsPanel;
 import me.kitakeyos.j2me.presentation.emulator.panel.InstancesPanel;
 import me.kitakeyos.j2me.presentation.injection.panel.InjectionPanel;
 
+import me.kitakeyos.j2me.presentation.common.dialog.SettingsDialog;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
+
 import javax.swing.*;
 
 /**
  * Main J2ME Launcher application
  */
 public class MainApplication extends JFrame {
+
+    static {
+        // Set system Look and Feel BEFORE any Swing component is created
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {
+        }
+    }
 
     public static final MainApplication INSTANCE = new MainApplication();
 
@@ -33,13 +44,16 @@ public class MainApplication extends JFrame {
     private InjectionPanel injectionPanel;
 
     public MainApplication() {
-        setTitle("J2ME MicroEmulator Launcher");
+        // Initialize config first and load language
+        applicationConfig = new ApplicationConfig();
+        Messages.loadBundle(applicationConfig.getLanguage());
+
+        setTitle(Messages.get("app.title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1090, 800);
         setLocationRelativeTo(null);
 
         // Initialize managers with dependency injection
-        applicationConfig = new ApplicationConfig();
         applicationRepository = new ApplicationRepositoryImpl(applicationConfig);
         applicationService = new ApplicationService(applicationRepository);
         emulatorConfigRepository = new EmulatorConfigRepositoryImpl(applicationConfig);
@@ -57,26 +71,35 @@ public class MainApplication extends JFrame {
         initializeComponents();
     }
 
+    /**
+     * Listener for application changes - kept as field to allow removal on rebuild.
+     */
+    private ApplicationService.ApplicationChangeListener appChangeListener;
+    private EmulatorConfigRepositoryImpl.EmulatorConfigChangeListener emulatorConfigChangeListener;
+    private Runnable instanceChangeListener;
+
     private void initializeComponents() {
         // Create tabbed pane
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Tab 1: Applications
-        tabbedPane.addTab("Applications", applicationsPanel);
-
-        // Tab 2: Emulators
-        tabbedPane.addTab("Emulators", emulatorsPanel);
-
-        // Tab 3: Instances
-        tabbedPane.addTab("Instances", instancesPanel);
-
-        // Tab 4: Injection
-        tabbedPane.addTab("Injection", injectionPanel);
+        tabbedPane.addTab(Messages.get("tab.applications"), applicationsPanel);
+        tabbedPane.addTab(Messages.get("tab.emulators"), emulatorsPanel);
+        tabbedPane.addTab(Messages.get("tab.instances"), instancesPanel);
+        tabbedPane.addTab(Messages.get("tab.injection"), injectionPanel);
 
         add(tabbedPane);
 
-        // Listen for application changes to update combo box in instances panel
-        applicationService.addApplicationChangeListener(new ApplicationService.ApplicationChangeListener() {
+        // Create menu bar
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu(Messages.get("settings.title"));
+        JMenuItem settingsItem = new JMenuItem(Messages.get("settings.title"));
+        settingsItem.addActionListener(e -> SettingsDialog.show(this, applicationConfig));
+        fileMenu.add(settingsItem);
+        menuBar.add(fileMenu);
+        setJMenuBar(menuBar);
+
+        // Store listeners as fields so they can be removed on rebuild
+        appChangeListener = new ApplicationService.ApplicationChangeListener() {
             @Override
             public void onApplicationAdded(J2meApplication app) {
                 instancesPanel.refreshApplicationComboBox();
@@ -86,15 +109,52 @@ public class MainApplication extends JFrame {
             public void onApplicationRemoved(J2meApplication app) {
                 instancesPanel.refreshApplicationComboBox();
             }
-        });
+        };
+        applicationService.addApplicationChangeListener(appChangeListener);
 
-        // Listen for emulator config changes to update combo box in instances panel
-        emulatorConfigRepository.addChangeListener(() -> instancesPanel.refreshEmulatorComboBox());
+        emulatorConfigChangeListener = () -> instancesPanel.refreshEmulatorComboBox();
+        emulatorConfigRepository.addChangeListener(emulatorConfigChangeListener);
 
-        // Auto-refresh instance combobox in Injection tab
-        emulatorInstanceManager.addInstanceChangeListener(() -> {
-            injectionPanel.refreshInstanceList();
-        });
+
+        instanceChangeListener = () -> injectionPanel.refreshInstanceList();
+        emulatorInstanceManager.addInstanceChangeListener(instanceChangeListener);
+    }
+
+    /**
+     * Rebuild the entire UI after language change.
+     * Stops all running instances first, then recreates all panels and menus.
+     */
+    public void rebuildUI() {
+        // Stop all running instances (their display components are tied to old panels)
+        if (emulatorInstanceManager != null) {
+            emulatorInstanceManager.clearAllInstances();
+        }
+
+        // Remove old listeners to prevent duplicates
+        if (appChangeListener != null) {
+            applicationService.removeApplicationChangeListener(appChangeListener);
+        }
+        applicationService.removeApplicationChangeListener(applicationsPanel);
+
+        // Remove all content
+        getContentPane().removeAll();
+        setJMenuBar(null);
+
+        // Recreate panels
+        applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
+        emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, emulatorConfigRepository);
+        instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
+        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService);
+
+        instancesPanel.setEmulatorConfigRepository(emulatorConfigRepository);
+        emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
+
+        // Rebuild UI
+        setTitle(Messages.get("app.title"));
+        initializeComponents();
+
+        revalidate();
+        repaint();
     }
 
     /**
@@ -112,13 +172,6 @@ public class MainApplication extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            INSTANCE.setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> INSTANCE.setVisible(true));
     }
 }

@@ -8,6 +8,7 @@ import me.kitakeyos.j2me.domain.injection.model.InjectionLogger;
 import me.kitakeyos.j2me.domain.injection.service.InjectionService;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -46,7 +47,7 @@ public class InjectionPanel extends BaseTabPanel {
 
         // Left: JAR info + buttons
         JPanel leftPanel = new JPanel(new GridBagLayout());
-        leftPanel.setBorder(BorderFactory.createTitledBorder("JAR File"));
+        leftPanel.setBorder(BorderFactory.createTitledBorder(Messages.get("inj.jar.title")));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 6, 4, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -55,9 +56,9 @@ public class InjectionPanel extends BaseTabPanel {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.0;
-        leftPanel.add(new JLabel("Loaded:"), gbc);
+        leftPanel.add(new JLabel(Messages.get("inj.loaded")), gbc);
 
-        jarPathLabel = new JLabel("No JAR loaded");
+        jarPathLabel = new JLabel(Messages.get("inj.noJar"));
         jarPathLabel.setForeground(Color.GRAY);
         gbc.gridx = 1;
         gbc.weightx = 1.0;
@@ -67,10 +68,10 @@ public class InjectionPanel extends BaseTabPanel {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0.0;
-        leftPanel.add(new JLabel("Target Instance:"), gbc);
+        leftPanel.add(new JLabel(Messages.get("inj.targetInstance")), gbc);
 
         instanceComboBox = new JComboBox<>();
-        instanceComboBox.setToolTipText("Select running instance to inject into");
+        instanceComboBox.setToolTipText(Messages.get("inj.targetInstance.tooltip"));
         instanceComboBox.setPreferredSize(new Dimension(200, instanceComboBox.getPreferredSize().height));
         gbc.gridx = 1;
         gbc.weightx = 1.0;
@@ -83,29 +84,29 @@ public class InjectionPanel extends BaseTabPanel {
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         buttonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JButton loadButton = new JButton("Load JAR");
-        loadButton.setToolTipText("Browse and load a JAR file containing InjectionEntry classes");
+        JButton loadButton = new JButton(Messages.get("inj.loadButton"));
+        loadButton.setToolTipText(Messages.get("inj.loadButton.tooltip"));
         loadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         loadButton.setPreferredSize(new Dimension(140, 30));
         loadButton.setMaximumSize(new Dimension(140, 30));
         loadButton.addActionListener(e -> browseAndLoadJar());
 
-        JButton reloadButton = new JButton("Reload JAR");
-        reloadButton.setToolTipText("Reload the current JAR file (hot-reload)");
+        JButton reloadButton = new JButton(Messages.get("inj.reloadButton"));
+        reloadButton.setToolTipText(Messages.get("inj.reloadButton.tooltip"));
         reloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         reloadButton.setPreferredSize(new Dimension(140, 30));
         reloadButton.setMaximumSize(new Dimension(140, 30));
         reloadButton.addActionListener(e -> reloadJar());
 
-        JButton refreshButton = new JButton("Refresh Instances");
-        refreshButton.setToolTipText("Refresh the list of running instances");
+        JButton refreshButton = new JButton(Messages.get("inj.refreshButton"));
+        refreshButton.setToolTipText(Messages.get("inj.refreshButton.tooltip"));
         refreshButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         refreshButton.setPreferredSize(new Dimension(140, 30));
         refreshButton.setMaximumSize(new Dimension(140, 30));
         refreshButton.addActionListener(e -> refreshInstanceList());
 
-        JButton clearLogButton = new JButton("Clear Log");
-        clearLogButton.setToolTipText("Clear the log output");
+        JButton clearLogButton = new JButton(Messages.get("inj.clearLog"));
+        clearLogButton.setToolTipText(Messages.get("inj.clearLog.tooltip"));
         clearLogButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         clearLogButton.setPreferredSize(new Dimension(140, 30));
         clearLogButton.setMaximumSize(new Dimension(140, 30));
@@ -130,7 +131,7 @@ public class InjectionPanel extends BaseTabPanel {
         entryListPanel = new JPanel();
         entryListPanel.setLayout(new BoxLayout(entryListPanel, BoxLayout.Y_AXIS));
 
-        emptyLabel = new JLabel("No JAR loaded. Click 'Load JAR' to import an injection JAR.");
+        emptyLabel = new JLabel(Messages.get("inj.entries.empty"));
         emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
         emptyLabel.setForeground(Color.GRAY);
         emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -140,7 +141,7 @@ public class InjectionPanel extends BaseTabPanel {
         JScrollPane entryScrollPane = new JScrollPane(entryListPanel);
         entryScrollPane.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                "Discovered Entry Classes",
+                Messages.get("inj.entries.title"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP));
         entryScrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -158,7 +159,7 @@ public class InjectionPanel extends BaseTabPanel {
         JScrollPane logScrollPane = new JScrollPane(logTextArea);
         logScrollPane.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                "Log Output",
+                Messages.get("inj.log.title"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP));
         logScrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -180,9 +181,9 @@ public class InjectionPanel extends BaseTabPanel {
 
     private void browseAndLoadJar() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select Injection JAR File");
+        fileChooser.setDialogTitle(Messages.get("inj.browseDialog.title"));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("JAR Files (*.jar)", "jar"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter(Messages.get("inj.jarFilter"), "jar"));
 
         // Start from last loaded JAR location
         if (injectionService.getLoadedJarFile() != null) {
@@ -205,31 +206,31 @@ public class InjectionPanel extends BaseTabPanel {
             refreshEntryList(entries);
 
             if (entries.isEmpty()) {
-                statusBar.setWarning("JAR loaded but no InjectionEntry classes found");
-                ToastNotification.showWarning("No InjectionEntry classes found in " + jarFile.getName());
+                statusBar.setWarning(Messages.get("inj.loaded.noEntries"));
+                ToastNotification.showWarning(Messages.get("inj.loaded.noEntriesShort", jarFile.getName()));
             } else {
-                statusBar.setSuccess("Loaded " + entries.size() + " entry class(es) from " + jarFile.getName());
-                ToastNotification.showSuccess("Loaded " + entries.size() + " entry class(es)");
+                statusBar.setSuccess(Messages.get("inj.loaded.success", entries.size(), jarFile.getName()));
+                ToastNotification.showSuccess(Messages.get("inj.loaded.successShort", entries.size()));
             }
         } catch (Exception e) {
-            statusBar.setError("Failed to load JAR: " + e.getMessage());
-            ToastNotification.showError("Failed to load: " + e.getMessage());
+            statusBar.setError(Messages.get("inj.loadFailed", e.getMessage()));
+            ToastNotification.showError(Messages.get("inj.loadFailedShort", e.getMessage()));
         }
     }
 
     private void reloadJar() {
         if (!injectionService.isJarLoaded() && injectionService.getLoadedJarFile() == null) {
-            statusBar.setWarning("No JAR to reload");
+            statusBar.setWarning(Messages.get("inj.noJarToReload"));
             return;
         }
 
         try {
             List<String> entries = injectionService.reloadJar();
             refreshEntryList(entries);
-            statusBar.setSuccess("Reloaded: " + entries.size() + " entry class(es)");
-            ToastNotification.showSuccess("JAR reloaded");
+            statusBar.setSuccess(Messages.get("inj.reloaded", entries.size()));
+            ToastNotification.showSuccess(Messages.get("inj.reloadedShort"));
         } catch (Exception e) {
-            statusBar.setError("Reload failed: " + e.getMessage());
+            statusBar.setError(Messages.get("inj.reloadFailed", e.getMessage()));
         }
     }
 
@@ -237,7 +238,7 @@ public class InjectionPanel extends BaseTabPanel {
         entryListPanel.removeAll();
 
         if (entryClassNames.isEmpty()) {
-            emptyLabel.setText("No InjectionEntry classes found in JAR.");
+            emptyLabel.setText(Messages.get("inj.entries.noEntries"));
             entryListPanel.add(emptyLabel);
         } else {
             for (String className : entryClassNames) {
@@ -281,7 +282,7 @@ public class InjectionPanel extends BaseTabPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
 
-        JButton executeButton = new JButton("Execute");
+        JButton executeButton = new JButton(Messages.get("common.execute"));
         executeButton.setPreferredSize(new Dimension(90, 26));
         executeButton.addActionListener(e -> executeEntry(className));
         buttonPanel.add(executeButton);
@@ -294,18 +295,18 @@ public class InjectionPanel extends BaseTabPanel {
     private void executeEntry(String className) {
         EmulatorInstance targetInstance = getSelectedInstance();
         if (targetInstance == null) {
-            statusBar.setWarning("No running instance selected");
-            ToastNotification.showWarning("Select a running instance first");
+            statusBar.setWarning(Messages.get("inj.error.noInstance"));
+            ToastNotification.showWarning(Messages.get("inj.error.noInstanceShort"));
             return;
         }
 
         ClassLoader appClassLoader = targetInstance.getAppClassLoader();
         if (appClassLoader == null) {
-            statusBar.setError("Instance #" + targetInstance.getInstanceId() + " has no ClassLoader");
+            statusBar.setError(Messages.get("inj.error.noClassLoader", targetInstance.getInstanceId()));
             return;
         }
 
-        statusBar.setInfo("Executing " + className + " on Instance #" + targetInstance.getInstanceId() + "...");
+        statusBar.setInfo(Messages.get("inj.executing", className, targetInstance.getInstanceId()));
 
         // Create logger that appends to the log text area
         InjectionLogger logger = new InjectionLogger(logEntry -> {
@@ -322,10 +323,10 @@ public class InjectionPanel extends BaseTabPanel {
             try {
                 injectionService.execute(className, appClassLoader, logger);
                 logger.success("Execution completed");
-                SwingUtilities.invokeLater(() -> statusBar.setSuccess("Executed: " + className));
+                SwingUtilities.invokeLater(() -> statusBar.setSuccess(Messages.get("inj.executed", className)));
             } catch (Exception e) {
                 logger.error("Execution failed", e);
-                SwingUtilities.invokeLater(() -> statusBar.setError("Execution failed: " + e.getMessage()));
+                SwingUtilities.invokeLater(() -> statusBar.setError(Messages.get("inj.executionFailed", e.getMessage())));
             }
         }, "injection-" + className).start();
     }
@@ -364,9 +365,9 @@ public class InjectionPanel extends BaseTabPanel {
             }
 
             if (running.isEmpty()) {
-                statusBar.setInfo("No running instances");
+                statusBar.setInfo(Messages.get("inj.status.noInstances"));
             } else {
-                statusBar.setInfo(running.size() + " running instance(s)");
+                statusBar.setInfo(Messages.get("inj.status.instances", running.size()));
             }
         }
     }

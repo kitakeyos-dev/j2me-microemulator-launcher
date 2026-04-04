@@ -8,6 +8,7 @@ import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -33,8 +34,8 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
     protected JComponent createHeader() {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
 
-        JButton addButton = new JButton("Add Application");
-        addButton.setToolTipText("Add new J2ME application from JAR or JAD file");
+        JButton addButton = new JButton(Messages.get("apps.addButton"));
+        addButton.setToolTipText(Messages.get("apps.addButton.tooltip"));
         addButton.addActionListener(e -> addApplication());
         panel.add(addButton, BorderLayout.EAST);
 
@@ -49,7 +50,7 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         JScrollPane scrollPane = new JScrollPane(applicationsListPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                "Applications",
+                Messages.get("apps.list.title"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP
         ));
@@ -71,7 +72,7 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         java.util.List<J2meApplication> apps = applicationManager.getApplications();
 
         if (apps.isEmpty()) {
-            JLabel emptyLabel = new JLabel("No applications installed. Click 'Add Application' to install one.");
+            JLabel emptyLabel = new JLabel(Messages.get("apps.empty"));
             emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             emptyLabel.setForeground(Color.GRAY);
             emptyLabel.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -118,26 +119,26 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         infoPanel.add(nameLabel);
 
         if (app.getVendor() != null) {
-            JLabel vendorLabel = new JLabel("Vendor: " + app.getVendor());
+            JLabel vendorLabel = new JLabel(Messages.get("apps.vendor", app.getVendor()));
             vendorLabel.setFont(vendorLabel.getFont().deriveFont(Font.PLAIN, 11f));
             vendorLabel.setForeground(Color.GRAY);
             infoPanel.add(vendorLabel);
         }
 
         if (app.getVersion() != null) {
-            JLabel versionLabel = new JLabel("Version: " + app.getVersion());
+            JLabel versionLabel = new JLabel(Messages.get("apps.version", app.getVersion()));
             versionLabel.setFont(versionLabel.getFont().deriveFont(Font.PLAIN, 11f));
             versionLabel.setForeground(Color.GRAY);
             infoPanel.add(versionLabel);
         }
 
-        JLabel pathLabel = new JLabel("Path: " + app.getFilePath());
+        JLabel pathLabel = new JLabel(Messages.get("apps.path", app.getFilePath()));
         pathLabel.setFont(pathLabel.getFont().deriveFont(Font.PLAIN, 10f));
         pathLabel.setForeground(Color.DARK_GRAY);
         infoPanel.add(pathLabel);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        JLabel dateLabel = new JLabel("Installed: " + dateFormat.format(new Date(app.getInstalledDate())));
+        JLabel dateLabel = new JLabel(Messages.get("apps.installed", dateFormat.format(new Date(app.getInstalledDate()))));
         dateLabel.setFont(dateLabel.getFont().deriveFont(Font.PLAIN, 10f));
         dateLabel.setForeground(Color.DARK_GRAY);
         infoPanel.add(dateLabel);
@@ -149,8 +150,8 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         buttonsPanel.setOpaque(false);
 
-        JButton removeButton = new JButton("Remove");
-        removeButton.setToolTipText("Remove this application from the list");
+        JButton removeButton = new JButton(Messages.get("common.remove"));
+        removeButton.setToolTipText(Messages.get("apps.remove.tooltip"));
         removeButton.addActionListener(e -> removeApplication(app));
         removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonsPanel.add(removeButton);
@@ -181,7 +182,7 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
     private void addApplication() {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "J2ME Files (JAR, JAD)", "jar", "jad"
+                Messages.get("apps.fileFilter"), "jar", "jad"
         );
         fileChooser.setFileFilter(filter);
 
@@ -190,16 +191,16 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 J2meApplication app = applicationManager.addApplication(selectedFile);
-                statusBar.setSuccess("Application added successfully: " + app.getName());
-                ToastNotification.showSuccess("Added: " + app.getName());
+                statusBar.setSuccess(Messages.get("apps.added", app.getName()));
+                ToastNotification.showSuccess(Messages.get("apps.addedShort", app.getName()));
             } catch (Exception e) {
                 statusBar.setError("Error: " + e.getMessage());
                 MessageDialog.showError(
                     SwingUtilities.getWindowAncestor(this) instanceof Frame
                         ? (Frame) SwingUtilities.getWindowAncestor(this)
                         : null,
-                    "Error",
-                    "Failed to add application: " + e.getMessage()
+                    Messages.get("common.error"),
+                    Messages.get("apps.addFailed", e.getMessage())
                 );
             }
         }
@@ -209,17 +210,17 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
         Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
         boolean confirm = ConfirmDialog.showConfirm(
                 parentFrame,
-                "Confirm Remove",
-                "Are you sure you want to remove '" + app.getName() + "'?"
+                Messages.get("apps.remove.confirm.title"),
+                Messages.get("apps.remove.confirm.message", app.getName())
         );
 
         if (confirm) {
             boolean success = applicationManager.removeApplication(app.getId());
             if (success) {
-                statusBar.setSuccess("Application removed: " + app.getName());
-                ToastNotification.showSuccess("Removed: " + app.getName());
+                statusBar.setSuccess(Messages.get("apps.removed", app.getName()));
+                ToastNotification.showSuccess(Messages.get("apps.removedShort", app.getName()));
             } else {
-                statusBar.setError("Failed to remove application");
+                statusBar.setError(Messages.get("apps.removeFailed"));
             }
         }
     }
@@ -227,9 +228,9 @@ public class ApplicationsPanel extends BaseTabPanel implements ApplicationServic
     private void updateStatus() {
         int count = applicationManager.getApplicationCount();
         if (count == 0) {
-            statusBar.setInfo("No applications installed");
+            statusBar.setInfo(Messages.get("apps.status.none"));
         } else {
-            statusBar.setInfo(count + " application(s) installed");
+            statusBar.setInfo(Messages.get("apps.status.count", count));
         }
     }
 

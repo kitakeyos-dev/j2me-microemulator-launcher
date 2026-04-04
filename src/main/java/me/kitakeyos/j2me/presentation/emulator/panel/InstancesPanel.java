@@ -16,6 +16,7 @@ import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ScrollablePanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 import me.kitakeyos.j2me.presentation.monitor.SystemMonitorDialog;
 import me.kitakeyos.j2me.presentation.network.NetworkMonitorDialog;
 
@@ -85,30 +86,30 @@ public class InstancesPanel extends BaseTabPanel {
 
         // Main Configuration (left side - compact)
         applicationComboBox = new JComboBox<>();
-        applicationComboBox.setToolTipText("Select J2ME application to create instances");
+        applicationComboBox.setToolTipText(Messages.get("inst.app.tooltip"));
         refreshApplicationComboBox();
 
         // Emulator selector dropdown
         emulatorComboBox = new JComboBox<>();
-        emulatorComboBox.setToolTipText("Select emulator (manage in Emulators tab)");
+        emulatorComboBox.setToolTipText(Messages.get("inst.emu.tooltip"));
         emulatorComboBox.addActionListener(e -> onEmulatorSelectionChanged());
 
         instanceCountSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
-        instanceCountSpinner.setToolTipText("Number of instances to create (1-100)");
+        instanceCountSpinner.setToolTipText(Messages.get("inst.count.tooltip"));
 
         // Display size spinners (default 240x320)
         displayWidthSpinner = new JSpinner(new SpinnerNumberModel(240, 128, 800, 1));
-        displayWidthSpinner.setToolTipText("Display width in pixels (128-800)");
+        displayWidthSpinner.setToolTipText(Messages.get("inst.width.tooltip"));
         displayWidthSpinner.setPreferredSize(new Dimension(80, displayWidthSpinner.getPreferredSize().height));
 
         displayHeightSpinner = new JSpinner(new SpinnerNumberModel(320, 128, 1000, 1));
-        displayHeightSpinner.setToolTipText("Display height in pixels (128-1000)");
+        displayHeightSpinner.setToolTipText(Messages.get("inst.height.tooltip"));
         displayHeightSpinner.setPreferredSize(new Dimension(80, displayHeightSpinner.getPreferredSize().height));
 
         // Default speed option
         defaultSpeedComboBox = new JComboBox<>(SPEED_OPTIONS);
         defaultSpeedComboBox.setSelectedIndex(1); // Default 1x
-        defaultSpeedComboBox.setToolTipText("Default speed for new instances");
+        defaultSpeedComboBox.setToolTipText(Messages.get("inst.speed.tooltip"));
 
         JPanel configurationPanel = ConfigurationPanelBuilder.createConfigurationPanel(
                 applicationComboBox, instanceCountSpinner, emulatorComboBox,
@@ -135,7 +136,7 @@ public class InstancesPanel extends BaseTabPanel {
         emulatorInstanceManager = new InstanceManager(runningInstancesPanel);
 
         // Create empty state label
-        instancesEmptyLabel = new JLabel("No instances running. Click 'Create & Run' to start instances.");
+        instancesEmptyLabel = new JLabel(Messages.get("inst.empty"));
         instancesEmptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
         instancesEmptyLabel.setForeground(Color.GRAY);
         instancesEmptyLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -144,7 +145,7 @@ public class InstancesPanel extends BaseTabPanel {
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                "Running Instances",
+                Messages.get("inst.running.title"),
                 javax.swing.border.TitledBorder.LEFT,
                 javax.swing.border.TitledBorder.TOP));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -167,29 +168,29 @@ public class InstancesPanel extends BaseTabPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JButton createButton = new JButton("Create & Run");
-        createButton.setToolTipText("Create and automatically start instances");
+        JButton createButton = new JButton(Messages.get("inst.createButton"));
+        createButton.setToolTipText(Messages.get("inst.createButton.tooltip"));
         createButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         createButton.setPreferredSize(new Dimension(130, 30));
         createButton.setMaximumSize(new Dimension(130, 30));
         createButton.addActionListener(e -> createEmulatorInstances());
 
-        JButton stopAllButton = new JButton("Stop All");
-        stopAllButton.setToolTipText("Stop all running instances");
+        JButton stopAllButton = new JButton(Messages.get("inst.stopAllButton"));
+        stopAllButton.setToolTipText(Messages.get("inst.stopAllButton.tooltip"));
         stopAllButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         stopAllButton.setPreferredSize(new Dimension(130, 30));
         stopAllButton.setMaximumSize(new Dimension(130, 30));
         stopAllButton.addActionListener(e -> stopAllInstances());
 
-        JButton networkMonitorButton = new JButton("Network Monitor");
-        networkMonitorButton.setToolTipText("Open network monitor to view connections, redirection and proxy rules");
+        JButton networkMonitorButton = new JButton(Messages.get("inst.networkMonitor"));
+        networkMonitorButton.setToolTipText(Messages.get("inst.networkMonitor.tooltip"));
         networkMonitorButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         networkMonitorButton.setPreferredSize(new Dimension(130, 30));
         networkMonitorButton.setMaximumSize(new Dimension(130, 30));
         networkMonitorButton.addActionListener(e -> openNetworkMonitor());
 
-        JButton systemMonitorButton = new JButton("System Monitor");
-        systemMonitorButton.setToolTipText("Open system monitor to view RAM, CPU usage and Threads");
+        JButton systemMonitorButton = new JButton(Messages.get("inst.systemMonitor"));
+        systemMonitorButton.setToolTipText(Messages.get("inst.systemMonitor.tooltip"));
         systemMonitorButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         systemMonitorButton.setPreferredSize(new Dimension(130, 30));
         systemMonitorButton.setMaximumSize(new Dimension(130, 30));
@@ -214,53 +215,51 @@ public class InstancesPanel extends BaseTabPanel {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Options"),
+                BorderFactory.createTitledBorder(Messages.get("inst.options.title")),
                 BorderFactory.createEmptyBorder(10, 15, 10, 15)));
 
         // Input synchronization option
-        syncInputCheckBox = new JCheckBox("Sync Mouse & Keyboard Input");
-        syncInputCheckBox.setToolTipText("Synchronize mouse clicks and keyboard input across all running instances");
+        syncInputCheckBox = new JCheckBox(Messages.get("inst.syncInput"));
+        syncInputCheckBox.setToolTipText(Messages.get("inst.syncInput.tooltip"));
         syncInputCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         syncInputCheckBox.addActionListener(e -> {
             boolean enabled = syncInputCheckBox.isSelected();
             if (emulatorInstanceManager != null) {
                 emulatorInstanceManager.setInputSynchronizationEnabled(enabled);
-                String message = enabled ? "Input synchronization enabled" : "Input synchronization disabled";
+                String message = Messages.get(enabled ? "inst.syncInput.enabled" : "inst.syncInput.disabled");
                 showToast(message, ToastNotification.ToastType.INFO);
                 statusBar.setInfo(message);
             }
         });
 
         // Scale input by size option
-        scaleInputBySizeCheckBox = new JCheckBox("Scale Input by Size");
-        scaleInputBySizeCheckBox.setToolTipText(
-                "Scale mouse coordinates based on device panel size (useful when instances have different sizes)");
+        scaleInputBySizeCheckBox = new JCheckBox(Messages.get("inst.scaleInput"));
+        scaleInputBySizeCheckBox.setToolTipText(Messages.get("inst.scaleInput.tooltip"));
         scaleInputBySizeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         scaleInputBySizeCheckBox.addActionListener(e -> {
             boolean enabled = scaleInputBySizeCheckBox.isSelected();
             if (emulatorInstanceManager != null) {
                 emulatorInstanceManager.setInputScaleBySize(enabled);
-                String message = enabled ? "Input scaling by size enabled" : "Input scaling by size disabled";
+                String message = Messages.get(enabled ? "inst.scaleInput.enabled" : "inst.scaleInput.disabled");
                 showToast(message, ToastNotification.ToastType.INFO);
                 statusBar.setInfo(message);
             }
         });
 
         // Full display mode option
-        fullDisplayModeCheckBox = new JCheckBox("Full Display Mode");
-        fullDisplayModeCheckBox.setToolTipText(
-                "Show emulator with full interface (menubar, toolbar) instead of simple device panel only");
+        fullDisplayModeCheckBox = new JCheckBox(Messages.get("inst.fullDisplay"));
+        fullDisplayModeCheckBox.setToolTipText(Messages.get("inst.fullDisplay.tooltip"));
         fullDisplayModeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Disable Graphics Toggle
-        disableGraphicsCheckBox = new JCheckBox("Disable All Graphics");
-        disableGraphicsCheckBox.setToolTipText("Toggle graphics rendering for ALL instances");
+        disableGraphicsCheckBox = new JCheckBox(Messages.get("inst.disableGraphics"));
+        disableGraphicsCheckBox.setToolTipText(Messages.get("inst.disableGraphics.tooltip"));
         disableGraphicsCheckBox.addActionListener(e -> {
             boolean disable = disableGraphicsCheckBox.isSelected();
             if (emulatorInstanceManager != null) {
                 // !disable because service takes "enabled"
                 emulatorInstanceManager.setGlobalGraphicsEnabled(!disable);
-                statusBar.setInfo(disable ? "Graphics DISABLED (All)" : "Graphics ENABLED (All)");
+                statusBar.setInfo(Messages.get(disable ? "inst.graphicsDisabledAll" : "inst.graphicsEnabledAll"));
             }
         });
 
@@ -324,18 +323,18 @@ public class InstancesPanel extends BaseTabPanel {
     private void createEmulatorInstances() {
         J2meApplication selectedApp = (J2meApplication) applicationComboBox.getSelectedItem();
         if (selectedApp == null) {
-            showErrorMessage("Please install and select a J2ME application from the Applications tab");
+            showErrorMessage(Messages.get("inst.error.noApp"));
             return;
         }
 
         EmulatorConfig selectedEmulator = (EmulatorConfig) emulatorComboBox.getSelectedItem();
         if (selectedEmulator == null) {
-            showErrorMessage("Please select an emulator from the Emulators tab");
+            showErrorMessage(Messages.get("inst.error.noEmulator"));
             return;
         }
 
         if (!selectedEmulator.isValid()) {
-            showErrorMessage("Selected emulator JAR is invalid: " + selectedEmulator.getJarPath());
+            showErrorMessage(Messages.get("inst.error.invalidEmulator", selectedEmulator.getJarPath()));
             return;
         }
 
@@ -356,7 +355,7 @@ public class InstancesPanel extends BaseTabPanel {
             runSingleInstance(emulatorInstance);
         }
 
-        String message = "Starting " + numberOfInstances + " instance(s) for '" + selectedApp.getName() + "'";
+        String message = Messages.get("inst.starting", numberOfInstances, selectedApp.getName());
         showToast(message, ToastNotification.ToastType.SUCCESS);
         statusBar.setSuccess(message);
     }
@@ -366,7 +365,7 @@ public class InstancesPanel extends BaseTabPanel {
      */
     public void runSingleInstance(EmulatorInstance emulatorInstance) {
         if (!emulatorInstance.canRun()) {
-            showErrorMessage("Instance #" + emulatorInstance.getInstanceId() + " cannot be run in current state.");
+            showErrorMessage(Messages.get("inst.error.cannotRun", emulatorInstance.getInstanceId()));
             return;
         }
 
@@ -411,8 +410,8 @@ public class InstancesPanel extends BaseTabPanel {
         java.util.List<EmulatorInstance> runningInstances = emulatorInstanceManager.getRunningInstances();
 
         if (runningInstances.isEmpty()) {
-            showInfoMessage("No running instances to stop.");
-            statusBar.setInfo("No running instances to stop");
+            showInfoMessage(Messages.get("inst.noRunning"));
+            statusBar.setInfo(Messages.get("inst.noRunningStatus"));
             return;
         }
 
@@ -421,7 +420,7 @@ public class InstancesPanel extends BaseTabPanel {
             removeEmulatorInstanceTab(instance);
         }
 
-        String message = "Stopping " + runningInstances.size() + " instance(s)...";
+        String message = Messages.get("inst.stopping", runningInstances.size());
         showToast(message, ToastNotification.ToastType.INFO);
         statusBar.setInfo(message);
 
@@ -446,7 +445,7 @@ public class InstancesPanel extends BaseTabPanel {
                 Thread.currentThread().interrupt();
             }
             SwingUtilities.invokeLater(() -> {
-                String doneMessage = "Stopped " + count + " instance(s)";
+                String doneMessage = Messages.get("inst.stopped", count);
                 showToast(doneMessage, ToastNotification.ToastType.INFO);
                 statusBar.setInfo(doneMessage);
             });
@@ -461,9 +460,9 @@ public class InstancesPanel extends BaseTabPanel {
         instancesEmptyLabel.setVisible(!hasInstances);
         if (hasInstances) {
             int count = runningInstancesPanel.getComponentCount() - 1; // Exclude empty label
-            statusBar.setInfo(count + " instance(s) running");
+            statusBar.setInfo(Messages.get("inst.status.running", count));
         } else {
-            statusBar.setInfo("No instances running");
+            statusBar.setInfo(Messages.get("inst.status.noRunning"));
         }
     }
 
@@ -517,7 +516,7 @@ public class InstancesPanel extends BaseTabPanel {
         JMenuBar menuBar = new JMenuBar();
 
         // Instance title/info as a non-clickable label
-        JLabel titleLabel = new JLabel("  Instance #" + emulatorInstance.getInstanceId() + "  ");
+        JLabel titleLabel = new JLabel("  " + Messages.get("inst.instance.title", emulatorInstance.getInstanceId()) + "  ");
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
         menuBar.add(titleLabel);
 
@@ -525,19 +524,19 @@ public class InstancesPanel extends BaseTabPanel {
         menuBar.add(Box.createHorizontalGlue());
 
         // Actions menu (contains all instance controls)
-        JMenu actionsMenu = new JMenu("Actions");
-        actionsMenu.setToolTipText("Instance actions");
+        JMenu actionsMenu = new JMenu(Messages.get("inst.actions"));
+        actionsMenu.setToolTipText(Messages.get("inst.actions.tooltip"));
 
         // Speed submenu - find initial text based on defaultSpeed
-        String initialSpeedText = "Speed";
+        String initialSpeedText = Messages.get("inst.speed");
         for (int i = 0; i < SPEED_VALUES.length; i++) {
             if (Math.abs(SPEED_VALUES[i] - defaultSpeed) < 0.01) {
-                initialSpeedText = "Speed (" + SPEED_OPTIONS[i] + ")";
+                initialSpeedText = Messages.get("inst.speed.format", SPEED_OPTIONS[i]);
                 break;
             }
         }
         JMenu speedSubmenu = new JMenu(initialSpeedText);
-        speedSubmenu.setToolTipText("Set emulator speed");
+        speedSubmenu.setToolTipText(Messages.get("inst.speed.submenu.tooltip"));
 
         ButtonGroup speedGroup = new ButtonGroup();
         for (int i = 0; i < SPEED_OPTIONS.length; i++) {
@@ -551,8 +550,8 @@ public class InstancesPanel extends BaseTabPanel {
             item.addActionListener(e -> {
                 double speed = SPEED_VALUES[index];
                 emulatorInstance.setSpeedMultiplier(speed);
-                speedSubmenu.setText("Speed (" + SPEED_OPTIONS[index] + ")");
-                showToast("Instance #" + emulatorInstance.getInstanceId() + " speed: " + SPEED_OPTIONS[index],
+                speedSubmenu.setText(Messages.get("inst.speed.format", SPEED_OPTIONS[index]));
+                showToast(Messages.get("inst.speed.set", emulatorInstance.getInstanceId(), SPEED_OPTIONS[index]),
                         ToastNotification.ToastType.INFO);
             });
 
@@ -562,15 +561,15 @@ public class InstancesPanel extends BaseTabPanel {
         actionsMenu.add(speedSubmenu);
 
         // Graphics optimization (Stop Painting)
-        JCheckBoxMenuItem graphicsItem = new JCheckBoxMenuItem("Disable Graphics");
-        graphicsItem.setToolTipText("Stop rendering graphics to save resources (CPU/GPU)");
+        JCheckBoxMenuItem graphicsItem = new JCheckBoxMenuItem(Messages.get("inst.disableGraphicsItem"));
+        graphicsItem.setToolTipText(Messages.get("inst.disableGraphicsItem.tooltip"));
         graphicsItem.addActionListener(e -> {
             boolean disableGraphics = graphicsItem.isSelected();
             me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService.getInstance()
                     .setGraphicsEnabled(emulatorInstance, !disableGraphics);
 
             String status = disableGraphics ? "DISABLED" : "ENABLED";
-            showToast("Graphics " + status + " for Instance #" + emulatorInstance.getInstanceId(),
+            showToast(Messages.get("inst.graphics.status", status, emulatorInstance.getInstanceId()),
                     ToastNotification.ToastType.INFO);
         });
         actionsMenu.add(graphicsItem);
@@ -578,13 +577,13 @@ public class InstancesPanel extends BaseTabPanel {
         actionsMenu.addSeparator();
 
         // Stop instance
-        JMenuItem stopItem = new JMenuItem("Stop Instance");
+        JMenuItem stopItem = new JMenuItem(Messages.get("inst.stopInstance"));
         stopItem.addActionListener(e -> {
             removeEmulatorInstanceTab(emulatorInstance);
             new Thread(() -> {
                 emulatorInstance.shutdown();
                 SwingUtilities.invokeLater(() ->
-                    showToast("Stopped Instance #" + emulatorInstance.getInstanceId(),
+                    showToast(Messages.get("inst.stoppedSingle", emulatorInstance.getInstanceId()),
                             ToastNotification.ToastType.INFO));
             }, "shutdown-instance-" + emulatorInstance.getInstanceId()).start();
         });
@@ -593,7 +592,7 @@ public class InstancesPanel extends BaseTabPanel {
         actionsMenu.addSeparator();
 
         // Placeholder for future features
-        JMenuItem screenshotItem = new JMenuItem("Take Screenshot");
+        JMenuItem screenshotItem = new JMenuItem(Messages.get("inst.takeScreenshot"));
         screenshotItem.setEnabled(false); // TODO: Implement
         actionsMenu.add(screenshotItem);
 
@@ -643,11 +642,11 @@ public class InstancesPanel extends BaseTabPanel {
 
     // Utility methods for dialogs and toast notifications
     private void showErrorMessage(String message) {
-        MessageDialog.showError(this, "Error", message);
+        MessageDialog.showError(this, Messages.get("common.error"), message);
     }
 
     private void showInfoMessage(String message) {
-        MessageDialog.showInfo(this, "Info", message);
+        MessageDialog.showInfo(this, Messages.get("common.info"), message);
     }
 
     private void showToast(String message, ToastNotification.ToastType type) {

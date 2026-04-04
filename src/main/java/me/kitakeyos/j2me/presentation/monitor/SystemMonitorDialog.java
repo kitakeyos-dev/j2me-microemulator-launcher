@@ -1,6 +1,7 @@
 package me.kitakeyos.j2me.presentation.monitor;
 
 import me.kitakeyos.j2me.infrastructure.monitoring.SystemMonitorService;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,7 @@ public class SystemMonitorDialog extends JDialog {
     private final DecimalFormat df = new DecimalFormat("#.##");
 
     public SystemMonitorDialog(Frame owner) {
-        super(owner, "System Monitor", false);
+        super(owner, Messages.get("sysmon.title"), false);
         setResizable(false);
         this.monitorService = new SystemMonitorService();
         this.timer = new Timer(true);
@@ -47,8 +48,8 @@ public class SystemMonitorDialog extends JDialog {
         gbc.insets = new Insets(4, 4, 4, 4);
 
         // Row 0: Heap
-        addLabel(contentPanel, "Heap RAM:", gbc, 0, 0);
-        heapLabel = new JLabel("Loading...");
+        addLabel(contentPanel, Messages.get("sysmon.heapRam"), gbc, 0, 0);
+        heapLabel = new JLabel(Messages.get("common.loading"));
         addControl(contentPanel, heapLabel, gbc, 1, 0);
 
         heapBar = new JProgressBar(0, 100);
@@ -61,13 +62,13 @@ public class SystemMonitorDialog extends JDialog {
 
         // Row 2: Non-Heap
         gbc.gridwidth = 1;
-        addLabel(contentPanel, "Non-Heap:", gbc, 0, 2);
-        nonHeapLabel = new JLabel("Loading...");
+        addLabel(contentPanel, Messages.get("sysmon.nonHeap"), gbc, 0, 2);
+        nonHeapLabel = new JLabel(Messages.get("common.loading"));
         addControl(contentPanel, nonHeapLabel, gbc, 1, 2);
 
         // Row 3: CPU
-        addLabel(contentPanel, "CPU Load:", gbc, 0, 3);
-        cpuLabel = new JLabel("Loading...");
+        addLabel(contentPanel, Messages.get("sysmon.cpuLoad"), gbc, 0, 3);
+        cpuLabel = new JLabel(Messages.get("common.loading"));
         addControl(contentPanel, cpuLabel, gbc, 1, 3);
 
         cpuBar = new JProgressBar(0, 100);
@@ -80,23 +81,23 @@ public class SystemMonitorDialog extends JDialog {
 
         // Row 5: Threads
         gbc.gridwidth = 1;
-        addLabel(contentPanel, "Threads:", gbc, 0, 5);
-        threadLabel = new JLabel("Loading...");
+        addLabel(contentPanel, Messages.get("sysmon.threads"), gbc, 0, 5);
+        threadLabel = new JLabel(Messages.get("common.loading"));
         addControl(contentPanel, threadLabel, gbc, 1, 5);
 
         // Row 6: Physical
-        addLabel(contentPanel, "Physical RAM:", gbc, 0, 6);
-        physicalMemLabel = new JLabel("Loading...");
+        addLabel(contentPanel, Messages.get("sysmon.physicalRam"), gbc, 0, 6);
+        physicalMemLabel = new JLabel(Messages.get("common.loading"));
         addControl(contentPanel, physicalMemLabel, gbc, 1, 6);
 
         // Footer: GC Button
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         footerPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY));
 
-        JButton gcButton = new JButton("Run Garbage Collector");
+        JButton gcButton = new JButton(Messages.get("sysmon.gcButton"));
         gcButton.addActionListener(e -> {
             System.gc();
-            JOptionPane.showMessageDialog(this, "Garbage Collection requested.", "System",
+            JOptionPane.showMessageDialog(this, Messages.get("sysmon.gcRequested"), Messages.get("sysmon.system"),
                     JOptionPane.INFORMATION_MESSAGE);
         });
         footerPanel.add(gcButton);
@@ -155,9 +156,9 @@ public class SystemMonitorDialog extends JDialog {
             cpuBar.setString(df.format(cpuLoad) + "%");
             cpuBar.setForeground(cpuLoad > 80 ? Color.RED : new Color(34, 139, 34));
         } else {
-            cpuLabel.setText("N/A");
+            cpuLabel.setText(Messages.get("common.na"));
             cpuBar.setValue(0);
-            cpuBar.setString("N/A");
+            cpuBar.setString(Messages.get("common.na"));
         }
 
         // Threads
@@ -171,7 +172,7 @@ public class SystemMonitorDialog extends JDialog {
             double totalGb = totalPhys / 1024.0 / 1024.0 / 1024.0;
             physicalMemLabel.setText(String.format("%.1f / %.1f GB", (totalGb - freeGb), totalGb));
         } else {
-            physicalMemLabel.setText("N/A");
+            physicalMemLabel.setText(Messages.get("common.na"));
         }
     }
 

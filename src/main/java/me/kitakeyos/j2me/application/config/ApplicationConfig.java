@@ -19,6 +19,7 @@ public class ApplicationConfig {
     private static final String MICROEMULATOR_PATH_KEY = "microemulator.path";
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
     private static final String TOAST_NOTIFICATIONS_KEY = "ui.toastNotifications";
+    private static final String LANGUAGE_KEY = "ui.language";
     public static final String DATA_DIR = "data";
     public static final String APPS_DIR = "apps";
     public static final String ICONS_DIR = "icons";
@@ -105,6 +106,20 @@ public class ApplicationConfig {
      */
     public void setMicroemulatorPath(String path) {
         properties.setProperty(MICROEMULATOR_PATH_KEY, path);
+    }
+
+    /**
+     * Get UI language
+     */
+    public String getLanguage() {
+        return properties.getProperty(LANGUAGE_KEY, "en");
+    }
+
+    /**
+     * Set UI language
+     */
+    public void setLanguage(String language) {
+        properties.setProperty(LANGUAGE_KEY, language);
     }
 
     /**

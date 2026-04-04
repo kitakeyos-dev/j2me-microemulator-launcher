@@ -1,6 +1,7 @@
 package me.kitakeyos.j2me.presentation.network;
 
 import me.kitakeyos.j2me.domain.network.model.ConnectionLog;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 import me.kitakeyos.j2me.domain.network.model.PacketLog;
 import me.kitakeyos.j2me.domain.network.model.ProxyRule;
 import me.kitakeyos.j2me.domain.network.model.RedirectionRule;
@@ -38,7 +39,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
     private JLabel packetStatsLabel;
 
     public NetworkMonitorDialog(Frame owner) {
-        super(owner, "Network Monitor", false);
+        super(owner, Messages.get("net.title"), false);
         this.networkService = NetworkService.getInstance();
 
         initComponents();
@@ -56,16 +57,16 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JTabbedPane tabbedPane = new JTabbedPane();
 
         // Logs tab
-        tabbedPane.addTab("Connection Logs", createLogsPanel());
+        tabbedPane.addTab(Messages.get("net.tab.connections"), createLogsPanel());
 
         // Redirection rules tab
-        tabbedPane.addTab("Redirection Rules", createRedirectionPanel());
+        tabbedPane.addTab(Messages.get("net.tab.redirection"), createRedirectionPanel());
 
         // Proxy rules tab
-        tabbedPane.addTab("Proxy Rules", createProxyPanel());
+        tabbedPane.addTab(Messages.get("net.tab.proxy"), createProxyPanel());
 
         // Packet logs tab
-        tabbedPane.addTab("Packet Logs", createPacketLogsPanel());
+        tabbedPane.addTab(Messages.get("net.tab.packets"), createPacketLogsPanel());
 
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -74,7 +75,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        String[] columns = { "Time", "Instance", "Original", "Actual", "Proxy", "Status" };
+        String[] columns = { Messages.get("net.col.time"), Messages.get("net.col.instance"), Messages.get("net.col.original"), Messages.get("net.col.actual"), Messages.get("net.col.proxy"), Messages.get("net.col.status") };
         logsTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -89,11 +90,11 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JScrollPane scrollPane = new JScrollPane(logsTable);
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        JButton createRedirectButton = new JButton("Create Redirect Rule");
-        createRedirectButton.setToolTipText("Create a redirect rule from selected log entry");
+        JButton createRedirectButton = new JButton(Messages.get("net.createRedirect"));
+        createRedirectButton.setToolTipText(Messages.get("net.createRedirect.tooltip"));
         createRedirectButton.addActionListener(e -> createRedirectFromSelectedLog());
 
-        JButton clearButton = new JButton("Clear Logs");
+        JButton clearButton = new JButton(Messages.get("net.clearLogs"));
         clearButton.addActionListener(e -> {
             networkService.clearConnectionLogs();
             logsTableModel.setRowCount(0);
@@ -112,7 +113,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        String[] columns = { "Enabled", "Instance", "Original Host", "Port", "Target Host", "Port" };
+        String[] columns = { Messages.get("net.col.enabled"), Messages.get("net.col.instance"), Messages.get("net.col.originalHost"), Messages.get("net.col.port"), Messages.get("net.col.targetHost"), Messages.get("net.col.port") };
         redirectionTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -156,13 +157,13 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        JButton addButton = new JButton("Add Rule");
+        JButton addButton = new JButton(Messages.get("net.addRule"));
         addButton.addActionListener(e -> showAddRedirectionDialog());
 
-        JButton editButton = new JButton("Edit");
+        JButton editButton = new JButton(Messages.get("common.edit"));
         editButton.addActionListener(e -> editSelectedRedirectionRule());
 
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = new JButton(Messages.get("common.remove"));
         removeButton.addActionListener(e -> removeSelectedRedirectionRule());
 
         buttonPanel.add(addButton);
@@ -177,7 +178,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        String[] columns = { "Enabled", "Instance", "Type", "Proxy Host", "Port", "Auth" };
+        String[] columns = { Messages.get("net.col.enabled"), Messages.get("net.col.instance"), Messages.get("net.col.type"), Messages.get("net.col.proxyHost"), Messages.get("net.col.port"), Messages.get("net.col.auth") };
         proxyTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -221,13 +222,13 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        JButton addButton = new JButton("Add Proxy");
+        JButton addButton = new JButton(Messages.get("net.addProxy"));
         addButton.addActionListener(e -> showAddProxyDialog());
 
-        JButton editButton = new JButton("Edit");
+        JButton editButton = new JButton(Messages.get("common.edit"));
         editButton.addActionListener(e -> editSelectedProxyRule());
 
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = new JButton(Messages.get("common.remove"));
         removeButton.addActionListener(e -> removeSelectedProxyRule());
 
         buttonPanel.add(addButton);
@@ -242,7 +243,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        String[] columns = { "Time", "Inst:Socket", "Dir", "Host:Port", "Size", "Data Preview" };
+        String[] columns = { Messages.get("net.col.time"), Messages.get("net.col.instSocket"), Messages.get("net.col.dir"), Messages.get("net.col.hostPort"), Messages.get("net.col.size"), Messages.get("net.col.dataPreview") };
         packetLogsTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -274,10 +275,10 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
 
-        packetStatsLabel = new JLabel("Sent: 0 B | Received: 0 B");
+        packetStatsLabel = new JLabel(Messages.get("net.stats.default"));
         packetStatsLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
-        JButton clearButton = new JButton("Clear Packets");
+        JButton clearButton = new JButton(Messages.get("net.clearPackets"));
         clearButton.addActionListener(e -> {
             networkService.clearPacketLogs();
             packetLogsTableModel.setRowCount(0);
@@ -401,18 +402,18 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JTextField targetHostField = new JTextField();
         JTextField targetPortField = new JTextField("80");
 
-        panel.add(new JLabel("Instance ID (-1 for all):"));
+        panel.add(new JLabel(Messages.get("net.label.instanceId")));
         panel.add(instanceField);
-        panel.add(new JLabel("Original Host:"));
+        panel.add(new JLabel(Messages.get("net.label.originalHost")));
         panel.add(origHostField);
-        panel.add(new JLabel("Original Port:"));
+        panel.add(new JLabel(Messages.get("net.label.originalPort")));
         panel.add(origPortField);
-        panel.add(new JLabel("Target Host:"));
+        panel.add(new JLabel(Messages.get("net.label.targetHost")));
         panel.add(targetHostField);
-        panel.add(new JLabel("Target Port:"));
+        panel.add(new JLabel(Messages.get("net.label.targetPort")));
         panel.add(targetPortField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Add Redirection Rule",
+        int result = JOptionPane.showConfirmDialog(this, panel, Messages.get("net.dialog.addRedirect"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -424,7 +425,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 int targetPort = Integer.parseInt(targetPortField.getText().trim());
 
                 if (origHost.isEmpty() || targetHost.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Host cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Messages.get("net.error.hostEmpty"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -432,7 +433,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 networkService.addRedirectionRule(rule);
                 addRedirectionRuleToTable(rule);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.get("net.error.invalidNumber"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -447,20 +448,20 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JTextField usernameField = new JTextField();
         JPasswordField passwordField = new JPasswordField();
 
-        panel.add(new JLabel("Instance ID (-1 for all):"));
+        panel.add(new JLabel(Messages.get("net.label.instanceId")));
         panel.add(instanceField);
-        panel.add(new JLabel("Proxy Type:"));
+        panel.add(new JLabel(Messages.get("net.label.proxyType")));
         panel.add(typeCombo);
-        panel.add(new JLabel("Proxy Host:"));
+        panel.add(new JLabel(Messages.get("net.label.proxyHost")));
         panel.add(hostField);
-        panel.add(new JLabel("Proxy Port:"));
+        panel.add(new JLabel(Messages.get("net.label.proxyPort")));
         panel.add(portField);
-        panel.add(new JLabel("Username (optional):"));
+        panel.add(new JLabel(Messages.get("net.label.username")));
         panel.add(usernameField);
-        panel.add(new JLabel("Password (optional):"));
+        panel.add(new JLabel(Messages.get("net.label.password")));
         panel.add(passwordField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Add Proxy Rule",
+        int result = JOptionPane.showConfirmDialog(this, panel, Messages.get("net.dialog.addProxy"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -473,7 +474,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 String password = new String(passwordField.getPassword());
 
                 if (host.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Host cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Messages.get("net.error.hostEmpty"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -486,7 +487,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 networkService.addProxyRule(rule);
                 addProxyRuleToTable(rule);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.get("net.error.invalidNumber"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -519,7 +520,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
     private void editSelectedRedirectionRule() {
         int selectedRow = redirectionTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a rule to edit", "Info",
+            JOptionPane.showMessageDialog(this, Messages.get("net.error.selectRule"), Messages.get("common.info"),
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -538,18 +539,18 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JTextField targetHostField = new JTextField(oldRule.getTargetHost());
         JTextField targetPortField = new JTextField(String.valueOf(oldRule.getTargetPort()));
 
-        panel.add(new JLabel("Instance ID (-1 for all):"));
+        panel.add(new JLabel(Messages.get("net.label.instanceId")));
         panel.add(instanceField);
-        panel.add(new JLabel("Original Host:"));
+        panel.add(new JLabel(Messages.get("net.label.originalHost")));
         panel.add(origHostField);
-        panel.add(new JLabel("Original Port:"));
+        panel.add(new JLabel(Messages.get("net.label.originalPort")));
         panel.add(origPortField);
-        panel.add(new JLabel("Target Host:"));
+        panel.add(new JLabel(Messages.get("net.label.targetHost")));
         panel.add(targetHostField);
-        panel.add(new JLabel("Target Port:"));
+        panel.add(new JLabel(Messages.get("net.label.targetPort")));
         panel.add(targetPortField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Edit Redirection Rule",
+        int result = JOptionPane.showConfirmDialog(this, panel, Messages.get("net.dialog.editRedirect"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -561,7 +562,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 int targetPort = Integer.parseInt(targetPortField.getText().trim());
 
                 if (origHost.isEmpty() || targetHost.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Host cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Messages.get("net.error.hostEmpty"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -579,7 +580,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 redirectionTableModel.setValueAt(targetHost, selectedRow, 4);
                 redirectionTableModel.setValueAt(targetPort, selectedRow, 5);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.get("net.error.invalidNumber"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -590,7 +591,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
     private void editSelectedProxyRule() {
         int selectedRow = proxyTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a rule to edit", "Info",
+            JOptionPane.showMessageDialog(this, Messages.get("net.error.selectRule"), Messages.get("common.info"),
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -611,20 +612,20 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JTextField usernameField = new JTextField(oldRule.getUsername() != null ? oldRule.getUsername() : "");
         JPasswordField passwordField = new JPasswordField(oldRule.getPassword() != null ? oldRule.getPassword() : "");
 
-        panel.add(new JLabel("Instance ID (-1 for all):"));
+        panel.add(new JLabel(Messages.get("net.label.instanceId")));
         panel.add(instanceField);
-        panel.add(new JLabel("Proxy Type:"));
+        panel.add(new JLabel(Messages.get("net.label.proxyType")));
         panel.add(typeCombo);
-        panel.add(new JLabel("Proxy Host:"));
+        panel.add(new JLabel(Messages.get("net.label.proxyHost")));
         panel.add(hostField);
-        panel.add(new JLabel("Proxy Port:"));
+        panel.add(new JLabel(Messages.get("net.label.proxyPort")));
         panel.add(portField);
-        panel.add(new JLabel("Username (optional):"));
+        panel.add(new JLabel(Messages.get("net.label.username")));
         panel.add(usernameField);
-        panel.add(new JLabel("Password (optional):"));
+        panel.add(new JLabel(Messages.get("net.label.password")));
         panel.add(passwordField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Edit Proxy Rule",
+        int result = JOptionPane.showConfirmDialog(this, panel, Messages.get("net.dialog.editProxy"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -637,7 +638,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 String password = new String(passwordField.getPassword());
 
                 if (host.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Host cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Messages.get("net.error.hostEmpty"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -661,7 +662,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 proxyTableModel.setValueAt(port, selectedRow, 4);
                 proxyTableModel.setValueAt(authStr, selectedRow, 5);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.get("net.error.invalidNumber"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -705,7 +706,7 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
     private void createRedirectFromSelectedLog() {
         int selectedRow = logsTable.getSelectedRow();
         if (selectedRow < 0 || selectedRow >= logsList.size()) {
-            JOptionPane.showMessageDialog(this, "Please select a log entry first", "Info",
+            JOptionPane.showMessageDialog(this, Messages.get("net.error.selectLog"), Messages.get("common.info"),
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -729,18 +730,18 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
         JTextField targetHostField = new JTextField();
         JTextField targetPortField = new JTextField(String.valueOf(origPort));
 
-        panel.add(new JLabel("Instance ID (-1 for all):"));
+        panel.add(new JLabel(Messages.get("net.label.instanceId")));
         panel.add(instanceField);
-        panel.add(new JLabel("Original Host:"));
+        panel.add(new JLabel(Messages.get("net.label.originalHost")));
         panel.add(origHostField);
-        panel.add(new JLabel("Original Port:"));
+        panel.add(new JLabel(Messages.get("net.label.originalPort")));
         panel.add(origPortField);
-        panel.add(new JLabel("Target Host:"));
+        panel.add(new JLabel(Messages.get("net.label.targetHost")));
         panel.add(targetHostField);
-        panel.add(new JLabel("Target Port:"));
+        panel.add(new JLabel(Messages.get("net.label.targetPort")));
         panel.add(targetPortField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Create Redirection Rule from Log",
+        int result = JOptionPane.showConfirmDialog(this, panel, Messages.get("net.dialog.createFromLog"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -752,17 +753,17 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
                 int targetPort = Integer.parseInt(targetPortField.getText().trim());
 
                 if (oHost.isEmpty() || targetHost.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Host cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Messages.get("net.error.hostEmpty"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 RedirectionRule rule = new RedirectionRule(oHost, oPort, targetHost, targetPort, instId);
                 networkService.addRedirectionRule(rule);
                 addRedirectionRuleToTable(rule);
-                JOptionPane.showMessageDialog(this, "Redirection rule created successfully", "Success",
+                JOptionPane.showMessageDialog(this, Messages.get("net.success.ruleCreated"), Messages.get("common.success"),
                         JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.get("net.error.invalidNumber"), Messages.get("common.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }

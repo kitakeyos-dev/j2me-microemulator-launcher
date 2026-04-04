@@ -9,6 +9,7 @@ import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.ConfirmDialog;
 import me.kitakeyos.j2me.presentation.common.dialog.MessageDialog;
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -54,7 +55,7 @@ public class EmulatorsPanel extends BaseTabPanel {
 
         // Form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Emulator Configuration"));
+        formPanel.setBorder(BorderFactory.createTitledBorder(Messages.get("emu.config.title")));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 6, 4, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -63,10 +64,10 @@ public class EmulatorsPanel extends BaseTabPanel {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.0;
-        formPanel.add(new JLabel("Name:"), gbc);
+        formPanel.add(new JLabel(Messages.get("emu.name")), gbc);
         nameField = new JTextField();
         nameField.setPreferredSize(new Dimension(200, nameField.getPreferredSize().height));
-        nameField.setToolTipText("Display name for this emulator");
+        nameField.setToolTipText(Messages.get("emu.name.tooltip"));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
@@ -77,15 +78,15 @@ public class EmulatorsPanel extends BaseTabPanel {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
-        formPanel.add(new JLabel("JAR Path:"), gbc);
+        formPanel.add(new JLabel(Messages.get("emu.jarPath")), gbc);
         jarPathField = new JTextField();
         jarPathField.setPreferredSize(new Dimension(200, jarPathField.getPreferredSize().height));
-        jarPathField.setToolTipText("Path to the emulator JAR file");
+        jarPathField.setToolTipText(Messages.get("emu.jarPath.tooltip"));
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         formPanel.add(jarPathField, gbc);
-        JButton browseButton = new JButton("Browse");
-        browseButton.setToolTipText("Browse for JAR file");
+        JButton browseButton = new JButton(Messages.get("common.browse"));
+        browseButton.setToolTipText(Messages.get("emu.browse.tooltip"));
         browseButton.addActionListener(e -> browseJarFile());
         gbc.gridx = 2;
         gbc.weightx = 0.0;
@@ -96,7 +97,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
-        formPanel.add(new JLabel("Default Size (W x H):"), gbc);
+        formPanel.add(new JLabel(Messages.get("emu.defaultSize")), gbc);
 
         defaultWidthSpinner = new JSpinner(new SpinnerNumberModel(240, 128, 800, 1));
         defaultWidthSpinner.setPreferredSize(new Dimension(80, defaultWidthSpinner.getPreferredSize().height));
@@ -119,7 +120,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         buttonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        addButton = new JButton("Add Emulator");
+        addButton = new JButton(Messages.get("emu.addButton"));
         addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         addButton.setPreferredSize(new Dimension(140, 30));
         addButton.setMaximumSize(new Dimension(140, 30));
@@ -131,7 +132,7 @@ public class EmulatorsPanel extends BaseTabPanel {
             }
         });
 
-        clearButton = new JButton("Clear Form");
+        clearButton = new JButton(Messages.get("emu.clearForm"));
         clearButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         clearButton.setPreferredSize(new Dimension(140, 30));
         clearButton.setMaximumSize(new Dimension(140, 30));
@@ -151,7 +152,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         emulatorsListPanel = new JPanel();
         emulatorsListPanel.setLayout(new BoxLayout(emulatorsListPanel, BoxLayout.Y_AXIS));
 
-        emptyLabel = new JLabel("No emulators configured. Add one above.");
+        emptyLabel = new JLabel(Messages.get("emu.empty"));
         emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
         emptyLabel.setForeground(Color.GRAY);
         emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -161,7 +162,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         JScrollPane scrollPane = new JScrollPane(emulatorsListPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                "Installed Emulators",
+                Messages.get("emu.list.title"),
                 TitledBorder.LEFT,
                 TitledBorder.TOP));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -178,9 +179,9 @@ public class EmulatorsPanel extends BaseTabPanel {
 
     private void browseJarFile() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select Emulator JAR File");
+        fileChooser.setDialogTitle(Messages.get("emu.browseDialog.title"));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("JAR Files (*.jar)", "jar"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter(Messages.get("emu.jarFilter"), "jar"));
 
         // Set current directory from existing path
         String currentPath = jarPathField.getText();
@@ -202,11 +203,11 @@ public class EmulatorsPanel extends BaseTabPanel {
         String jarPath = jarPathField.getText().trim();
 
         if (name.isEmpty()) {
-            MessageDialog.showError(this, "Error", "Please enter a name for the emulator.");
+            MessageDialog.showError(this, Messages.get("common.error"), Messages.get("emu.error.nameEmpty"));
             return;
         }
         if (jarPath.isEmpty()) {
-            MessageDialog.showError(this, "Error", "Please specify the JAR file path.");
+            MessageDialog.showError(this, Messages.get("common.error"), Messages.get("emu.error.jarEmpty"));
             return;
         }
 
@@ -218,7 +219,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         try {
             clonedPath = emulatorConfigRepository.cloneJarFile(jarPath);
         } catch (java.io.IOException ex) {
-            MessageDialog.showError(this, "Error", "Failed to clone JAR file: " + ex.getMessage());
+            MessageDialog.showError(this, Messages.get("common.error"), Messages.get("emu.error.cloneFailed", ex.getMessage()));
             return;
         }
 
@@ -227,8 +228,8 @@ public class EmulatorsPanel extends BaseTabPanel {
         refreshEmulatorsList();
         clearForm();
 
-        ToastNotification.showSuccess("Emulator '" + name + "' added successfully");
-        statusBar.setSuccess("Added emulator: " + name);
+        ToastNotification.showSuccess(Messages.get("emu.added", name));
+        statusBar.setSuccess(Messages.get("emu.addedStatus", name));
     }
 
     private void updateEmulator() {
@@ -239,11 +240,11 @@ public class EmulatorsPanel extends BaseTabPanel {
         String jarPath = jarPathField.getText().trim();
 
         if (name.isEmpty()) {
-            MessageDialog.showError(this, "Error", "Please enter a name for the emulator.");
+            MessageDialog.showError(this, Messages.get("common.error"), Messages.get("emu.error.nameEmpty"));
             return;
         }
         if (jarPath.isEmpty()) {
-            MessageDialog.showError(this, "Error", "Please specify the JAR file path.");
+            MessageDialog.showError(this, Messages.get("common.error"), Messages.get("emu.error.jarEmpty"));
             return;
         }
 
@@ -257,7 +258,7 @@ public class EmulatorsPanel extends BaseTabPanel {
                 String clonedPath = emulatorConfigRepository.cloneJarFile(jarPath);
                 editingConfig.setJarPath(clonedPath);
             } catch (java.io.IOException ex) {
-                MessageDialog.showError(this, "Error", "Failed to clone JAR file: " + ex.getMessage());
+                MessageDialog.showError(this, Messages.get("common.error"), Messages.get("emu.error.cloneFailed", ex.getMessage()));
                 return;
             }
         }
@@ -266,14 +267,14 @@ public class EmulatorsPanel extends BaseTabPanel {
         refreshEmulatorsList();
         clearForm();
 
-        ToastNotification.showSuccess("Emulator '" + name + "' updated successfully");
-        statusBar.setSuccess("Updated emulator: " + name);
+        ToastNotification.showSuccess(Messages.get("emu.updated", name));
+        statusBar.setSuccess(Messages.get("emu.updatedStatus", name));
     }
 
     private void removeEmulator(EmulatorConfig config) {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        boolean confirmed = ConfirmDialog.showConfirm(owner, "Remove Emulator",
-                "Are you sure you want to remove '" + config.getName() + "'?");
+        boolean confirmed = ConfirmDialog.showConfirm(owner, Messages.get("emu.remove.title"),
+                Messages.get("emu.remove.confirm", config.getName()));
         if (confirmed) {
             emulatorConfigRepository.remove(config.getId());
             refreshEmulatorsList();
@@ -283,8 +284,8 @@ public class EmulatorsPanel extends BaseTabPanel {
                 clearForm();
             }
 
-            ToastNotification.showInfo("Emulator '" + config.getName() + "' removed");
-            statusBar.setInfo("Removed emulator: " + config.getName());
+            ToastNotification.showInfo(Messages.get("emu.removed", config.getName()));
+            statusBar.setInfo(Messages.get("emu.removedStatus", config.getName()));
         }
     }
 
@@ -295,10 +296,10 @@ public class EmulatorsPanel extends BaseTabPanel {
         defaultWidthSpinner.setValue(config.getDefaultDisplayWidth());
         defaultHeightSpinner.setValue(config.getDefaultDisplayHeight());
 
-        addButton.setText("Save Changes");
-        clearButton.setText("Cancel");
+        addButton.setText(Messages.get("emu.saveChanges"));
+        clearButton.setText(Messages.get("emu.cancelEdit"));
 
-        statusBar.setInfo("Editing: " + config.getName());
+        statusBar.setInfo(Messages.get("emu.editing", config.getName()));
     }
 
     private void clearForm() {
@@ -308,8 +309,8 @@ public class EmulatorsPanel extends BaseTabPanel {
         defaultWidthSpinner.setValue(240);
         defaultHeightSpinner.setValue(320);
 
-        addButton.setText("Add Emulator");
-        clearButton.setText("Clear Form");
+        addButton.setText(Messages.get("emu.addButton"));
+        clearButton.setText(Messages.get("emu.clearForm"));
     }
 
     private void refreshEmulatorsList() {
@@ -332,7 +333,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         emulatorsListPanel.repaint();
 
         // Update status
-        statusBar.setInfo(configs.size() + " emulator(s) configured");
+        statusBar.setInfo(Messages.get("emu.status.count", configs.size()));
     }
 
     private JPanel createEmulatorRow(EmulatorConfig config) {
@@ -357,7 +358,7 @@ public class EmulatorsPanel extends BaseTabPanel {
         detailsLabel.setFont(detailsLabel.getFont().deriveFont(Font.PLAIN, 11f));
         detailsLabel.setForeground(valid ? Color.GRAY : Color.RED);
         if (!valid) {
-            detailsLabel.setToolTipText("JAR file not found or invalid");
+            detailsLabel.setToolTipText(Messages.get("emu.jarNotFound"));
         }
         infoPanel.add(detailsLabel);
 
@@ -365,9 +366,9 @@ public class EmulatorsPanel extends BaseTabPanel {
 
         // Status indicator
         if (!valid) {
-            JLabel warningLabel = new JLabel("⚠");
+            JLabel warningLabel = new JLabel("\u26a0");
             warningLabel.setForeground(Color.RED);
-            warningLabel.setToolTipText("JAR file not found");
+            warningLabel.setToolTipText(Messages.get("emu.jarNotFoundShort"));
             row.add(warningLabel, BorderLayout.WEST);
         }
 
@@ -375,11 +376,11 @@ public class EmulatorsPanel extends BaseTabPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
 
-        JButton editButton = new JButton("Edit");
+        JButton editButton = new JButton(Messages.get("common.edit"));
         editButton.setPreferredSize(new Dimension(70, 26));
         editButton.addActionListener(e -> editEmulator(config));
 
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = new JButton(Messages.get("common.remove"));
         removeButton.setPreferredSize(new Dimension(80, 26));
         removeButton.addActionListener(e -> removeEmulator(config));
 

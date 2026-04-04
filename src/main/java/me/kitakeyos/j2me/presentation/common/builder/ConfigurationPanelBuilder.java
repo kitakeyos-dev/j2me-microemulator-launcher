@@ -1,5 +1,7 @@
 package me.kitakeyos.j2me.presentation.common.builder;
 
+import me.kitakeyos.j2me.presentation.common.i18n.Messages;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,7 +18,7 @@ public class ConfigurationPanelBuilder {
             JComboBox<?> emulatorComboBox, JSpinner displayWidthSpinner,
             JSpinner displayHeightSpinner, JComboBox<String> defaultSpeedComboBox) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Configuration"));
+        panel.setBorder(BorderFactory.createTitledBorder(Messages.get("config.title")));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -25,7 +27,7 @@ public class ConfigurationPanelBuilder {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.0;
-        panel.add(new JLabel("J2ME Application:"), gbc);
+        panel.add(new JLabel(Messages.get("config.j2meApp")), gbc);
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         gbc.weightx = 0.0;
@@ -37,7 +39,7 @@ public class ConfigurationPanelBuilder {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
-        panel.add(new JLabel("Number of Instances:"), gbc);
+        panel.add(new JLabel(Messages.get("config.instanceCount")), gbc);
         gbc.gridx = 1;
         gbc.weightx = 0.3;
         panel.add(instanceCountSpinner, gbc);
@@ -48,7 +50,7 @@ public class ConfigurationPanelBuilder {
             gbc.gridy = 2;
             gbc.gridwidth = 1;
             gbc.weightx = 0.0;
-            panel.add(new JLabel("Display Size (W x H):"), gbc);
+            panel.add(new JLabel(Messages.get("config.displaySize")), gbc);
 
             // Create a panel to hold both width and height spinners
             JPanel sizePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -67,7 +69,7 @@ public class ConfigurationPanelBuilder {
         gbc.gridy = displayWidthSpinner != null ? 3 : 2;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
-        panel.add(new JLabel("Emulator:"), gbc);
+        panel.add(new JLabel(Messages.get("config.emulator")), gbc);
         emulatorComboBox.setPreferredSize(new Dimension(200, emulatorComboBox.getPreferredSize().height));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
@@ -77,7 +79,7 @@ public class ConfigurationPanelBuilder {
         // Default Speed
         gbc.gridy++;
         gbc.gridwidth = 1;
-        JLabel speedLabel = new JLabel("Default Speed: ");
+        JLabel speedLabel = new JLabel(Messages.get("config.defaultSpeed") + " ");
         gbc.gridx = 0;
         gbc.weightx = 0.0;
         panel.add(speedLabel, gbc);
