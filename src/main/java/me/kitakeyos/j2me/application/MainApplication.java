@@ -52,6 +52,7 @@ public class MainApplication extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1090, 800);
         setLocationRelativeTo(null);
+        loadAppIcons();
 
         // Initialize managers with dependency injection
         applicationRepository = new ApplicationRepositoryImpl(applicationConfig);
@@ -155,6 +156,23 @@ public class MainApplication extends JFrame {
 
         revalidate();
         repaint();
+    }
+
+    /**
+     * Load application icons for the window title bar and taskbar.
+     */
+    private void loadAppIcons() {
+        int[] sizes = {16, 32, 48, 64, 128, 256};
+        java.util.List<java.awt.Image> icons = new java.util.ArrayList<>();
+        for (int size : sizes) {
+            java.net.URL url = getClass().getClassLoader().getResource("icons/icon_" + size + ".png");
+            if (url != null) {
+                icons.add(new javax.swing.ImageIcon(url).getImage());
+            }
+        }
+        if (!icons.isEmpty()) {
+            setIconImages(icons);
+        }
     }
 
     /**

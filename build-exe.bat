@@ -43,6 +43,7 @@ jpackage ^
     --main-jar %MAIN_JAR% ^
     --main-class %MAIN_CLASS% ^
     --dest %DEST_DIR% ^
+    --icon src\main\resources\icons\app.ico ^
     --java-options "--add-opens java.base/java.lang=ALL-UNNAMED" ^
     --java-options "--add-opens java.base/java.lang.reflect=ALL-UNNAMED" ^
     --java-options "--add-opens java.base/java.io=ALL-UNNAMED"

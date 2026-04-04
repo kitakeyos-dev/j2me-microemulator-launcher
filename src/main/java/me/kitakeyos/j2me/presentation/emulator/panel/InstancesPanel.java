@@ -139,8 +139,19 @@ public class InstancesPanel extends BaseTabPanel {
         instancesEmptyLabel = new JLabel(Messages.get("inst.empty"));
         instancesEmptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
         instancesEmptyLabel.setForeground(Color.GRAY);
-        instancesEmptyLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         runningInstancesPanel.add(instancesEmptyLabel);
+
+        // Resize empty label to full width whenever panel is laid out
+        runningInstancesPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                if (instancesEmptyLabel.isVisible()) {
+                    int w = runningInstancesPanel.getWidth() - 30;
+                    instancesEmptyLabel.setPreferredSize(new Dimension(Math.max(w, 100), 40));
+                    runningInstancesPanel.revalidate();
+                }
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(runningInstancesPanel);
         scrollPane.setBorder(BorderFactory.createTitledBorder(
