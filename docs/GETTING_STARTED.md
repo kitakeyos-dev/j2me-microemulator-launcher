@@ -172,31 +172,6 @@ Right-click app → Context menu:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Scripts Tab (if enabled)
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Scripts Tab                                                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌────────────┐  ┌──────────────────────────────────────────────────────┐  │
-│  │ File Tree  │  │ Code Editor                                          │  │
-│  │            │  │                                                       │  │
-│  │ scripts/   │  │  -- automation.lua                                   │  │
-│  │ ├─ init.lua│  │                                                       │  │
-│  │ ├─ auto/   │  │  print("Starting...")                                │  │
-│  │ │  └─...   │  │  local data = network.getSentData(1)                 │  │
-│  │ └─ utils/  │  │  print("Got " .. #data .. " bytes")                  │  │
-│  │            │  │                                                       │  │
-│  │            │  │                                                       │  │
-│  └────────────┘  └──────────────────────────────────────────────────────┘  │
-│                  ┌──────────────────────────────────────────────────────┐  │
-│  Instance: [#1▼] │ Output                                                │  │
-│                  │ > Starting...                                         │  │
-│  [Run] [Stop]    │ > Got 128 bytes                                       │  │
-│                  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## ⚡ Quick Actions
@@ -220,13 +195,6 @@ Right-click app → Context menu:
 2. View connection logs
 3. Add redirection rules
 4. Add proxy rules
-
-### Run Lua Script
-
-1. Go to Scripts tab
-2. Select script from file tree
-3. Select target instance from dropdown
-4. Click "Run" or press Ctrl+Enter
 
 ---
 
@@ -252,10 +220,6 @@ Right-click app → Context menu:
 2. Does the JAR contain a MIDlet class?
 3. Check console for error messages
 
-### Scripts tab not visible
-
-**Solution**: Go to Settings → Enable "Script Tab" → Save → Restart
-
 ### Network rules not working
 
 **Check**:
@@ -279,7 +243,6 @@ data/
 ├── rms/                         # Instance data
 │   ├── 1/                       # Instance #1
 │   └── 2/                       # Instance #2
-└── scripts/                     # Lua scripts
 ```
 
 ---
@@ -290,5 +253,5 @@ After installation:
 
 1. [CONFIGURATION.md](CONFIGURATION.md) - Detailed configuration options
 2. [NETWORK.md](NETWORK.md) - Network monitoring and proxy
-3. [SCRIPTING.md](SCRIPTING.md) - Lua scripting guide
+3. [INJECTION.md](INJECTION.md) - Java injection guide
 4. [ARCHITECTURE.md](ARCHITECTURE.md) - Understanding the codebase

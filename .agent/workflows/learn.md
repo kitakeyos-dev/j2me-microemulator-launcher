@@ -24,7 +24,7 @@ This workflow helps AI Agent understand the project through pre-created document
 6. **docs/NETWORK.md** - Socket interception, redirection/proxy rules, MonitoredSocket
 
 ### Feature Documentation
-7. **docs/SCRIPTING.md** - Lua API (luajava, network lib), type coercion, examples
+7. **docs/INJECTION.md** - Java injection API and guides
 8. **docs/API.md** - Complete API reference for all key classes
 
 ### User Guides
@@ -45,9 +45,9 @@ Read `docs/CLASSLOADER.md` and `docs/BYTECODE.md`
 // turbo
 Read `docs/NETWORK.md`
 
-### To understand Lua scripting:
+### To understand Java injection:
 // turbo
-Read `docs/SCRIPTING.md`
+Read `docs/INJECTION.md`
 
 ### To understand emulator initialization:
 // turbo
@@ -62,5 +62,5 @@ Read `docs/REFLECTION.md`
 | Class Loading | `EmulatorClassLoader`, `ClassPreprocessor` |
 | Bytecode | `InstrumentationClassVisitor`, `SystemCallInterceptor`, `SystemCallHandler` |
 | Network | `NetworkService`, `MonitoredSocket`, `RedirectionRule`, `ProxyRule` |
-| Scripting | `LuaScriptExecutor`, `DynamicJavaLib` |
+| Injection | `InjectionService`, `InjectionEntry`, `InjectionPanel` |
 | Reflection | `ReflectionHelper`, `EmulatorReflectionHelper` |

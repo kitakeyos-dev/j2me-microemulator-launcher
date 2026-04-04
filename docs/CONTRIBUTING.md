@@ -297,7 +297,7 @@ Looking for something to contribute? Check these areas:
 Major features that need contributors:
 
 - [ ] Plugin system for extensions
-- [ ] Better Lua IDE (autocomplete, debugging)
+- [ ] Enhanced Java injection IDE (autocomplete, debugging)
 - [ ] Screenshot/video recording
 - [ ] Performance profiling tools
 - [ ] Cross-platform installer

@@ -34,7 +34,6 @@ data/j2me_launcher.properties
 | `microemulatorPath` | String | `""` | Path to microemulator.jar |
 | `defaultDisplayWidth` | Integer | `240` | Default emulator width |
 | `defaultDisplayHeight` | Integer | `320` | Default emulator height |
-| `scriptTabEnabled` | Boolean | `true` | Show Scripts tab |
 
 ### Example File
 
@@ -46,8 +45,6 @@ microemulatorPath=C:/tools/microemulator.jar
 defaultDisplayWidth=240
 defaultDisplayHeight=320
 
-# Enable Lua scripting tab
-scriptTabEnabled=true
 ```
 
 ### Code Reference
@@ -57,7 +54,6 @@ public class ApplicationConfig {
     private String microemulatorPath;
     private int defaultDisplayWidth = 240;
     private int defaultDisplayHeight = 320;
-    private boolean scriptTabEnabled = true;
     
     public void load() {
         Properties props = new Properties();
@@ -231,9 +227,6 @@ data/
 │   └── 2/                       # Instance #2 data
 │       └── ...
 │
-└── scripts/                     # Lua scripts
-    ├── init.lua
-    └── ...
 ```
 
 ### apps/ Directory
@@ -258,10 +251,6 @@ This is where MIDlet data is persisted (game saves, settings, etc.).
 The directory is created automatically when:
 - `SystemCallHandler.initMEHomePath(instanceId)` is called
 - (Intercepted from `Config.initMEHomePath()` in MicroEmulator)
-
-### scripts/ Directory
-
-Lua scripts are stored here. The directory is watched by `LuaScriptManager` for changes.
 
 ---
 
@@ -346,4 +335,4 @@ Important files to backup:
 
 - [GETTING_STARTED.md](GETTING_STARTED.md) - Initial setup
 - [NETWORK.md](NETWORK.md) - Network rules details
-- [SCRIPTING.md](SCRIPTING.md) - Lua scripting
+- [INJECTION.md](INJECTION.md) - Java injection

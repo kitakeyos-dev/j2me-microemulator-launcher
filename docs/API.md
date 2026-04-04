@@ -300,37 +300,6 @@ public class ProxyRule {
 
 ---
 
-### LuaScriptExecutor
-
-Executes Lua scripts.
-
-**Package**: `me.kitakeyos.j2me.domain.script.executor`
-
-```java
-public class LuaScriptExecutor {
-    
-    // === CONSTRUCTORS ===
-    
-    public LuaScriptExecutor(
-        Path scriptsDirectory,
-        Consumer<String> outputConsumer,
-        Consumer<String> errorConsumer,
-        Consumer<String> successConsumer,
-        Consumer<String> infoConsumer
-    );
-    
-    // === CLASSLOADER ===
-    
-    void setInstanceClassLoader(ClassLoader classLoader);
-    
-    // === EXECUTION ===
-    
-    void executeScript(Path scriptPath);
-}
-```
-
----
-
 ## 📦 Infrastructure Layer
 
 ### EmulatorClassLoader
@@ -470,7 +439,6 @@ public class ApplicationConfig {
     public static final String APPS_DIR = "apps";
     public static final String ICONS_DIR = "icons";
     public static final String RMS_DIR = "rms";
-    public static final String SCRIPTS_DIR = "scripts";
     
     // === CONSTRUCTORS ===
     
@@ -485,11 +453,6 @@ public class ApplicationConfig {
     
     int getDefaultDisplayWidth();
     int getDefaultDisplayHeight();
-    
-    // === FEATURES ===
-    
-    boolean isScriptTabEnabled();
-    void setScriptTabEnabled(boolean enabled);
     
     // === PERSISTENCE ===
     

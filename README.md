@@ -32,11 +32,6 @@ J2ME MicroEmulator Launcher is a powerful desktop application that enables runni
 - **Instance Filtering**: Apply rules to all instances or specific ones
 - **Auto-persistence**: Rules are automatically saved and loaded
 
-### 📜 Lua Scripting
-- Automate interactions with running instances
-- Built-in code editor with syntax highlighting
-- Folder organization for scripts
-
 ### 🔌 Java Injection
 - Load external JAR files to execute code against running instances
 - Direct access to MIDlet classes via custom classloader chain
@@ -105,8 +100,7 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ├── apps/                       # Cloned JAR/JAD files
 ├── icons/                      # Application icons
 ├── rms/                        # Per-instance data
-├── emulators/                  # Cloned emulator JARs
-└── scripts/                    # Lua scripts
+└── emulators/                  # Cloned emulator JARs
 ```
 
 ## License

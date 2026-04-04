@@ -68,8 +68,8 @@ presentation/
 ├── network/
 │   └── NetworkMonitorDialog.java # Network monitoring UI
 │
-└── script/
-    └── LuaScriptManager.java    # Lua script editor panel
+└── injection/panel/
+    └── InjectionPanel.java      # Java injection UI
 ```
 
 **Key Classes**:
@@ -80,7 +80,7 @@ presentation/
 | `EmulatorsPanel` | Add/edit/remove emulator JAR configurations |
 | `InstancesPanel` | Shows running emulator instances, start/stop controls |
 | `NetworkMonitorDialog` | View connection logs, manage rules |
-| `LuaScriptManager` | File tree, code editor, output console |
+| `InjectionPanel` | Load JARs, execute code against running instances |
 
 ---
 
@@ -95,10 +95,8 @@ application/
 ├── MainApplication.java         # Entry point, JFrame, DI container
 ├── config/
 │   └── ApplicationConfig.java   # Settings management
-├── emulator/
-│   └── EmulatorLauncher.java    # Coordinates instance startup
-└── script/
-    └── LuaScriptService.java    # Script execution service
+└── emulator/
+    └── EmulatorLauncher.java    # Coordinates instance startup
 ```
 
 **Key Classes**:
@@ -124,7 +122,7 @@ public class MainApplication extends JFrame {
     // Panels
     private final ApplicationsPanel applicationsPanel;
     private final InstancesPanel instancesPanel;
-    private final LuaScriptManager luaScriptManager;
+    private final InjectionPanel injectionPanel;
     
     public MainApplication() {
         // Create services
@@ -136,6 +134,7 @@ public class MainApplication extends JFrame {
         // Create panels
         applicationsPanel = new ApplicationsPanel(applicationService, ...);
         instancesPanel = new InstancesPanel(emulatorInstanceManager, ...);
+        injectionPanel = new InjectionPanel(emulatorInstanceManager);
         
         initializeComponents();
     }
@@ -144,9 +143,7 @@ public class MainApplication extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Applications", applicationsPanel);
         tabbedPane.addTab("Instances", instancesPanel);
-        if (applicationConfig.isScriptTabEnabled()) {
-            tabbedPane.addTab("Scripts", luaScriptManager);
-        }
+        tabbedPane.addTab("Injection", injectionPanel);
         add(tabbedPane);
     }
     
@@ -198,13 +195,20 @@ domain/
 │   └── service/
 │       └── NetworkService.java          # Singleton
 │
-└── script/                      # Lua scripting
-    ├── model/
-    │   └── LuaScript.java
-    ├── executor/
-    │   └── LuaScriptExecutor.java
-    └── library/
-        └── DynamicJavaLib.java
+├── injection/                   # Java injection
+│   ├── model/
+│   │   ├── InjectionEntry.java
+│   │   └── InjectionLogger.java
+│   └── service/
+│       └── InjectionService.java
+│
+├── speed/                       # Speed control
+│   └── service/
+│       └── SpeedService.java            # Singleton
+│
+└── graphics/                    # Graphics optimization
+    └── service/
+        └── GraphicsOptimizationService.java  # Singleton
 ```
 
 **Key Classes**:
@@ -215,7 +219,9 @@ domain/
 | `EmulatorInstance` | Model representing a running emulator |
 | `NetworkService` | Singleton managing network rules and logging |
 | `InstanceManager` | Manages lifecycle of all instances |
-| `LuaScriptExecutor` | Executes Lua scripts with custom libraries |
+| `InjectionService` | Loads external JARs and executes code against instances |
+| `SpeedService` | Manages per-instance speed multipliers |
+| `GraphicsOptimizationService` | Toggles paint interception via dynamic proxy |
 
 #### EmulatorInstance Details
 
@@ -316,10 +322,8 @@ infrastructure/
 ├── persistence/                 # File storage
 │   ├── application/
 │   │   └── ApplicationRepositoryImpl.java
-│   ├── emulator/
-│   │   └── EmulatorConfigRepositoryImpl.java
-│   └── script/
-│       └── ScriptFileManager.java
+│   └── emulator/
+│       └── EmulatorConfigRepositoryImpl.java
 │
 ├── resource/
 │   └── ManifestReader.java      # Read JAR manifest
@@ -429,8 +433,7 @@ data/j2me_launcher.properties
       │
       ├── microemulatorPath
       ├── defaultDisplayWidth
-      ├── defaultDisplayHeight
-      └── scriptTabEnabled
+      └── defaultDisplayHeight
 ```
 
 ### Application Storage

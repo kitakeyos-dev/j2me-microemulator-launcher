@@ -32,10 +32,12 @@ J2ME MicroEmulator Launcher là ứng dụng desktop mạnh mẽ cho phép chạ
 - **Lọc Theo Instance**: Áp dụng rules cho tất cả instances hoặc instance cụ thể
 - **Tự Động Lưu**: Rules được tự động lưu và load
 
-### 📜 Lua Scripting
-- Tự động hóa tương tác với instances đang chạy
-- Editor tích hợp với syntax highlighting
-- Tổ chức scripts theo thư mục
+### 🔌 Java Injection
+- Nạp file JAR bên ngoài để thực thi code lên các instance đang chạy
+- Truy cập trực tiếp MIDlet classes qua classloader chain tùy chỉnh
+- Hệ thống logging tích hợp với output real-time
+- Hỗ trợ hot-reload cho phát triển nhanh
+- Xem [docs/INJECTION.md](docs/INJECTION.md) để biết thêm chi tiết
 
 ### ⚡ Hiệu Năng
 - Caching bytecode để khởi động nhanh
@@ -97,8 +99,7 @@ java -jar target/j2me-microemulator-launcher-*-jar-with-dependencies.jar
 ├── network_rules.properties    # Rules redirection/proxy
 ├── apps/                       # Files JAR/JAD đã sao chép
 ├── icons/                      # Icons ứng dụng
-├── rms/                        # Dữ liệu theo instance
-└── scripts/                    # Scripts Lua
+└── rms/                        # Dữ liệu theo instance
 ```
 
 ## Giấy Phép

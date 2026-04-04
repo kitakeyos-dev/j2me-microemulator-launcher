@@ -14,7 +14,7 @@
 | **Build System** | Maven |
 | **Architecture** | Clean Architecture (4 layers) |
 | **Main Entry Point** | `me.kitakeyos.j2me.application.MainApplication` |
-| **Key Dependencies** | ASM 3.1, LuaJ 3.0.1, Gson 2.10.1 |
+| **Key Dependencies** | ASM 3.1, Gson 2.10.1 |
 
 ---
 
@@ -25,8 +25,7 @@ This application allows users to:
 1. **Run J2ME (Java ME) applications** on a modern desktop using MicroEmulator
 2. **Run multiple instances simultaneously** - each instance is isolated with its own ClassLoader
 3. **Monitor network traffic** - intercept, log, redirect, and proxy all socket connections
-4. **Automate with Lua scripts** - access J2ME app internals via reflection
-5. **Inject Java code at runtime** - load external JARs and execute against running instances
+4. **Inject Java code at runtime** - load external JARs and execute against running instances
 6. **Manage J2ME apps** - install, store, and organize J2ME JAR/JAD files
 
 ### Why Bytecode Manipulation is Needed
@@ -53,7 +52,6 @@ J2ME apps make system calls that need to be intercepted:
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [NETWORK.md](NETWORK.md) | Network monitoring, redirection, proxy system | Using/extending network features |
-| [SCRIPTING.md](SCRIPTING.md) | Lua scripting API and examples | Writing automation scripts |
 | [INJECTION.md](INJECTION.md) | Java injection API and guides | Runtime class injection |
 
 ### Technical Deep-Dives
@@ -101,8 +99,9 @@ J2ME apps make system calls that need to be intercepted:
 │  │   (Model)       │  │   (Singleton)   │  │   (CRUD)        │              │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘              │
 │  ┌─────────────────┐  ┌─────────────────┐                                   │
-│  │ LuaScriptExecutor│ │ InstanceManager │                                   │
-│  │   (Lua Engine)  │  │   (Lifecycle)   │                                   │
+│  ┌─────────────────┐  ┌─────────────────┐                                   │
+│  │ InjectionService│  │ InstanceManager │                                   │
+│  │   (Injection)   │  │   (Lifecycle)   │                                   │
 │  └─────────────────┘  └─────────────────┘                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
             ▲                     ▲                   ▲
@@ -114,9 +113,9 @@ J2ME apps make system calls that need to be intercepted:
 │  │  (Custom CL)    │  │ (Intercepts)    │  │   (Persistence) │              │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘              │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐              │
-│  │ClassPreprocessor│  │ MonitoredSocket │  │ ScriptFileManager│             │
-│  │   (ASM)         │  │ (Network I/O)   │  │   (Lua files)   │              │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘              │
+│  │ClassPreprocessor│  │ MonitoredSocket │                                    │
+│  │   (ASM)         │  │ (Network I/O)   │                                    │
+│  └─────────────────┘  └─────────────────┘                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -133,10 +132,8 @@ j2me-microemulator-launcher/
 │   │   ├── MainApplication.java     # Entry point, DI container
 │   │   ├── config/
 │   │   │   └── ApplicationConfig.java
-│   │   ├── emulator/
-│   │   │   └── EmulatorLauncher.java
-│   │   └── script/
-│   │       └── LuaScriptService.java
+│   │   └── emulator/
+│   │       └── EmulatorLauncher.java
 │   │
 │   ├── domain/                      # DOMAIN LAYER (Business Logic)
 │   │   ├── application/
@@ -158,10 +155,6 @@ j2me-microemulator-launcher/
 │   │   │   │   ├── ProxyRule.java
 │   │   │   │   └── RedirectionRule.java
 │   │   │   └── service/NetworkService.java            # Singleton
-│   │   └── script/
-│   │       ├── model/LuaScript.java
-│   │       ├── executor/LuaScriptExecutor.java
-│   │       └── library/DynamicJavaLib.java
 │   │   └── injection/
 │   │       ├── model/
 │   │       │   ├── InjectionEntry.java
@@ -188,8 +181,7 @@ j2me-microemulator-launcher/
 │   │   │   ├── MonitoredOutputStream.java
 │   │   │   └── MonitoredSocket.java
 │   │   ├── persistence/
-│   │   │   ├── application/ApplicationRepositoryImpl.java
-│   │   │   └── script/ScriptFileManager.java
+│   │   │   └── application/ApplicationRepositoryImpl.java
 │   │   ├── resource/
 │   │   │   └── ManifestReader.java
 │   │   └── thread/
@@ -216,8 +208,6 @@ j2me-microemulator-launcher/
 │   │   │   └── SystemMonitorDialog.java
 │   │   ├── network/
 │   │   │   └── NetworkMonitorDialog.java
-│   │   └── script/
-│   │       └── LuaScriptManager.java
 │   │   └── injection/panel/
 │   │       └── InjectionPanel.java
 │   │
@@ -232,8 +222,7 @@ j2me-microemulator-launcher/
     ├── network_rules.properties
     ├── apps/
     ├── icons/
-    ├── rms/
-    └── scripts/
+    └── rms/
 ```
 
 ---
@@ -322,13 +311,6 @@ All data sent/received is logged via MonitoredInputStream/MonitoredOutputStream
         <version>3.1</version>
     </dependency>
     
-    <!-- LuaJ for Lua scripting -->
-    <dependency>
-        <groupId>org.luaj</groupId>
-        <artifactId>luaj-jse</artifactId>
-        <version>3.0.1</version>
-    </dependency>
-    
     <!-- Gson for JSON handling -->
     <dependency>
         <groupId>com.google.code.gson</groupId>
@@ -373,8 +355,6 @@ Each emulator instance needs:
 
 - [MicroEmulator](http://www.microemu.org/) - The emulator used
 - [ASM Library](https://asm.ow2.io/) - Bytecode manipulation
-- [LuaJ](https://github.com/luaj/luaj) - Lua interpreter for Java
-
 ---
 
 ## 📝 License

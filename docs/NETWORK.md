@@ -13,7 +13,7 @@ The network system:
 3. **Redirects connections** based on rules (e.g., game.server.com → localhost)
 4. **Proxies connections** through SOCKS or HTTP proxies
 5. **Captures all packet data** (sent and received bytes)
-6. **Exposes data to Lua scripts** for automation
+6. **Exposes packet data** for inspection and injection
 
 ---
 
@@ -150,7 +150,7 @@ public List<ProxyRule> getProxyRules();
 public void clearProxyRules();
 ```
 
-### Packet Data Access (for Lua scripts)
+### Packet Data Access
 
 ```java
 // Get all data SENT through a specific socket
@@ -463,34 +463,12 @@ public class MonitoredOutputStream extends OutputStream {
 │      │                                                                       │
 │      ├── wrapped.write(data)     → Actually send data                       │
 │      │                                                                       │
-│      └── NetworkService.logSentData(1, data)   → Store for Lua access       │
+│      └── NetworkService.logSentData(1, data)   → Store for inspection       │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
-
-## 📜 Lua Script Access
-
-```lua
--- Get data sent through socket #1
-local sent = network.getSentData(1)
-if sent then
-    print("Sent " .. #sent .. " bytes")
-    
-    -- Parse as hex
-    for i = 1, math.min(#sent, 50) do
-        io.write(string.format("%02X ", sent:byte(i)))
-    end
-    print()
-end
-
--- Get data received through socket #1
-local received = network.getReceivedData(1)
-if received then
-    print("Received " .. #received .. " bytes")
-end
-```
 
 ---
 
@@ -552,5 +530,5 @@ for (Socket socket : instance.getSockets()) {
 ## 🔗 Related Documentation
 
 - [BYTECODE.md](BYTECODE.md) - How socket creation is intercepted
-- [SCRIPTING.md](SCRIPTING.md) - Accessing network data from Lua
+- [INJECTION.md](INJECTION.md) - Java injection for runtime interaction
 - [CONFIGURATION.md](CONFIGURATION.md) - Network rules configuration

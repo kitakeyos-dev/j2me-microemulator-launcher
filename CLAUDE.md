@@ -51,7 +51,7 @@ Presentation (Swing UI) -> Application (Orchestration) -> Domain (Business Logic
 
 ## Data Directory
 
-Runtime state lives in `./data/`: properties files for apps, emulators, network rules, and launcher config; subdirectories for cloned JARs, icons, RMS data, emulator JARs, and Lua scripts.
+Runtime state lives in `./data/`: properties files for apps, emulators, network rules, and launcher config; subdirectories for cloned JARs, icons, RMS data, and emulator JARs.
 
 ## Conventions
 

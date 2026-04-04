@@ -17,8 +17,8 @@ Workflow to guide debugging issues in the project.
 ### Bytecode transformation issues
 → Read `docs/BYTECODE.md`
 
-### Lua script errors
-→ Read `docs/SCRIPTING.md`
+### Java injection issues
+→ Read `docs/INJECTION.md`
 
 ## Step 2: Check common error points
 
