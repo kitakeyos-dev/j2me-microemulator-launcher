@@ -63,22 +63,57 @@ public class ResourceManager {
     }
 
     /**
-     * Clean up all threads - interrupt and clear
+     * Total deadline for all threads to finish gracefully, regardless of thread count.
+     * After this deadline, remaining threads are force-stopped.
+     */
+    private static final long THREAD_CLEANUP_DEADLINE_MS = 1000;
+
+    /**
+     * Clean up all threads - interrupt first, then join with shared deadline, force stop as last resort.
+     * Sockets are closed BEFORE interrupting threads so that threads blocked on I/O get unblocked.
+     * Total wait time is bounded by THREAD_CLEANUP_DEADLINE_MS regardless of thread count.
      */
     @SuppressWarnings("deprecation")
     public void cleanupThreads() {
         logger.info("Cleaning up " + threads.size() + " threads for instance " + instanceId);
 
+        List<Thread> aliveThreads = new ArrayList<>();
+
+        // Phase 1: Interrupt all threads
         for (Thread thread : threads) {
             if (thread.isAlive() && thread != Thread.currentThread()) {
+                thread.interrupt();
+                aliveThreads.add(thread);
+            }
+        }
+
+        // Phase 2: Wait with a shared deadline (not per-thread timeout)
+        long deadline = System.currentTimeMillis() + THREAD_CLEANUP_DEADLINE_MS;
+        for (Thread thread : aliveThreads) {
+            long remaining = deadline - System.currentTimeMillis();
+            if (remaining <= 0) {
+                break;
+            }
+            try {
+                thread.join(remaining);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        // Phase 3: Force stop threads that didn't respond to interrupt
+        for (Thread thread : aliveThreads) {
+            if (thread.isAlive()) {
                 try {
                     thread.stop();
-                    logger.info("Stopped thread: " + thread.getName());
+                    logger.warning("Force-stopped unresponsive thread: " + thread.getName());
                 } catch (Exception e) {
-                    // Ignore
+                    logger.warning("Failed to stop thread " + thread.getName() + ": " + e.getMessage());
                 }
             }
         }
+
         threads.clear();
     }
 
@@ -89,10 +124,9 @@ public class ResourceManager {
         logger.info("Cleaning up " + sockets.size() + " sockets for instance " + instanceId);
 
         for (Socket socket : sockets) {
-            if (socket.isConnected() && !socket.isClosed()) {
+            if (!socket.isClosed()) {
                 try {
                     socket.close();
-                    logger.info("Closed socket: " + socket);
                 } catch (Exception e) {
                     logger.warning("Error closing socket: " + e.getMessage());
                 }
@@ -102,11 +136,13 @@ public class ResourceManager {
     }
 
     /**
-     * Clean up all resources (threads and sockets)
+     * Clean up all resources.
+     * Sockets are closed FIRST to unblock threads waiting on I/O,
+     * then threads are interrupted and joined.
      */
     public void cleanupAll() {
-        cleanupThreads();
         cleanupSockets();
+        cleanupThreads();
         logger.info("All resources cleaned up for instance " + instanceId);
     }
 

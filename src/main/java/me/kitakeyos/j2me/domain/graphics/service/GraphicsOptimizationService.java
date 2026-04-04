@@ -92,6 +92,43 @@ public class GraphicsOptimizationService {
     }
 
     /**
+     * Remove graphics proxy for an instance, restoring the original DisplayAccess.
+     * Called during instance shutdown to prevent proxy reference leaks.
+     */
+    public void removeInstance(EmulatorInstance emulatorInstance) {
+        try {
+            ClassLoader cl = emulatorInstance.getEmulatorClassLoader();
+            if (cl == null) {
+                return;
+            }
+
+            Class<?> bridgeClass = ReflectionHelper.loadClass(cl, "org.microemu.MIDletBridge");
+            Object midletAccess = ReflectionHelper.invokeStaticMethod(bridgeClass, "getMIDletAccess", new Class<?>[0]);
+
+            if (midletAccess == null) {
+                return;
+            }
+
+            Object currentDisplayAccess = ReflectionHelper.invokeMethod(midletAccess, "getDisplayAccess");
+
+            // If wrapped with our proxy, restore the original
+            if (currentDisplayAccess != null && Proxy.isProxyClass(currentDisplayAccess.getClass())) {
+                InvocationHandler handler = Proxy.getInvocationHandler(currentDisplayAccess);
+                if (handler instanceof GraphicsToggleHandler) {
+                    Object original = ((GraphicsToggleHandler) handler).getOriginal();
+                    Class<?> displayAccessInterface = ReflectionHelper.loadClass(cl, "org.microemu.DisplayAccess");
+                    ReflectionHelper.invokeMethod(midletAccess, "setDisplayAccess",
+                            new Class<?>[] { displayAccessInterface }, original);
+                    logger.info("Restored original DisplayAccess for instance #" + emulatorInstance.getInstanceId());
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("Error removing graphics proxy for instance #" + emulatorInstance.getInstanceId()
+                    + ": " + e.getMessage());
+        }
+    }
+
+    /**
      * InvocationHandler to intercept paint calls.
      */
     private static class GraphicsToggleHandler implements InvocationHandler {
@@ -105,6 +142,10 @@ public class GraphicsOptimizationService {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+
+        public Object getOriginal() {
+            return original;
         }
 
         @Override

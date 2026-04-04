@@ -32,6 +32,23 @@ public class EmulatorClassLoader extends URLClassLoader {
 
     private final int instanceId;
 
+    /**
+     * Clear the shared bytecode cache.
+     * Should be called when no emulator instances are running to free memory.
+     */
+    public static void clearSharedCache() {
+        int size = sharedBytecodeCache.size();
+        sharedBytecodeCache.clear();
+        logger.info("Cleared shared bytecode cache (" + size + " entries)");
+    }
+
+    /**
+     * Get the current size of the shared bytecode cache.
+     */
+    public static int getSharedCacheSize() {
+        return sharedBytecodeCache.size();
+    }
+
     public EmulatorClassLoader(int instanceId, URL[] urls, ClassLoader parent) {
         super(urls, parent);
         this.instanceId = instanceId;

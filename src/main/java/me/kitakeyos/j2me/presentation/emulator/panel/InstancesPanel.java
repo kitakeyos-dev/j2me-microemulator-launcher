@@ -404,7 +404,8 @@ public class InstancesPanel extends BaseTabPanel {
     }
 
     /**
-     * Stop all running instances
+     * Stop all running instances.
+     * UI tabs are removed immediately on EDT, then shutdowns run in parallel on background threads.
      */
     private void stopAllInstances() {
         java.util.List<EmulatorInstance> runningInstances = emulatorInstanceManager.getRunningInstances();
@@ -415,15 +416,41 @@ public class InstancesPanel extends BaseTabPanel {
             return;
         }
 
-        // Note: removeEmulatorInstanceTab already calls notifyInstanceStopping
+        // Remove UI tabs immediately so the user sees instant feedback
         for (EmulatorInstance instance : runningInstances) {
             removeEmulatorInstanceTab(instance);
-            instance.shutdown();
         }
 
-        String message = "Stopped " + runningInstances.size() + " instance(s)";
+        String message = "Stopping " + runningInstances.size() + " instance(s)...";
         showToast(message, ToastNotification.ToastType.INFO);
         statusBar.setInfo(message);
+
+        // Shutdown all instances in parallel on background threads
+        int count = runningInstances.size();
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(count);
+        for (EmulatorInstance instance : runningInstances) {
+            new Thread(() -> {
+                try {
+                    instance.shutdown();
+                } finally {
+                    latch.countDown();
+                }
+            }, "shutdown-instance-" + instance.getInstanceId()).start();
+        }
+
+        // Notify completion asynchronously without blocking EDT
+        new Thread(() -> {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            SwingUtilities.invokeLater(() -> {
+                String doneMessage = "Stopped " + count + " instance(s)";
+                showToast(doneMessage, ToastNotification.ToastType.INFO);
+                statusBar.setInfo(doneMessage);
+            });
+        }, "shutdown-wait").start();
     }
 
     /**
@@ -554,8 +581,12 @@ public class InstancesPanel extends BaseTabPanel {
         JMenuItem stopItem = new JMenuItem("Stop Instance");
         stopItem.addActionListener(e -> {
             removeEmulatorInstanceTab(emulatorInstance);
-            emulatorInstance.shutdown();
-            showToast("Stopped Instance #" + emulatorInstance.getInstanceId(), ToastNotification.ToastType.INFO);
+            new Thread(() -> {
+                emulatorInstance.shutdown();
+                SwingUtilities.invokeLater(() ->
+                    showToast("Stopped Instance #" + emulatorInstance.getInstanceId(),
+                            ToastNotification.ToastType.INFO));
+            }, "shutdown-instance-" + emulatorInstance.getInstanceId()).start();
         });
         actionsMenu.add(stopItem);
 

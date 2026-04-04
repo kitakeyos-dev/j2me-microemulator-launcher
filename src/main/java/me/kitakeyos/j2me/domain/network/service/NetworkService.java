@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -196,6 +197,50 @@ public class NetworkService {
 
     public long getTotalBytesReceived() {
         return totalBytesReceived;
+    }
+
+    /**
+     * Remove all logs and data pools associated with a specific instance.
+     * Called during instance shutdown to prevent memory leaks.
+     */
+    public void removeInstanceData(int instanceId) {
+        // Remove connection logs for this instance
+        connectionLogs.removeIf(log -> log.getInstanceId() == instanceId);
+
+        // Remove packet logs and associated data pools for this instance
+        List<Integer> socketIdsToRemove = new ArrayList<>();
+        long sentReduction = 0;
+        long receivedReduction = 0;
+
+        for (PacketLog log : packetLogs) {
+            if (log.getInstanceId() == instanceId) {
+                socketIdsToRemove.add(log.getSocketId());
+                if (log.getDirection() == PacketLog.Direction.OUT) {
+                    sentReduction += log.getLength();
+                } else {
+                    receivedReduction += log.getLength();
+                }
+            }
+        }
+        packetLogs.removeIf(log -> log.getInstanceId() == instanceId);
+
+        // Clean up data pools for removed sockets
+        for (int socketId : socketIdsToRemove) {
+            ByteArrayOutputStream sent = sentDataPools.remove(socketId);
+            if (sent != null) {
+                try { sent.close(); } catch (IOException ignored) {}
+            }
+            ByteArrayOutputStream received = receivedDataPools.remove(socketId);
+            if (received != null) {
+                try { received.close(); } catch (IOException ignored) {}
+            }
+        }
+
+        // Adjust statistics
+        totalBytesSent -= sentReduction;
+        totalBytesReceived -= receivedReduction;
+
+        logger.info("Cleaned up network data for instance #" + instanceId);
     }
 
     public String getFormattedStats() {
