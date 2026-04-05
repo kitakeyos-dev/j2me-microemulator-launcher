@@ -47,17 +47,15 @@ mvn clean package
 java -jar j2me-microemulator-launcher.jar
 ```
 
-### Step 2: Configure MicroEmulator Path
+### Step 2: Configure MicroEmulator
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  1. Click "Settings" in menu bar                                            │
+│  1. Go to the "Emulators" tab                                               │
 │                                                                              │
-│  2. Click "Browse" next to MicroEmulator path                               │
+│  2. The default emulator (microemulator.jar) is auto-configured             │
 │                                                                              │
-│  3. Navigate to and select microemulator.jar                                │
-│                                                                              │
-│  4. Click "Save"                                                            │
+│  3. To add more emulators, enter a name, browse for the JAR, click "Add"   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -103,9 +101,10 @@ java -jar j2me-microemulator-launcher.jar
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  File   Settings   Help                                    [_] [□] [X]      │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┬───────────────┬────────────┬────────────┐                 │
-│  │ Applications │   Instances   │  Instance 1 │ Instance 2 │                 │
-│  └──────────────┴───────────────┴────────────┴────────────┘                 │
+│  Menu bar: Settings (language selection)                                     │
+│  ┌──────────────┬──────────┬───────────────┬────────────┬────────────┐      │
+│  │ Applications │ Emulators│   Instances   │ Instance 1 │ Instance 2 │      │
+│  └──────────────┴──────────┴───────────────┴────────────┴────────────┘      │
 │                                                                              │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
 │  │                                                                          ││
@@ -196,13 +195,15 @@ Right-click app → Context menu:
 3. Add redirection rules
 4. Add proxy rules
 
+> **Note**: Packet capture must be enabled per-instance via the Actions menu first.
+
 ---
 
 ## 🔧 Troubleshooting
 
 ### "MicroEmulator path not set"
 
-**Solution**: Go to Settings → Browse → Select microemulator.jar
+**Solution**: Go to the Emulators tab and ensure an emulator JAR is configured.
 
 ### "Class not found" when starting instance
 

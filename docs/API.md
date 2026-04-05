@@ -174,10 +174,21 @@ public class NetworkService {
     List<ConnectionLog> getConnectionLogs();
     void clearConnectionLogs();
     
-    // === PACKET DATA ACCESS ===
+    // === TAPPING CONTROL ===
     
-    byte[] getSentData(int socketId);
-    byte[] getReceivedData(int socketId);
+    void enableTapping(int instanceId);
+    void disableTapping(int instanceId);
+    boolean isTappingEnabled(int instanceId);
+    
+    // === SOCKET TAPS ===
+    
+    SocketTap getOrCreateTap(int socketId, int instanceId, String host, int port);
+    SocketTap getTap(int socketId);
+    List<SocketTap> getTapsByInstance(int instanceId);
+    Map<Integer, SocketTap> getAllTaps();
+    void removeTap(int socketId);
+    
+    // === STATISTICS ===
     
     long getTotalBytesSent();
     long getTotalBytesReceived();
@@ -186,15 +197,61 @@ public class NetworkService {
     
     Socket createSocket(int instanceId, String host, int port) throws IOException;
     
+    // === INSTANCE CLEANUP ===
+    
+    void removeInstanceData(int instanceId);
+    
     // === PERSISTENCE ===
     
     void saveRules();
     void loadRules();
+}
+```
+
+---
+
+### SocketTap
+
+Holds sent/received TapStreams for a monitored socket connection.
+
+**Package**: `me.kitakeyos.j2me.domain.network.model`
+
+```java
+public class SocketTap {
     
-    // === INTERNAL (called by MonitoredInputStream/OutputStream) ===
+    int getSocketId();
+    int getInstanceId();
+    String getHost();
+    int getPort();
+    TapStream getSentStream();
+    TapStream getReceivedStream();
+    byte[] drainSent();      // Non-blocking consume
+    byte[] drainReceived();  // Non-blocking consume
+    byte[] peekSent();       // Non-blocking peek
+    byte[] peekReceived();   // Non-blocking peek
+    void close();
+}
+```
+
+---
+
+### TapStream
+
+Expandable-buffer backed InputStream for capturing socket data.
+
+**Package**: `me.kitakeyos.j2me.domain.network.model`
+
+```java
+public class TapStream extends InputStream {
     
-    void logSentData(int socketId, byte[] data, int offset, int length);
-    void logReceivedData(int socketId, byte[] data, int offset, int length);
+    void push(byte[] data, int offset, int length);  // Called by MonitoredStreams
+    int read();                                        // Blocking read
+    int read(byte[] b, int off, int len);             // Blocking read
+    byte[] drain();                                    // Non-blocking consume all
+    byte[] peek();                                     // Non-blocking peek all
+    int available();
+    int getBufferSize();
+    void close();
 }
 ```
 
@@ -453,6 +510,11 @@ public class ApplicationConfig {
     
     int getDefaultDisplayWidth();
     int getDefaultDisplayHeight();
+    
+    // === LANGUAGE ===
+    
+    String getLanguage();        // default "en"
+    void setLanguage(String language);
     
     // === PERSISTENCE ===
     

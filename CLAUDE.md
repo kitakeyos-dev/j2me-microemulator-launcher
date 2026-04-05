@@ -44,6 +44,8 @@ Presentation (Swing UI) -> Application (Orchestration) -> Domain (Business Logic
 - **Load-time bytecode transformation**: J2ME app classes are instrumented via ASM when loaded. `SystemCallInterceptor` redirects `Thread.sleep()` through `SpeedHelper` (for speed control) and `new Socket()` through `SystemCallHandler` (for network monitoring/redirection).
 - **Reflection-based MicroEmulator integration**: MicroEmulator is loaded at runtime via classloader; all access to its internals uses reflection since the launcher can't compile against it directly.
 - **Singleton services**: `NetworkService`, `SpeedService`, `GraphicsOptimizationService` are singletons shared across all instances.
+- **i18n via ResourceBundle**: `Messages` class loads `messages.properties` (English) or `messages_vi.properties` (Vietnamese) based on `ApplicationConfig` language setting. UI rebuilds on language change via `MainApplication.rebuildUI()`.
+- **Per-instance packet tapping**: `SocketTap`/`TapStream` provide stream-based packet capture per socket. Tapping is off by default and enabled per-instance via `NetworkService.enableTapping()`. Expandable byte buffer avoids fixed-size limitations.
 
 ## Entry Point
 

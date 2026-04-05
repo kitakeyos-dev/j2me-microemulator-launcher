@@ -117,35 +117,46 @@ public class MainApplication extends JFrame {
     private final ApplicationConfig applicationConfig;
     private final ApplicationRepository applicationRepository;
     private final ApplicationService applicationService;
-    public final InstanceManager emulatorInstanceManager;
+    public InstanceManager emulatorInstanceManager;
     
     // Panels
-    private final ApplicationsPanel applicationsPanel;
-    private final InstancesPanel instancesPanel;
-    private final InjectionPanel injectionPanel;
+    private ApplicationsPanel applicationsPanel;
+    private EmulatorsPanel emulatorsPanel;
+    private InstancesPanel instancesPanel;
+    private InjectionPanel injectionPanel;
     
     public MainApplication() {
-        // Create services
+        // Initialize config and load i18n bundle
         applicationConfig = new ApplicationConfig();
+        Messages.loadBundle(applicationConfig.getLanguage());
+        
+        setTitle(Messages.get("app.title"));
+        
+        // Create services
         applicationRepository = new ApplicationRepositoryImpl(applicationConfig);
         applicationService = new ApplicationService(applicationRepository);
-        emulatorInstanceManager = new InstanceManager();
         
         // Create panels
-        applicationsPanel = new ApplicationsPanel(applicationService, ...);
-        instancesPanel = new InstancesPanel(emulatorInstanceManager, ...);
-        injectionPanel = new InjectionPanel(emulatorInstanceManager);
+        applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
+        emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, ...);
+        instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
+        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService);
         
+        emulatorInstanceManager = instancesPanel.emulatorInstanceManager;
         initializeComponents();
     }
     
     private void initializeComponents() {
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Applications", applicationsPanel);
-        tabbedPane.addTab("Instances", instancesPanel);
-        tabbedPane.addTab("Injection", injectionPanel);
+        tabbedPane.addTab(Messages.get("tab.applications"), applicationsPanel);
+        tabbedPane.addTab(Messages.get("tab.emulators"), emulatorsPanel);
+        tabbedPane.addTab(Messages.get("tab.instances"), instancesPanel);
+        tabbedPane.addTab(Messages.get("tab.injection"), injectionPanel);
         add(tabbedPane);
     }
+    
+    // Rebuilds the entire UI after language change (stops all running instances first)
+    public void rebuildUI() { ... }
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> INSTANCE.setVisible(true));
@@ -272,10 +283,13 @@ public class NetworkService {
     
     // Logs
     private final List<ConnectionLog> connectionLogs;
+    private final List<PacketLog> packetLogs;
     
-    // Packet data (socketId → bytes)
-    private final Map<Integer, ByteArrayOutputStream> sentDataPools;
-    private final Map<Integer, ByteArrayOutputStream> receivedDataPools;
+    // Socket taps: socketId → SocketTap (stream-based data access)
+    private final Map<Integer, SocketTap> socketTaps;
+    
+    // Per-instance tapping control (off by default)
+    private final Set<Integer> tappingEnabledInstances;
     
     // Called when J2ME app creates a socket
     public Socket createSocket(int instanceId, String host, int port) {
@@ -433,7 +447,8 @@ data/j2me_launcher.properties
       │
       ├── microemulatorPath
       ├── defaultDisplayWidth
-      └── defaultDisplayHeight
+      ├── defaultDisplayHeight
+      └── ui.language
 ```
 
 ### Application Storage

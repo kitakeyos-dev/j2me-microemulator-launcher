@@ -34,6 +34,7 @@ data/j2me_launcher.properties
 | `microemulatorPath` | String | `""` | Path to microemulator.jar |
 | `defaultDisplayWidth` | Integer | `240` | Default emulator width |
 | `defaultDisplayHeight` | Integer | `320` | Default emulator height |
+| `ui.language` | String | `en` | Interface language (en, vi) |
 
 ### Example File
 
@@ -45,6 +46,8 @@ microemulatorPath=C:/tools/microemulator.jar
 defaultDisplayWidth=240
 defaultDisplayHeight=320
 
+# Interface language
+ui.language=en
 ```
 
 ### Code Reference
@@ -54,6 +57,7 @@ public class ApplicationConfig {
     private String microemulatorPath;
     private int defaultDisplayWidth = 240;
     private int defaultDisplayHeight = 320;
+    private String language = "en";
     
     public void load() {
         Properties props = new Properties();
@@ -294,9 +298,9 @@ public class ApplicationConfig {
 ### First-Time Setup
 
 1. **Set MicroEmulator path**:
-   - Open Settings dialog
-   - Browse to microemulator.jar
-   - Click Save
+   - Go to the Emulators tab
+   - The default emulator is auto-configured
+   - To add more, enter a name, browse for the JAR, click Add
 
 2. **Configure display size**:
    - Default is 240x320 (QVGA)

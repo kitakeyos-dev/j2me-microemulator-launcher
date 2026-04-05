@@ -27,6 +27,7 @@ This application allows users to:
 3. **Monitor network traffic** - intercept, log, redirect, and proxy all socket connections
 4. **Inject Java code at runtime** - load external JARs and execute against running instances
 6. **Manage J2ME apps** - install, store, and organize J2ME JAR/JAD files
+7. **Multi-language support** - i18n via ResourceBundle with English and Vietnamese translations
 
 ### Why Bytecode Manipulation is Needed
 

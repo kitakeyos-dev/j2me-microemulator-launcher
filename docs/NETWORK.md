@@ -32,8 +32,8 @@ The network system:
 │  │  │                     │    │ • RedirectionRule (host:port → target)  ││ │
 │  │  │ • Redirection rules │    │ • ProxyRule (SOCKS/HTTP proxy config)    ││ │
 │  │  │ • Proxy rules       │    │ • ConnectionLog (connection metadata)   ││ │
-│  │  │ • Connection logs   │    │ • PacketLog (captured bytes)            ││ │
-│  │  │ • Packet data pools │    │                                         ││ │
+│  │  │ • Connection logs   │    │ • SocketTap (per-socket tap streams)    ││ │
+│  │  │ • Socket taps       │    │ • TapStream (expandable-buffer stream)  ││ │
 │  │  │ • createSocket()    │    └─────────────────────────────────────────┘│ │
 │  │  └─────────────────────┘                                                │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
@@ -74,9 +74,9 @@ public class NetworkService {
     // Logs
     private final List<ConnectionLog> connectionLogs = new CopyOnWriteArrayList<>();
     
-    // Packet data pools (socketId → byte data)
-    private final Map<Integer, ByteArrayOutputStream> sentDataPools = new ConcurrentHashMap<>();
-    private final Map<Integer, ByteArrayOutputStream> receivedDataPools = new ConcurrentHashMap<>();
+    // Socket taps (stream-based, per-instance on/off)
+    private final Map<Integer, SocketTap> socketTaps = new ConcurrentHashMap<>();
+    private final Set<Integer> tappingEnabledInstances = ConcurrentHashMap.newKeySet();
     
     // Statistics
     private final AtomicLong totalBytesSent = new AtomicLong(0);
@@ -150,34 +150,24 @@ public List<ProxyRule> getProxyRules();
 public void clearProxyRules();
 ```
 
-### Packet Data Access
+### Tapping and Data Access
 
 ```java
-// Get all data SENT through a specific socket
-public byte[] getSentData(int socketId) {
-    ByteArrayOutputStream baos = sentDataPools.get(socketId);
-    return baos != null ? baos.toByteArray() : new byte[0];
-}
+// Enable tapping for an instance (off by default)
+NetworkService.getInstance().enableTapping(instanceId);
 
-// Get all data RECEIVED through a specific socket
-public byte[] getReceivedData(int socketId) {
-    ByteArrayOutputStream baos = receivedDataPools.get(socketId);
-    return baos != null ? baos.toByteArray() : new byte[0];
-}
+// Get taps for an instance
+List<SocketTap> taps = NetworkService.getInstance().getTapsByInstance(instanceId);
 
-// Internal: Called by MonitoredOutputStream
-void logSentData(int socketId, byte[] data, int offset, int length) {
-    sentDataPools.computeIfAbsent(socketId, k -> new ByteArrayOutputStream())
-        .write(data, offset, length);
-    totalBytesSent.addAndGet(length);
-}
+// Read data (blocking, like InputStream)
+InputStream received = tap.getReceivedStream();
 
-// Internal: Called by MonitoredInputStream
-void logReceivedData(int socketId, byte[] data, int offset, int length) {
-    receivedDataPools.computeIfAbsent(socketId, k -> new ByteArrayOutputStream())
-        .write(data, offset, length);
-    totalBytesReceived.addAndGet(length);
-}
+// Read data (non-blocking)
+byte[] data = tap.drainSent();      // consume all buffered
+byte[] peek = tap.peekReceived();   // peek without consuming
+
+// Disable when done
+NetworkService.getInstance().disableTapping(instanceId);
 ```
 
 ---
@@ -355,9 +345,11 @@ public class MonitoredInputStream extends InputStream {
     public int read() throws IOException {
         int b = wrapped.read();
         if (b != -1) {
-            // Log single byte
-            NetworkService.getInstance().logReceivedData(
-                socketId, new byte[]{(byte) b}, 0, 1);
+            // Push to SocketTap received stream
+            SocketTap tap = NetworkService.getInstance().getTap(socketId);
+            if (tap != null) {
+                tap.getReceivedStream().push(new byte[]{(byte) b}, 0, 1);
+            }
         }
         return b;
     }
@@ -366,8 +358,11 @@ public class MonitoredInputStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         int bytesRead = wrapped.read(b, off, len);
         if (bytesRead > 0) {
-            // Log received bytes
-            NetworkService.getInstance().logReceivedData(socketId, b, off, bytesRead);
+            // Push to SocketTap received stream
+            SocketTap tap = NetworkService.getInstance().getTap(socketId);
+            if (tap != null) {
+                tap.getReceivedStream().push(b, off, bytesRead);
+            }
         }
         return bytesRead;
     }
@@ -391,16 +386,21 @@ public class MonitoredOutputStream extends OutputStream {
     @Override
     public void write(int b) throws IOException {
         wrapped.write(b);
-        // Log single byte
-        NetworkService.getInstance().logSentData(
-            socketId, new byte[]{(byte) b}, 0, 1);
+        // Push to SocketTap sent stream
+        SocketTap tap = NetworkService.getInstance().getTap(socketId);
+        if (tap != null) {
+            tap.getSentStream().push(new byte[]{(byte) b}, 0, 1);
+        }
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         wrapped.write(b, off, len);
-        // Log sent bytes
-        NetworkService.getInstance().logSentData(socketId, b, off, len);
+        // Push to SocketTap sent stream
+        SocketTap tap = NetworkService.getInstance().getTap(socketId);
+        if (tap != null) {
+            tap.getSentStream().push(b, off, len);
+        }
     }
 }
 ```
@@ -463,7 +463,7 @@ public class MonitoredOutputStream extends OutputStream {
 │      │                                                                       │
 │      ├── wrapped.write(data)     → Actually send data                       │
 │      │                                                                       │
-│      └── NetworkService.logSentData(1, data)   → Store for inspection       │
+│      └── SocketTap.getSentStream().push(data)   → Store for inspection      │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -506,9 +506,9 @@ All collections use thread-safe implementations:
 
 ### Memory Considerations
 
-Packet data accumulates in memory. For long-running sessions:
-- Data pools grow as more data is transferred
-- Consider clearing pools periodically
+Tap stream buffers accumulate in memory. For long-running sessions:
+- Use `drain()` to consume and release buffered data regularly
+- Disable tapping with `disableTapping(instanceId)` when not needed
 - Large data transfers will consume significant memory
 
 ### Socket Cleanup
