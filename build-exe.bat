@@ -7,7 +7,7 @@ echo ========================================
 echo.
 
 set APP_NAME=J2MELauncher
-set APP_VERSION=1.0.2
+set APP_VERSION=1.0.3
 set MAIN_CLASS=me.kitakeyos.j2me.application.MainApplication
 set MAIN_JAR=%APP_NAME%-%APP_VERSION%-jar-with-dependencies.jar
 set DEST_DIR=dist
