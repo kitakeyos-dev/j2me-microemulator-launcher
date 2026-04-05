@@ -1,13 +1,16 @@
 package me.kitakeyos.j2me.infrastructure.network;
 
 import me.kitakeyos.j2me.domain.network.model.PacketLog;
+import me.kitakeyos.j2me.domain.network.model.SocketTap;
 import me.kitakeyos.j2me.domain.network.service.NetworkService;
+
 
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Wrapped InputStream that monitors all read operations for packet capture.
+ * Wrapped InputStream that monitors all read operations.
+ * Data is both logged as PacketLog and pushed to the SocketTap for streaming access.
  */
 public class MonitoredInputStream extends InputStream {
 
@@ -29,8 +32,8 @@ public class MonitoredInputStream extends InputStream {
     public int read() throws IOException {
         int b = wrapped.read();
         if (b != -1) {
-            byte[] data = new byte[] { (byte) b };
-            logPacket(data, 0, 1);
+            byte[] data = new byte[]{(byte) b};
+            onDataReceived(data, 0, 1);
         }
         return b;
     }
@@ -39,7 +42,7 @@ public class MonitoredInputStream extends InputStream {
     public int read(byte[] b) throws IOException {
         int len = wrapped.read(b);
         if (len > 0) {
-            logPacket(b, 0, len);
+            onDataReceived(b, 0, len);
         }
         return len;
     }
@@ -48,9 +51,18 @@ public class MonitoredInputStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         int bytesRead = wrapped.read(b, off, len);
         if (bytesRead > 0) {
-            logPacket(b, off, bytesRead);
+            onDataReceived(b, off, bytesRead);
         }
         return bytesRead;
+    }
+
+    private void onDataReceived(byte[] data, int offset, int length) {
+        NetworkService ns = NetworkService.getInstance();
+        logPacket(data, offset, length);
+        SocketTap tap = ns.getOrCreateTap(socketId, instanceId, host, port);
+        if (tap != null) {
+            tap.getReceivedStream().push(data, offset, length);
+        }
     }
 
     private void logPacket(byte[] data, int offset, int length) {

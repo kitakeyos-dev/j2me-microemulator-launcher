@@ -585,6 +585,23 @@ public class InstancesPanel extends BaseTabPanel {
         });
         actionsMenu.add(graphicsItem);
 
+        // Packet capture toggle
+        JCheckBoxMenuItem packetCaptureItem = new JCheckBoxMenuItem(Messages.get("inst.packetCapture"));
+        packetCaptureItem.setToolTipText(Messages.get("inst.packetCapture.tooltip"));
+        packetCaptureItem.addActionListener(e -> {
+            me.kitakeyos.j2me.domain.network.service.NetworkService ns =
+                    me.kitakeyos.j2me.domain.network.service.NetworkService.getInstance();
+            if (packetCaptureItem.isSelected()) {
+                ns.enableTapping(emulatorInstance.getInstanceId());
+            } else {
+                ns.disableTapping(emulatorInstance.getInstanceId());
+            }
+            String status = packetCaptureItem.isSelected() ? "ON" : "OFF";
+            showToast(Messages.get("inst.packetCapture.status", status, emulatorInstance.getInstanceId()),
+                    ToastNotification.ToastType.INFO);
+        });
+        actionsMenu.add(packetCaptureItem);
+
         actionsMenu.addSeparator();
 
         // Stop instance

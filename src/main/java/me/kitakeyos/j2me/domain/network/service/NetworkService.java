@@ -4,8 +4,8 @@ import me.kitakeyos.j2me.domain.network.model.ConnectionLog;
 import me.kitakeyos.j2me.domain.network.model.PacketLog;
 import me.kitakeyos.j2me.domain.network.model.ProxyRule;
 import me.kitakeyos.j2me.domain.network.model.RedirectionRule;
+import me.kitakeyos.j2me.domain.network.model.SocketTap;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -36,9 +36,11 @@ public class NetworkService {
     private final List<NetworkChangeListener> listeners = new CopyOnWriteArrayList<>();
     private final List<PacketLog> packetLogs = new CopyOnWriteArrayList<>();
 
-    // Data pools per socketId
-    private final Map<Integer, ByteArrayOutputStream> sentDataPools = new ConcurrentHashMap<>();
-    private final Map<Integer, ByteArrayOutputStream> receivedDataPools = new ConcurrentHashMap<>();
+    // Socket taps: socketId → SocketTap (stream-based data access)
+    private final Map<Integer, SocketTap> socketTaps = new ConcurrentHashMap<>();
+
+    // Instances with tapping/packet logging enabled (off by default)
+    private final java.util.Set<Integer> tappingEnabledInstances = ConcurrentHashMap.newKeySet();
 
     private static final int MAX_LOG_SIZE = 1000;
     private static final int MAX_PACKET_LOG_SIZE = 5000;
@@ -128,18 +130,59 @@ public class NetworkService {
         notifyLogsCleared();
     }
 
+    // === Tapping Control (per-instance on/off) ===
+
+    /**
+     * Enable packet logging and stream tapping for an instance.
+     * Must be called before data will be captured.
+     */
+    public void enableTapping(int instanceId) {
+        tappingEnabledInstances.add(instanceId);
+        logger.info("Tapping enabled for instance #" + instanceId);
+    }
+
+    /**
+     * Disable tapping for an instance and close all its taps.
+     */
+    public void disableTapping(int instanceId) {
+        tappingEnabledInstances.remove(instanceId);
+        // Close existing taps for this instance
+        List<Integer> toRemove = new ArrayList<>();
+        for (Map.Entry<Integer, SocketTap> entry : socketTaps.entrySet()) {
+            if (entry.getValue().getInstanceId() == instanceId) {
+                toRemove.add(entry.getKey());
+            }
+        }
+        for (int socketId : toRemove) {
+            removeTap(socketId);
+        }
+        logger.info("Tapping disabled for instance #" + instanceId);
+    }
+
+    /**
+     * Check if tapping is enabled for an instance.
+     */
+    public boolean isTappingEnabled(int instanceId) {
+        return tappingEnabledInstances.contains(instanceId);
+    }
+
     // === Packet Logs ===
 
+    /**
+     * Add a packet log entry. Only logs if tapping is enabled for the instance.
+     */
     public void addPacketLog(PacketLog log) {
+        if (!tappingEnabledInstances.contains(log.getInstanceId())) {
+            return;
+        }
+
         packetLogs.add(log);
 
-        // Update statistics and accumulate data
+        // Update statistics
         if (log.getDirection() == PacketLog.Direction.OUT) {
             totalBytesSent += log.getLength();
-            accumulateData(sentDataPools, log);
         } else {
             totalBytesReceived += log.getLength();
-            accumulateData(receivedDataPools, log);
         }
 
         // Trim if too large
@@ -149,45 +192,66 @@ public class NetworkService {
         notifyPacketLogAdded(log);
     }
 
-    private void accumulateData(Map<Integer, ByteArrayOutputStream> pool, PacketLog log) {
-        pool.computeIfAbsent(log.getSocketId(), k -> new ByteArrayOutputStream())
-                .write(log.getData(), 0, log.getLength());
-    }
-
     public List<PacketLog> getPacketLogs() {
         return Collections.unmodifiableList(packetLogs);
     }
 
     public void clearPacketLogs() {
         packetLogs.clear();
-        sentDataPools.clear();
-        receivedDataPools.clear();
         totalBytesSent = 0;
         totalBytesReceived = 0;
         notifyPacketLogsCleared();
     }
 
-    public byte[] getSentData(int socketId) {
-        ByteArrayOutputStream stream = sentDataPools.get(socketId);
-        if (stream == null) {
-            return new byte[0];
+    // === Socket Taps (stream-based data access) ===
+
+    /**
+     * Get or create a SocketTap for the given socket.
+     * Only creates if tapping is enabled for the instance.
+     * Returns null if tapping is disabled.
+     */
+    public SocketTap getOrCreateTap(int socketId, int instanceId, String host, int port) {
+        if (!tappingEnabledInstances.contains(instanceId)) {
+            return null;
         }
-        synchronized (stream) {
-            byte[] data = stream.toByteArray();
-            stream.reset();
-            return data;
-        }
+        return socketTaps.computeIfAbsent(socketId, k -> new SocketTap(socketId, instanceId, host, port));
     }
 
-    public byte[] getReceivedData(int socketId) {
-        ByteArrayOutputStream stream = receivedDataPools.get(socketId);
-        if (stream == null) {
-            return new byte[0];
+    /**
+     * Get an existing SocketTap by socketId.
+     * Returns null if no tap exists for this socket.
+     */
+    public SocketTap getTap(int socketId) {
+        return socketTaps.get(socketId);
+    }
+
+    /**
+     * Get all active taps for a specific instance.
+     */
+    public List<SocketTap> getTapsByInstance(int instanceId) {
+        List<SocketTap> result = new ArrayList<>();
+        for (SocketTap tap : socketTaps.values()) {
+            if (tap.getInstanceId() == instanceId) {
+                result.add(tap);
+            }
         }
-        synchronized (stream) {
-            byte[] data = stream.toByteArray();
-            stream.reset();
-            return data;
+        return result;
+    }
+
+    /**
+     * Get all active taps.
+     */
+    public Map<Integer, SocketTap> getAllTaps() {
+        return Collections.unmodifiableMap(socketTaps);
+    }
+
+    /**
+     * Remove and close a tap for a specific socket.
+     */
+    public void removeTap(int socketId) {
+        SocketTap tap = socketTaps.remove(socketId);
+        if (tap != null) {
+            tap.close();
         }
     }
 
@@ -200,21 +264,18 @@ public class NetworkService {
     }
 
     /**
-     * Remove all logs and data pools associated with a specific instance.
+     * Remove all logs and taps associated with a specific instance.
      * Called during instance shutdown to prevent memory leaks.
      */
     public void removeInstanceData(int instanceId) {
         // Remove connection logs for this instance
         connectionLogs.removeIf(log -> log.getInstanceId() == instanceId);
 
-        // Remove packet logs and associated data pools for this instance
-        List<Integer> socketIdsToRemove = new ArrayList<>();
+        // Remove packet logs for this instance and adjust statistics
         long sentReduction = 0;
         long receivedReduction = 0;
-
         for (PacketLog log : packetLogs) {
             if (log.getInstanceId() == instanceId) {
-                socketIdsToRemove.add(log.getSocketId());
                 if (log.getDirection() == PacketLog.Direction.OUT) {
                     sentReduction += log.getLength();
                 } else {
@@ -223,22 +284,19 @@ public class NetworkService {
             }
         }
         packetLogs.removeIf(log -> log.getInstanceId() == instanceId);
-
-        // Clean up data pools for removed sockets
-        for (int socketId : socketIdsToRemove) {
-            ByteArrayOutputStream sent = sentDataPools.remove(socketId);
-            if (sent != null) {
-                try { sent.close(); } catch (IOException ignored) {}
-            }
-            ByteArrayOutputStream received = receivedDataPools.remove(socketId);
-            if (received != null) {
-                try { received.close(); } catch (IOException ignored) {}
-            }
-        }
-
-        // Adjust statistics
         totalBytesSent -= sentReduction;
         totalBytesReceived -= receivedReduction;
+
+        // Close and remove all taps for this instance
+        List<Integer> tapIdsToRemove = new ArrayList<>();
+        for (Map.Entry<Integer, SocketTap> entry : socketTaps.entrySet()) {
+            if (entry.getValue().getInstanceId() == instanceId) {
+                tapIdsToRemove.add(entry.getKey());
+            }
+        }
+        for (int socketId : tapIdsToRemove) {
+            removeTap(socketId);
+        }
 
         logger.info("Cleaned up network data for instance #" + instanceId);
     }
