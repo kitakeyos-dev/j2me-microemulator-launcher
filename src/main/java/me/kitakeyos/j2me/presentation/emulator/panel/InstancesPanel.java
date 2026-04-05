@@ -267,9 +267,6 @@ public class InstancesPanel extends BaseTabPanel {
         });
 
         // Max paint FPS spinner (caps SwingDisplayComponent.repaintRequest)
-        JPanel fpsRow = new JPanel();
-        fpsRow.setLayout(new BoxLayout(fpsRow, BoxLayout.X_AXIS));
-        fpsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         JLabel fpsLabel = new JLabel("Max paint FPS: ");
         int currentFps = applicationConfig.getMaxPaintFps();
         JSpinner fpsSpinner = new JSpinner(new SpinnerNumberModel(currentFps, 5, 60, 5));
@@ -281,14 +278,8 @@ public class InstancesPanel extends BaseTabPanel {
             applicationConfig.saveConfiguration();
             me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setFps(fps);
         });
-        fpsRow.add(fpsLabel);
-        fpsRow.add(fpsSpinner);
-
         // Idle sleep spinner — drops paints entirely after N seconds idle.
-        JPanel idleRow = new JPanel();
-        idleRow.setLayout(new BoxLayout(idleRow, BoxLayout.X_AXIS));
-        idleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel idleLabel = new JLabel("Idle sleep (sec, 0=off): ");
+        JLabel idleLabel = new JLabel("  Idle sleep (sec): ");
         int currentIdle = applicationConfig.getIdleSleepSeconds();
         JSpinner idleSpinner = new JSpinner(new SpinnerNumberModel(currentIdle, 0, 3600, 10));
         idleSpinner.setMaximumSize(new Dimension(80, 25));
@@ -299,20 +290,39 @@ public class InstancesPanel extends BaseTabPanel {
             applicationConfig.saveConfiguration();
             me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setIdleTimeoutSeconds(sec);
         });
-        idleRow.add(idleLabel);
-        idleRow.add(idleSpinner);
+
+        // Row 1: Sync Input button
+        syncInputButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Row 2: Scale Input + Full Display (two checkboxes side by side)
+        JPanel inputRow = new JPanel();
+        inputRow.setLayout(new BoxLayout(inputRow, BoxLayout.X_AXIS));
+        inputRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        inputRow.add(scaleInputBySizeCheckBox);
+        inputRow.add(Box.createHorizontalStrut(10));
+        inputRow.add(fullDisplayModeCheckBox);
+        inputRow.add(Box.createHorizontalGlue());
+
+        // Row 3: Disable All Graphics (own row — long label)
+        disableGraphicsCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Row 4: Performance — Max FPS + Idle sleep on one row
+        JPanel perfRow = new JPanel();
+        perfRow.setLayout(new BoxLayout(perfRow, BoxLayout.X_AXIS));
+        perfRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        perfRow.add(fpsLabel);
+        perfRow.add(fpsSpinner);
+        perfRow.add(idleLabel);
+        perfRow.add(idleSpinner);
+        perfRow.add(Box.createHorizontalGlue());
 
         panel.add(syncInputButton);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(scaleInputBySizeCheckBox);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(fullDisplayModeCheckBox);
-        panel.add(Box.createVerticalStrut(5));
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(inputRow);
+        panel.add(Box.createVerticalStrut(4));
         panel.add(disableGraphicsCheckBox);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(fpsRow);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(idleRow);
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(perfRow);
 
         return panel;
     }
