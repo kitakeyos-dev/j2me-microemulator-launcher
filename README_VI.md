@@ -16,7 +16,7 @@ J2ME MicroEmulator Launcher là ứng dụng desktop mạnh mẽ cho phép chạ
 ### 🖥️ Hỗ Trợ Đa Instance
 - Chạy không giới hạn số lượng emulator instances cùng lúc
 - Tùy chỉnh kích thước màn hình (rộng 128-800px, cao 128-1000px)
-- Đồng bộ input giữa tất cả instances
+- Đồng bộ input có chọn lọc giữa các instance với hỗ trợ kéo thả
 - Điều khiển từng instance riêng lẻ
 
 ### ⚙️ Quản Lý Emulator

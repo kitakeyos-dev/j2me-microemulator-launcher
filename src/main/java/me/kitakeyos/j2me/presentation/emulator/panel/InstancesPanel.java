@@ -40,7 +40,7 @@ public class InstancesPanel extends BaseTabPanel {
     private JSpinner instanceCountSpinner;
     private JSpinner displayWidthSpinner;
     private JSpinner displayHeightSpinner;
-    private JCheckBox syncInputCheckBox;
+    private JButton syncInputButton;
     private JCheckBox scaleInputBySizeCheckBox;
     private JCheckBox fullDisplayModeCheckBox;
     private JCheckBox disableGraphicsCheckBox; // New global toggle
@@ -229,19 +229,11 @@ public class InstancesPanel extends BaseTabPanel {
                 BorderFactory.createTitledBorder(Messages.get("inst.options.title")),
                 BorderFactory.createEmptyBorder(10, 15, 10, 15)));
 
-        // Input synchronization option
-        syncInputCheckBox = new JCheckBox(Messages.get("inst.syncInput"));
-        syncInputCheckBox.setToolTipText(Messages.get("inst.syncInput.tooltip"));
-        syncInputCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        syncInputCheckBox.addActionListener(e -> {
-            boolean enabled = syncInputCheckBox.isSelected();
-            if (emulatorInstanceManager != null) {
-                emulatorInstanceManager.setInputSynchronizationEnabled(enabled);
-                String message = Messages.get(enabled ? "inst.syncInput.enabled" : "inst.syncInput.disabled");
-                showToast(message, ToastNotification.ToastType.INFO);
-                statusBar.setInfo(message);
-            }
-        });
+        // Input synchronization button - opens selection dialog
+        syncInputButton = new JButton(Messages.get("inst.syncInput"));
+        syncInputButton.setToolTipText(Messages.get("inst.syncInput.tooltip"));
+        syncInputButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        syncInputButton.addActionListener(e -> showSyncSelectionDialog());
 
         // Scale input by size option
         scaleInputBySizeCheckBox = new JCheckBox(Messages.get("inst.scaleInput"));
@@ -274,7 +266,7 @@ public class InstancesPanel extends BaseTabPanel {
             }
         });
 
-        panel.add(syncInputCheckBox);
+        panel.add(syncInputButton);
         panel.add(Box.createVerticalStrut(5));
         panel.add(scaleInputBySizeCheckBox);
         panel.add(Box.createVerticalStrut(5));
@@ -524,7 +516,17 @@ public class InstancesPanel extends BaseTabPanel {
      * @param defaultSpeed Default speed to show as selected
      */
     private JMenuBar createInstanceMenuBar(EmulatorInstance emulatorInstance, double defaultSpeed) {
-        JMenuBar menuBar = new JMenuBar();
+        JMenuBar menuBar = new JMenuBar() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                if (isOpaque() && getBackground() != null) {
+                    g.setColor(getBackground());
+                    g.fillRect(0, 0, getWidth(), getHeight());
+                } else {
+                    super.paintComponent(g);
+                }
+            }
+        };
 
         // Instance title/info as a non-clickable label
         JLabel titleLabel = new JLabel("  " + Messages.get("inst.instance.title", emulatorInstance.getInstanceId()) + "  ");
@@ -693,6 +695,103 @@ public class InstancesPanel extends BaseTabPanel {
                 ToastNotification.showInfo(message);
                 break;
         }
+    }
+
+    /**
+     * Show dialog to select which instances participate in input sync.
+     */
+    private void showSyncSelectionDialog() {
+        java.util.List<EmulatorInstance> running = emulatorInstanceManager.getRunningInstances();
+        if (running.isEmpty()) {
+            showInfoMessage(Messages.get("inst.noRunning"));
+            return;
+        }
+
+        java.util.Set<Integer> currentSynced = emulatorInstanceManager.getSyncedInstanceIds();
+
+        // Build checkbox list
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+
+        java.util.List<JCheckBox> checkBoxes = new java.util.ArrayList<>();
+        for (EmulatorInstance instance : running) {
+            JCheckBox cb = new JCheckBox(
+                    Messages.get("inst.instance.title", instance.getInstanceId()),
+                    currentSynced.contains(instance.getInstanceId()));
+            checkBoxes.add(cb);
+            listPanel.add(cb);
+        }
+
+        // Select All / Deselect All buttons
+        JPanel buttonRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
+        JButton selectAllBtn = new JButton(Messages.get("inst.sync.selectAll"));
+        selectAllBtn.addActionListener(e -> checkBoxes.forEach(cb -> cb.setSelected(true)));
+        JButton deselectAllBtn = new JButton(Messages.get("inst.sync.deselectAll"));
+        deselectAllBtn.addActionListener(e -> checkBoxes.forEach(cb -> cb.setSelected(false)));
+        buttonRow.add(selectAllBtn);
+        buttonRow.add(deselectAllBtn);
+
+        JPanel dialogPanel = new JPanel(new BorderLayout(0, 10));
+        dialogPanel.add(buttonRow, BorderLayout.NORTH);
+        dialogPanel.add(listPanel, BorderLayout.CENTER);
+
+        int result = JOptionPane.showConfirmDialog(
+                this, dialogPanel, Messages.get("inst.syncInput"),
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            java.util.Set<Integer> selected = new java.util.HashSet<>();
+            for (int i = 0; i < checkBoxes.size(); i++) {
+                if (checkBoxes.get(i).isSelected()) {
+                    selected.add(running.get(i).getInstanceId());
+                }
+            }
+
+            emulatorInstanceManager.setSyncedInstanceIds(selected);
+
+            if (selected.isEmpty()) {
+                emulatorInstanceManager.setInputSynchronizationEnabled(false);
+                statusBar.setInfo(Messages.get("inst.syncInput.disabled"));
+            } else {
+                emulatorInstanceManager.setInputSynchronizationEnabled(true);
+                statusBar.setInfo(Messages.get("inst.sync.selected", selected.size()));
+            }
+
+            updateSyncHighlights(selected);
+        }
+    }
+
+    private static final Color SYNC_BG = new Color(0, 120, 215);
+    private static final Color SYNC_FG = Color.WHITE;
+
+    /**
+     * Update menu bar background to show which instances are synced.
+     * Custom paintComponent on JMenuBar allows overriding LAF background.
+     */
+    private void updateSyncHighlights(java.util.Set<Integer> syncedIds) {
+        for (Component comp : runningInstancesPanel.getComponents()) {
+            if (!(comp instanceof JPanel)) continue;
+            JPanel panel = (JPanel) comp;
+            Integer id = (Integer) panel.getClientProperty("instanceId");
+            if (id == null) continue;
+
+            Component first = panel.getComponent(0);
+            if (!(first instanceof JMenuBar)) continue;
+            JMenuBar menuBar = (JMenuBar) first;
+
+            boolean synced = syncedIds.contains(id);
+            menuBar.setOpaque(synced);
+            menuBar.setBackground(synced ? SYNC_BG : null);
+
+            for (Component child : menuBar.getComponents()) {
+                if (child instanceof JLabel) {
+                    ((JLabel) child).setForeground(synced ? SYNC_FG : null);
+                } else if (child instanceof JMenu) {
+                    ((JMenu) child).setForeground(synced ? SYNC_FG : null);
+                }
+            }
+        }
+        runningInstancesPanel.repaint();
     }
 
     /**

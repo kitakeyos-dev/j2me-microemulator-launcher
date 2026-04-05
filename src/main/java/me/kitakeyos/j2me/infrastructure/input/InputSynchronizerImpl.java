@@ -10,19 +10,16 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Synchronizes mouse and keyboard input across multiple emulator instances.
- *
- * Optimizations over naive approach:
- * - Source instance is stored in listener, eliminating per-event instance lookup.
- * - Mouse coordinates use SwingUtilities.convertPoint instead of getLocationOnScreen.
- * - Key events dispatch directly to target devicePanel (no component path matching).
- * - Re-entrancy guard uses a simple thread-local boolean instead of a component set.
+ * Synchronizes mouse and keyboard input across selected emulator instances.
+ * Only instances whose IDs are in the syncedInstanceIds set will participate.
  */
 public class InputSynchronizerImpl implements InputSynchronizer {
 
@@ -31,6 +28,9 @@ public class InputSynchronizerImpl implements InputSynchronizer {
     private final InstanceManager instanceManager;
     private boolean enabled = false;
     private boolean scaleBySize = false;
+
+    // Which instances participate in sync
+    private final Set<Integer> syncedInstanceIds = ConcurrentHashMap.newKeySet();
 
     // Thread-local guard to prevent infinite dispatch loops
     private final ThreadLocal<Boolean> dispatching = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -52,11 +52,15 @@ public class InputSynchronizerImpl implements InputSynchronizer {
         this.enabled = enabled;
 
         if (enabled) {
+            // Attach listeners to all synced running instances
             for (EmulatorInstance instance : instanceManager.getRunningInstances()) {
-                attachListenersToInstance(instance);
+                if (syncedInstanceIds.contains(instance.getInstanceId())) {
+                    attachListenersToInstance(instance);
+                }
             }
-            logger.info("Input synchronization enabled");
+            logger.info("Input synchronization enabled for instances: " + syncedInstanceIds);
         } else {
+            // Detach all listeners
             for (EmulatorInstance instance : instanceManager.getRunningInstances()) {
                 detachListenersFromInstance(instance);
             }
@@ -74,7 +78,6 @@ public class InputSynchronizerImpl implements InputSynchronizer {
     @Override
     public void setScaleBySize(boolean scaleBySize) {
         this.scaleBySize = scaleBySize;
-        logger.info("Input scaling by size " + (scaleBySize ? "enabled" : "disabled"));
     }
 
     @Override
@@ -83,8 +86,44 @@ public class InputSynchronizerImpl implements InputSynchronizer {
     }
 
     @Override
+    public void setSyncedInstanceIds(Set<Integer> instanceIds) {
+        // Detach from instances no longer synced
+        Set<Integer> removed = new HashSet<>(syncedInstanceIds);
+        removed.removeAll(instanceIds);
+        for (int id : removed) {
+            EmulatorInstance instance = instanceManager.findInstance(id);
+            if (instance != null) {
+                detachListenersFromInstance(instance);
+            }
+        }
+
+        // Update the set
+        syncedInstanceIds.clear();
+        syncedInstanceIds.addAll(instanceIds);
+
+        // Attach to newly synced instances
+        if (enabled) {
+            Set<Integer> added = new HashSet<>(instanceIds);
+            added.removeAll(removed); // Only truly new ones
+            for (int id : syncedInstanceIds) {
+                EmulatorInstance instance = instanceManager.findInstance(id);
+                if (instance != null && !mouseListeners.containsKey(instance)) {
+                    attachListenersToInstance(instance);
+                }
+            }
+        }
+
+        logger.info("Synced instances updated: " + syncedInstanceIds);
+    }
+
+    @Override
+    public Set<Integer> getSyncedInstanceIds() {
+        return new HashSet<>(syncedInstanceIds);
+    }
+
+    @Override
     public void attachListenersToInstance(EmulatorInstance instance) {
-        if (!enabled) {
+        if (!enabled || !syncedInstanceIds.contains(instance.getInstanceId())) {
             return;
         }
 
@@ -93,7 +132,11 @@ public class InputSynchronizerImpl implements InputSynchronizer {
             return;
         }
 
-        // Each listener knows its source instance - no per-event lookup needed
+        // Don't attach twice
+        if (mouseListeners.containsKey(instance)) {
+            return;
+        }
+
         MouseAdapter mouseListener = new SyncMouseAdapter(instance);
         KeyAdapter keyListener = new SyncKeyAdapter(instance);
 
@@ -117,7 +160,6 @@ public class InputSynchronizerImpl implements InputSynchronizer {
 
         if (mouseListener != null && keyListener != null) {
             detachRecursively(devicePanel, mouseListener, keyListener);
-            logger.info("Detached listeners from instance #" + instance.getInstanceId());
         }
     }
 
@@ -133,7 +175,6 @@ public class InputSynchronizerImpl implements InputSynchronizer {
             return;
         }
 
-        // Convert event point to source devicePanel coordinates
         Point pointInSource;
         try {
             pointInSource = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), sourcePanel);
@@ -146,25 +187,31 @@ public class InputSynchronizerImpl implements InputSynchronizer {
             if (target == sourceInstance) {
                 continue;
             }
+            // Only dispatch to synced instances
+            if (!syncedInstanceIds.contains(target.getInstanceId())) {
+                continue;
+            }
 
             JPanel targetPanel = target.getDevicePanel();
             if (targetPanel == null) {
                 continue;
             }
 
-            // Scale coordinates if panels have different sizes
             Point pointInTarget = scaleBySize
                     ? scalePoint(pointInSource, sourcePanel, targetPanel)
                     : pointInSource;
 
-            // Find deepest component at target point
+            // Clamp point to find target component, but use unclamped for the event
+            int clampedX = Math.max(0, Math.min(pointInTarget.x, targetPanel.getWidth() - 1));
+            int clampedY = Math.max(0, Math.min(pointInTarget.y, targetPanel.getHeight() - 1));
+
             Component targetComponent = SwingUtilities.getDeepestComponentAt(
-                    targetPanel, pointInTarget.x, pointInTarget.y);
+                    targetPanel, clampedX, clampedY);
             if (targetComponent == null) {
                 targetComponent = targetPanel;
             }
 
-            // Convert to target component's local coordinates
+            // Convert the actual (unclamped) point to target component coordinates
             Point localPoint = SwingUtilities.convertPoint(targetPanel, pointInTarget, targetComponent);
 
             MouseEvent newEvent = new MouseEvent(
@@ -199,8 +246,10 @@ public class InputSynchronizerImpl implements InputSynchronizer {
             if (target == sourceInstance) {
                 continue;
             }
+            if (!syncedInstanceIds.contains(target.getInstanceId())) {
+                continue;
+            }
 
-            // Dispatch key events directly to target devicePanel
             JPanel targetPanel = target.getDevicePanel();
             if (targetPanel == null) {
                 continue;
@@ -243,6 +292,7 @@ public class InputSynchronizerImpl implements InputSynchronizer {
 
     private void attachRecursively(Component component, MouseAdapter mouse, KeyAdapter key) {
         component.addMouseListener(mouse);
+        component.addMouseMotionListener(mouse);
         component.addKeyListener(key);
         if (component instanceof JComponent) {
             component.setFocusable(true);
@@ -256,6 +306,7 @@ public class InputSynchronizerImpl implements InputSynchronizer {
 
     private void detachRecursively(Component component, MouseAdapter mouse, KeyAdapter key) {
         component.removeMouseListener(mouse);
+        component.removeMouseMotionListener(mouse);
         component.removeKeyListener(key);
         if (component instanceof Container) {
             for (Component child : ((Container) component).getComponents()) {
@@ -264,7 +315,7 @@ public class InputSynchronizerImpl implements InputSynchronizer {
         }
     }
 
-    // ======== Listener classes that know their source instance ========
+    // ======== Listener classes ========
 
     private class SyncMouseAdapter extends MouseAdapter {
         private final EmulatorInstance sourceInstance;
@@ -285,6 +336,16 @@ public class InputSynchronizerImpl implements InputSynchronizer {
 
         @Override
         public void mouseClicked(MouseEvent e) {
+            broadcastMouse(sourceInstance, e);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            broadcastMouse(sourceInstance, e);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
             broadcastMouse(sourceInstance, e);
         }
     }

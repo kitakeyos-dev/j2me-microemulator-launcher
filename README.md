@@ -16,7 +16,7 @@ J2ME MicroEmulator Launcher is a powerful desktop application that enables runni
 ### 🖥️ Multi-Instance Support
 - Run unlimited emulator instances simultaneously
 - Configurable display size (128-800px width, 128-1000px height)
-- Input synchronization across all instances
+- Selective input synchronization across chosen instances with drag support
 - Individual instance control
 
 ### ⚙️ Emulator Management

@@ -143,6 +143,19 @@ public class InstanceManager {
         return inputSynchronizer != null && inputSynchronizer.isScaleBySize();
     }
 
+    public void setSyncedInstanceIds(java.util.Set<Integer> instanceIds) {
+        if (inputSynchronizer != null) {
+            inputSynchronizer.setSyncedInstanceIds(instanceIds);
+        }
+    }
+
+    public java.util.Set<Integer> getSyncedInstanceIds() {
+        if (inputSynchronizer != null) {
+            return inputSynchronizer.getSyncedInstanceIds();
+        }
+        return java.util.Collections.emptySet();
+    }
+
     public void notifyInstanceStarted(EmulatorInstance instance) {
         if (inputSynchronizer != null && inputSynchronizer.isEnabled()) {
             inputSynchronizer.attachListenersToInstance(instance);
