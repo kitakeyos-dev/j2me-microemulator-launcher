@@ -284,6 +284,24 @@ public class InstancesPanel extends BaseTabPanel {
         fpsRow.add(fpsLabel);
         fpsRow.add(fpsSpinner);
 
+        // Idle sleep spinner — drops paints entirely after N seconds idle.
+        JPanel idleRow = new JPanel();
+        idleRow.setLayout(new BoxLayout(idleRow, BoxLayout.X_AXIS));
+        idleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel idleLabel = new JLabel("Idle sleep (sec, 0=off): ");
+        int currentIdle = applicationConfig.getIdleSleepSeconds();
+        JSpinner idleSpinner = new JSpinner(new SpinnerNumberModel(currentIdle, 0, 3600, 10));
+        idleSpinner.setMaximumSize(new Dimension(80, 25));
+        idleSpinner.setToolTipText("After this many seconds without mouse/keyboard activity, stop rendering all MIDlet canvases. 0 disables.");
+        idleSpinner.addChangeListener(e -> {
+            int sec = (Integer) idleSpinner.getValue();
+            applicationConfig.setIdleSleepSeconds(sec);
+            applicationConfig.saveConfiguration();
+            me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setIdleTimeoutSeconds(sec);
+        });
+        idleRow.add(idleLabel);
+        idleRow.add(idleSpinner);
+
         panel.add(syncInputButton);
         panel.add(Box.createVerticalStrut(5));
         panel.add(scaleInputBySizeCheckBox);
@@ -293,6 +311,8 @@ public class InstancesPanel extends BaseTabPanel {
         panel.add(disableGraphicsCheckBox);
         panel.add(Box.createVerticalStrut(5));
         panel.add(fpsRow);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(idleRow);
 
         return panel;
     }

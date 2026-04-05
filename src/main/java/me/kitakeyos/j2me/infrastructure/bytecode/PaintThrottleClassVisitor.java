@@ -108,12 +108,59 @@ public class PaintThrottleClassVisitor extends ClassAdapter {
         public void visitCode() {
             mv.visitCode();
 
+            org.objectweb.asm.Label dropFrame = new org.objectweb.asm.Label();
+
+            // Guard 1: launcher window minimized → drop every frame
+            // if (PaintThrottleConfig.windowMinimized) return;
+            mv.visitFieldInsn(Opcodes.GETSTATIC, CONFIG_CLASS, "windowMinimized", "Z");
+            mv.visitJumpInsn(Opcodes.IFNE, dropFrame);
+
+            // Guard 2: component scrolled out of viewport
+            // Rectangle r = this.getVisibleRect();
+            // if (r.width <= 0 || r.height <= 0) return;
+            mv.visitVarInsn(Opcodes.ALOAD, 0);
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "javax/swing/JComponent",
+                    "getVisibleRect", "()Ljava/awt/Rectangle;");
+            mv.visitVarInsn(Opcodes.ASTORE, 5);
+            mv.visitVarInsn(Opcodes.ALOAD, 5);
+            mv.visitFieldInsn(Opcodes.GETFIELD, "java/awt/Rectangle", "width", "I");
+            mv.visitJumpInsn(Opcodes.IFLE, dropFrame);
+            mv.visitVarInsn(Opcodes.ALOAD, 5);
+            mv.visitFieldInsn(Opcodes.GETFIELD, "java/awt/Rectangle", "height", "I");
+            mv.visitJumpInsn(Opcodes.IFLE, dropFrame);
+
             // long now = System.currentTimeMillis();
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/System",
                     "currentTimeMillis", "()J");
-            mv.visitVarInsn(Opcodes.LSTORE, 5);
+            mv.visitVarInsn(Opcodes.LSTORE, 5); // reuse slot 5-6 (Rectangle ref no longer needed)
 
-            // if (now - this.__lastPaintTime >= 33) goto proceed;
+            // Guard 3: idle timeout
+            // long idle = PaintThrottleConfig.idleTimeoutMs;
+            // if (idle > 0 && now - PaintThrottleConfig.lastActivityMs > idle) return;
+            mv.visitFieldInsn(Opcodes.GETSTATIC, CONFIG_CLASS, "idleTimeoutMs", "J");
+            mv.visitInsn(Opcodes.DUP2); // keep idle for the comparison below
+            mv.visitInsn(Opcodes.LCONST_0);
+            mv.visitInsn(Opcodes.LCMP);
+            org.objectweb.asm.Label idleDisabled = new org.objectweb.asm.Label();
+            mv.visitJumpInsn(Opcodes.IFLE, idleDisabled); // idle <= 0 → skip check
+            // stack: [idle(long)]
+            mv.visitVarInsn(Opcodes.LLOAD, 5);
+            mv.visitFieldInsn(Opcodes.GETSTATIC, CONFIG_CLASS, "lastActivityMs", "J");
+            mv.visitInsn(Opcodes.LSUB); // now - lastActivity
+            // stack: [idle, elapsed]
+            mv.visitInsn(Opcodes.LCMP); // compare: v1=idle, v2=elapsed → -1 if idle<elapsed (exceeded)
+            mv.visitJumpInsn(Opcodes.IFLT, dropFrame); // cmp<0 means elapsed>idle → drop
+            org.objectweb.asm.Label afterIdle = new org.objectweb.asm.Label();
+            mv.visitJumpInsn(Opcodes.GOTO, afterIdle);
+
+            mv.visitLabel(idleDisabled);
+            // stack: [idle(long)] still present (from DUP2) — discard
+            mv.visitInsn(Opcodes.POP2);
+
+            mv.visitLabel(afterIdle);
+
+            // Guard 4: rate limit
+            // if (now - this.__lastPaintTime < intervalMs) return;
             mv.visitVarInsn(Opcodes.LLOAD, 5);
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitFieldInsn(Opcodes.GETFIELD, owner, FIELD_NAME, "J");
@@ -123,7 +170,7 @@ public class PaintThrottleClassVisitor extends ClassAdapter {
             org.objectweb.asm.Label proceed = new org.objectweb.asm.Label();
             mv.visitJumpInsn(Opcodes.IFGE, proceed);
 
-            // drop frame
+            mv.visitLabel(dropFrame);
             mv.visitInsn(Opcodes.RETURN);
 
             mv.visitLabel(proceed);
@@ -138,8 +185,8 @@ public class PaintThrottleClassVisitor extends ClassAdapter {
 
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
-            // We introduced a long-sized local (slots 5-6) and added up to
-            // 4 stack slots (2 longs for LSUB). Pad both.
+            // slots 5-6 used for temp (Rectangle ref or long now).
+            // Max stack: 4 for LSUB with two longs.
             super.visitMaxs(Math.max(maxStack, 4), Math.max(maxLocals, 7));
         }
     }

@@ -56,6 +56,24 @@ public class MainApplication extends JFrame {
         setLocationRelativeTo(null);
         loadAppIcons();
 
+        // Drop every MicroEmulator paint while the launcher is minimized to
+        // the taskbar — no point rendering canvases the user cannot see.
+        addWindowStateListener(e -> {
+            boolean iconified = (e.getNewState() & java.awt.Frame.ICONIFIED) != 0;
+            me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.windowMinimized = iconified;
+        });
+
+        // Track user activity for idle-based paint sleeping. Writes happen
+        // on the EDT, reads happen from MIDlet threads — both via volatile.
+        java.awt.Toolkit.getDefaultToolkit().addAWTEventListener(
+                evt -> me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.lastActivityMs
+                        = System.currentTimeMillis(),
+                java.awt.AWTEvent.MOUSE_EVENT_MASK
+                        | java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK
+                        | java.awt.AWTEvent.KEY_EVENT_MASK);
+        me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setIdleTimeoutSeconds(
+                applicationConfig.getIdleSleepSeconds());
+
         // Initialize managers with dependency injection
         applicationRepository = new ApplicationRepositoryImpl(applicationConfig);
         applicationService = new ApplicationService(applicationRepository);

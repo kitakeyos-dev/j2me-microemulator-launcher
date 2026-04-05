@@ -22,6 +22,8 @@ public class ApplicationConfig {
     private static final String LANGUAGE_KEY = "ui.language";
     private static final String MAX_PAINT_FPS_KEY = "ui.maxPaintFps";
     private static final int DEFAULT_MAX_PAINT_FPS = 30;
+    private static final String IDLE_SLEEP_SECONDS_KEY = "ui.idleSleepSeconds";
+    private static final int DEFAULT_IDLE_SLEEP_SECONDS = 0; // disabled by default
     public static final String DATA_DIR = "data";
     public static final String APPS_DIR = "apps";
     public static final String ICONS_DIR = "icons";
@@ -126,6 +128,23 @@ public class ApplicationConfig {
 
     public void setMaxPaintFps(int fps) {
         properties.setProperty(MAX_PAINT_FPS_KEY, String.valueOf(fps));
+    }
+
+    /**
+     * After this many seconds without user input, the paint throttle guard
+     * drops every paint. 0 disables the idle sleep entirely.
+     */
+    public int getIdleSleepSeconds() {
+        try {
+            return Integer.parseInt(properties.getProperty(IDLE_SLEEP_SECONDS_KEY,
+                    String.valueOf(DEFAULT_IDLE_SLEEP_SECONDS)));
+        } catch (NumberFormatException e) {
+            return DEFAULT_IDLE_SLEEP_SECONDS;
+        }
+    }
+
+    public void setIdleSleepSeconds(int seconds) {
+        properties.setProperty(IDLE_SLEEP_SECONDS_KEY, String.valueOf(seconds));
     }
 
     /**
