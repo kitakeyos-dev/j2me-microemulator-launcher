@@ -29,6 +29,7 @@ package me.kitakeyos.j2me.infrastructure.bytecode;
 import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
+import me.kitakeyos.j2me.domain.network.service.NetworkService;
 import me.kitakeyos.j2me.infrastructure.network.MonitoredSocket;
 
 import java.io.File;
@@ -84,7 +85,7 @@ public final class SystemCallHandler implements Serializable {
 
     public static Socket createSocket(int instanceId, String host, int port) throws IOException {
         // Delegate to NetworkService for redirection, proxy, and logging
-        Socket realSocket = me.kitakeyos.j2me.domain.network.service.NetworkService.getInstance()
+        Socket realSocket = NetworkService.getInstance()
                 .createSocket(instanceId, host, port);
 
         // Wrap with MonitoredSocket for packet capture
@@ -99,21 +100,4 @@ public final class SystemCallHandler implements Serializable {
         return socket;
     }
 
-    /**
-     * Intercepted Thread.sleep call with speed adjustment.
-     * Called instead of Thread.sleep(long) in J2ME apps after JAR transformation.
-     *
-     * @param millis     Original sleep time in milliseconds
-     * @param instanceId Instance ID for speed lookup
-     */
-    public static void sleep(long millis, int instanceId) throws InterruptedException {
-        me.kitakeyos.j2me.domain.speed.service.SpeedService speedService = me.kitakeyos.j2me.domain.speed.service.SpeedService
-                .getInstance();
-        long adjustedMillis = speedService.adjustSleepTime(instanceId, millis);
-
-        if (adjustedMillis > 0) {
-            Thread.sleep(adjustedMillis);
-        }
-        // If 0 or negative (very high speed), skip sleep entirely
-    }
 }

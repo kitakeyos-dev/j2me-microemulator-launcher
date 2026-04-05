@@ -1,43 +1,46 @@
 package me.kitakeyos.j2me.infrastructure.bytecode;
 
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Label;
 
 /**
  * Generates bytecode for SpeedHelper class that will be injected into J2ME
- * JARs.
- * 
- * This class is designed to be included in the transformed JAR so that
- * J2ME app classes can call it without ClassLoader issues.
- * 
+ * JARs. The helper is loaded by MicroEmulator's MIDlet classloader, which
+ * restricts visibility to standard {@code java.*} APIs — so the generated
+ * code must not reference any launcher-side class directly.
+ *
+ * Speed multipliers are carried across the classloader boundary via the
+ * Thread's own name: XThread encodes {@code <baseName> + '\u0001' + milli}
+ * when speed != 1.0. The fast path (no override) is just {@code getName()}
+ * + {@code indexOf} + one branch — no lock, no allocation, no reflection.
+ *
  * The generated class is equivalent to:
- * 
+ *
+ * <pre>
  * package j2me_speed_helper;
  * public class SpeedHelper {
- * public static void sleep(long millis) throws InterruptedException {
- * int instanceId = getInstanceIdFromThread();
- * String speedStr = System.getProperty("j2me.speed." + instanceId);
- * if (speedStr == null) speedStr = "1.0";
- * double speed = Double.parseDouble(speedStr);
- * long adjusted = (long)(millis / speed);
- * if (adjusted > 0) {
- * Thread.sleep(adjusted);
+ *     public static void sleep(long millis) throws InterruptedException {
+ *         String name = Thread.currentThread().getName();
+ *         int idx = name.indexOf(1); // '\u0001'
+ *         if (idx >= 0) {
+ *             // Manual decimal parse — zero allocation on the hot path.
+ *             int len = name.length();
+ *             int milli = 0;
+ *             for (int i = idx + 1; i < len; i++) {
+ *                 milli = milli * 10 + name.charAt(i) - '0';
+ *             }
+ *             if (milli > 0 && milli != 1000) {
+ *                 millis = millis * 1000L / milli;
+ *             }
+ *         }
+ *         if (millis > 0) {
+ *             Thread.sleep(millis);
+ *         }
+ *     }
  * }
- * }
- * 
- * private static int getInstanceIdFromThread() {
- * Thread t = Thread.currentThread();
- * try {
- * // Use reflection to call t.getInstanceId() if it's XThread
- * return
- * ((Integer)t.getClass().getMethod("getInstanceId").invoke(t)).intValue();
- * } catch (Exception e) {
- * return 0; // Default instance
- * }
- * }
- * }
+ * </pre>
  */
 public class SpeedHelperGenerator {
 
@@ -50,7 +53,6 @@ public class SpeedHelperGenerator {
     public static byte[] generateClass() {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
-        // Class header
         cw.visit(Opcodes.V1_5,
                 Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER,
                 CLASS_NAME,
@@ -67,10 +69,6 @@ public class SpeedHelperGenerator {
         mv.visitMaxs(1, 1);
         mv.visitEnd();
 
-        // Generate getInstanceIdFromThread() method
-        generateGetInstanceIdMethod(cw);
-
-        // Generate sleep(long millis) method
         generateSleepMethod(cw);
 
         cw.visitEnd();
@@ -78,65 +76,15 @@ public class SpeedHelperGenerator {
     }
 
     /**
-     * Generate: private static int getInstanceIdFromThread()
-     */
-    private static void generateGetInstanceIdMethod(ClassWriter cw) {
-        MethodVisitor mv = cw.visitMethod(
-                Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC,
-                "getInstanceIdFromThread",
-                "()I",
-                null,
-                null);
-        mv.visitCode();
-
-        Label tryStart = new Label();
-        Label tryEnd = new Label();
-        Label catchHandler = new Label();
-        mv.visitTryCatchBlock(tryStart, tryEnd, catchHandler, "java/lang/Exception");
-
-        mv.visitLabel(tryStart);
-
-        // Thread t = Thread.currentThread()
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;");
-        mv.visitVarInsn(Opcodes.ASTORE, 0);
-
-        // t.getClass()
-        mv.visitVarInsn(Opcodes.ALOAD, 0);
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
-
-        // .getMethod("getInstanceId")
-        mv.visitLdcInsn("getInstanceId");
-        mv.visitInsn(Opcodes.ICONST_0);
-        mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getMethod",
-                "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;");
-
-        // .invoke(t)
-        mv.visitVarInsn(Opcodes.ALOAD, 0);
-        mv.visitInsn(Opcodes.ICONST_0);
-        mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke",
-                "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
-
-        // Cast to Integer and get intValue
-        mv.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I");
-
-        mv.visitLabel(tryEnd);
-        mv.visitInsn(Opcodes.IRETURN);
-
-        mv.visitLabel(catchHandler);
-        // On exception, just return 0
-        mv.visitInsn(Opcodes.POP); // pop exception
-        mv.visitInsn(Opcodes.ICONST_0);
-        mv.visitInsn(Opcodes.IRETURN);
-
-        mv.visitMaxs(4, 1);
-        mv.visitEnd();
-    }
-
-    /**
      * Generate: public static void sleep(long millis) throws InterruptedException
+     *
+     * Local slots:
+     *   0-1: millis (long) — reused to hold adjusted value
+     *   2  : String name
+     *   3  : int idx
+     *   4  : int len
+     *   5  : int milli (accumulator)
+     *   6  : int i (loop index)
      */
     private static void generateSleepMethod(ClassWriter cw) {
         MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC,
@@ -146,61 +94,98 @@ public class SpeedHelperGenerator {
                 new String[] { "java/lang/InterruptedException" });
         mv.visitCode();
 
-        // int instanceId = getInstanceIdFromThread()
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, CLASS_NAME, "getInstanceIdFromThread", "()I");
-        mv.visitVarInsn(Opcodes.ISTORE, 2);
+        Label doSleep = new Label();
+        Label end = new Label();
 
-        // String key = "j2me.speed." + instanceId
-        mv.visitTypeInsn(Opcodes.NEW, "java/lang/StringBuilder");
-        mv.visitInsn(Opcodes.DUP);
-        mv.visitLdcInsn("j2me.speed.");
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
-        mv.visitVarInsn(Opcodes.ILOAD, 2); // instanceId
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-        // Stack: [key]
+        // String name = Thread.currentThread().getName();
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;");
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Thread", "getName", "()Ljava/lang/String;");
+        mv.visitVarInsn(Opcodes.ASTORE, 2);
 
-        // String speedStr = System.getProperty(key) - WITHOUT default
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/System", "getProperty",
-                "(Ljava/lang/String;)Ljava/lang/String;");
-        // Stack: [speedStr] (may be null)
+        // int idx = name.indexOf(1);
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitInsn(Opcodes.ICONST_1);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "indexOf", "(I)I");
+        mv.visitVarInsn(Opcodes.ISTORE, 3);
 
-        // if (speedStr == null) speedStr = "1.0"
-        mv.visitInsn(Opcodes.DUP);
-        Label notNull = new Label();
-        mv.visitJumpInsn(Opcodes.IFNONNULL, notNull);
-        mv.visitInsn(Opcodes.POP); // pop null
-        mv.visitLdcInsn("1.0"); // push default
-        mv.visitLabel(notNull);
-        // Stack: [speedStr]
+        // if (idx < 0) goto doSleep;
+        mv.visitVarInsn(Opcodes.ILOAD, 3);
+        mv.visitJumpInsn(Opcodes.IFLT, doSleep);
 
-        // double speed = Double.parseDouble(speedStr)
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "parseDouble",
-                "(Ljava/lang/String;)D");
-        mv.visitVarInsn(Opcodes.DSTORE, 3); // Store speed in local var 3
-        // Stack: []
+        // int len = name.length();
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I");
+        mv.visitVarInsn(Opcodes.ISTORE, 4);
 
-        // long adjusted = (long)(millis / speed)
-        mv.visitVarInsn(Opcodes.LLOAD, 0); // millis
-        mv.visitInsn(Opcodes.L2D); // convert to double
-        mv.visitVarInsn(Opcodes.DLOAD, 3); // speed
-        mv.visitInsn(Opcodes.DDIV); // millis / speed
-        mv.visitInsn(Opcodes.D2L); // convert back to long
-        mv.visitVarInsn(Opcodes.LSTORE, 5); // Store adjusted in local var 5
-        // Stack: []
+        // int milli = 0;
+        mv.visitInsn(Opcodes.ICONST_0);
+        mv.visitVarInsn(Opcodes.ISTORE, 5);
 
-        // if (adjusted > 0) Thread.sleep(adjusted)
-        mv.visitVarInsn(Opcodes.LLOAD, 5); // adjusted
+        // int i = idx + 1;
+        mv.visitVarInsn(Opcodes.ILOAD, 3);
+        mv.visitInsn(Opcodes.ICONST_1);
+        mv.visitInsn(Opcodes.IADD);
+        mv.visitVarInsn(Opcodes.ISTORE, 6);
+
+        // loop: if (i >= len) goto afterLoop;
+        Label loopStart = new Label();
+        Label afterLoop = new Label();
+        mv.visitLabel(loopStart);
+        mv.visitVarInsn(Opcodes.ILOAD, 6);
+        mv.visitVarInsn(Opcodes.ILOAD, 4);
+        mv.visitJumpInsn(Opcodes.IF_ICMPGE, afterLoop);
+
+        // milli = milli * 10 + name.charAt(i) - '0';
+        mv.visitVarInsn(Opcodes.ILOAD, 5);
+        mv.visitIntInsn(Opcodes.BIPUSH, 10);
+        mv.visitInsn(Opcodes.IMUL);
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitVarInsn(Opcodes.ILOAD, 6);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C");
+        mv.visitInsn(Opcodes.IADD);
+        mv.visitIntInsn(Opcodes.BIPUSH, 48); // '0'
+        mv.visitInsn(Opcodes.ISUB);
+        mv.visitVarInsn(Opcodes.ISTORE, 5);
+
+        // i++;
+        mv.visitIincInsn(6, 1);
+
+        // goto loopStart;
+        mv.visitJumpInsn(Opcodes.GOTO, loopStart);
+
+        mv.visitLabel(afterLoop);
+
+        // if (milli <= 0) goto doSleep;
+        mv.visitVarInsn(Opcodes.ILOAD, 5);
+        mv.visitJumpInsn(Opcodes.IFLE, doSleep);
+
+        // if (milli == 1000) goto doSleep;
+        mv.visitVarInsn(Opcodes.ILOAD, 5);
+        mv.visitIntInsn(Opcodes.SIPUSH, 1000);
+        mv.visitJumpInsn(Opcodes.IF_ICMPEQ, doSleep);
+
+        // millis = millis * 1000L / milli;
+        mv.visitVarInsn(Opcodes.LLOAD, 0);
+        mv.visitLdcInsn(Long.valueOf(1000L));
+        mv.visitInsn(Opcodes.LMUL);
+        mv.visitVarInsn(Opcodes.ILOAD, 5);
+        mv.visitInsn(Opcodes.I2L);
+        mv.visitInsn(Opcodes.LDIV);
+        mv.visitVarInsn(Opcodes.LSTORE, 0);
+
+        mv.visitLabel(doSleep);
+
+        // if (millis <= 0) goto end;
+        mv.visitVarInsn(Opcodes.LLOAD, 0);
         mv.visitInsn(Opcodes.LCONST_0);
         mv.visitInsn(Opcodes.LCMP);
-        Label skipSleep = new Label();
-        mv.visitJumpInsn(Opcodes.IFLE, skipSleep);
+        mv.visitJumpInsn(Opcodes.IFLE, end);
 
-        // Thread.sleep(adjusted)
-        mv.visitVarInsn(Opcodes.LLOAD, 5);
+        // Thread.sleep(millis);
+        mv.visitVarInsn(Opcodes.LLOAD, 0);
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "sleep", "(J)V");
 
-        mv.visitLabel(skipSleep);
+        mv.visitLabel(end);
         mv.visitInsn(Opcodes.RETURN);
 
         mv.visitMaxs(4, 7);
