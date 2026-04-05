@@ -27,6 +27,7 @@
 package me.kitakeyos.j2me.infrastructure.classloader;
 
 import me.kitakeyos.j2me.infrastructure.bytecode.InstrumentationClassVisitor;
+import me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -65,7 +66,9 @@ public class ClassPreprocessor {
 			ClassReader cr = new ClassReader(originalBytes);
 			ClassWriter cw = new ClassWriter(0);
 			me.kitakeyos.j2me.infrastructure.bytecode.ModificationTracker tracker = new me.kitakeyos.j2me.infrastructure.bytecode.ModificationTracker();
-			ClassVisitor cv = new InstrumentationClassVisitor(cw, instanceId, tracker);
+			// Chain: reader → InstrumentationClassVisitor → PaintThrottleClassVisitor → writer
+			ClassVisitor cv = new PaintThrottleClassVisitor(cw, tracker);
+			cv = new InstrumentationClassVisitor(cv, instanceId, tracker);
 			cr.accept(cv, 0);
 
 			if (tracker.isModified()) {

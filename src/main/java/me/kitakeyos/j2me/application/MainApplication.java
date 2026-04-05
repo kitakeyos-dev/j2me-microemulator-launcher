@@ -47,6 +47,8 @@ public class MainApplication extends JFrame {
         // Initialize config first and load language
         applicationConfig = new ApplicationConfig();
         Messages.loadBundle(applicationConfig.getLanguage());
+        me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setFps(
+                applicationConfig.getMaxPaintFps());
 
         setTitle(Messages.get("app.title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

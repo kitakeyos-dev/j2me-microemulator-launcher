@@ -266,6 +266,24 @@ public class InstancesPanel extends BaseTabPanel {
             }
         });
 
+        // Max paint FPS spinner (caps SwingDisplayComponent.repaintRequest)
+        JPanel fpsRow = new JPanel();
+        fpsRow.setLayout(new BoxLayout(fpsRow, BoxLayout.X_AXIS));
+        fpsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel fpsLabel = new JLabel("Max paint FPS: ");
+        int currentFps = applicationConfig.getMaxPaintFps();
+        JSpinner fpsSpinner = new JSpinner(new SpinnerNumberModel(currentFps, 5, 60, 5));
+        fpsSpinner.setMaximumSize(new Dimension(80, 25));
+        fpsSpinner.setToolTipText("Cap MicroEmulator paint rate. Game logic speed is unaffected.");
+        fpsSpinner.addChangeListener(e -> {
+            int fps = (Integer) fpsSpinner.getValue();
+            applicationConfig.setMaxPaintFps(fps);
+            applicationConfig.saveConfiguration();
+            me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setFps(fps);
+        });
+        fpsRow.add(fpsLabel);
+        fpsRow.add(fpsSpinner);
+
         panel.add(syncInputButton);
         panel.add(Box.createVerticalStrut(5));
         panel.add(scaleInputBySizeCheckBox);
@@ -273,6 +291,8 @@ public class InstancesPanel extends BaseTabPanel {
         panel.add(fullDisplayModeCheckBox);
         panel.add(Box.createVerticalStrut(5));
         panel.add(disableGraphicsCheckBox);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(fpsRow);
 
         return panel;
     }
@@ -709,9 +729,10 @@ public class InstancesPanel extends BaseTabPanel {
 
         java.util.Set<Integer> currentSynced = emulatorInstanceManager.getSyncedInstanceIds();
 
-        // Build checkbox list
-        JPanel listPanel = new JPanel();
-        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        // Build checkbox grid — scale columns with instance count so dialog
+        // stays compact when there are many instances.
+        int columns = running.size() > 60 ? 5 : running.size() > 20 ? 3 : 1;
+        JPanel listPanel = new JPanel(new java.awt.GridLayout(0, columns, 8, 2));
 
         java.util.List<JCheckBox> checkBoxes = new java.util.ArrayList<>();
         for (EmulatorInstance instance : running) {
@@ -721,6 +742,18 @@ public class InstancesPanel extends BaseTabPanel {
             checkBoxes.add(cb);
             listPanel.add(cb);
         }
+
+        // Cap the dialog height; scroll when it overflows.
+        JScrollPane scrollPane = new JScrollPane(listPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        int rowHeight = 24;
+        int preferredRows = Math.min((int) Math.ceil(running.size() / (double) columns), 18);
+        scrollPane.setPreferredSize(new Dimension(
+                columns * 130 + 24,
+                preferredRows * rowHeight + 8));
 
         // Select All / Deselect All buttons
         JPanel buttonRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
@@ -733,7 +766,7 @@ public class InstancesPanel extends BaseTabPanel {
 
         JPanel dialogPanel = new JPanel(new BorderLayout(0, 10));
         dialogPanel.add(buttonRow, BorderLayout.NORTH);
-        dialogPanel.add(listPanel, BorderLayout.CENTER);
+        dialogPanel.add(scrollPane, BorderLayout.CENTER);
 
         int result = JOptionPane.showConfirmDialog(
                 this, dialogPanel, Messages.get("inst.syncInput"),

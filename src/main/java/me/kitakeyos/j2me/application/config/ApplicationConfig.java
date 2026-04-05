@@ -20,6 +20,8 @@ public class ApplicationConfig {
     private static final String DEFAULT_MICROEMULATOR_PATH = "microemulator.jar";
     private static final String TOAST_NOTIFICATIONS_KEY = "ui.toastNotifications";
     private static final String LANGUAGE_KEY = "ui.language";
+    private static final String MAX_PAINT_FPS_KEY = "ui.maxPaintFps";
+    private static final int DEFAULT_MAX_PAINT_FPS = 30;
     public static final String DATA_DIR = "data";
     public static final String APPS_DIR = "apps";
     public static final String ICONS_DIR = "icons";
@@ -106,6 +108,24 @@ public class ApplicationConfig {
      */
     public void setMicroemulatorPath(String path) {
         properties.setProperty(MICROEMULATOR_PATH_KEY, path);
+    }
+
+    /**
+     * Max FPS cap for MicroEmulator paint pipeline. Applied at runtime via
+     * {@code PaintThrottleConfig}. Keeps EDT responsive when many instances
+     * run at high game-loop speed.
+     */
+    public int getMaxPaintFps() {
+        try {
+            return Integer.parseInt(properties.getProperty(MAX_PAINT_FPS_KEY,
+                    String.valueOf(DEFAULT_MAX_PAINT_FPS)));
+        } catch (NumberFormatException e) {
+            return DEFAULT_MAX_PAINT_FPS;
+        }
+    }
+
+    public void setMaxPaintFps(int fps) {
+        properties.setProperty(MAX_PAINT_FPS_KEY, String.valueOf(fps));
     }
 
     /**
