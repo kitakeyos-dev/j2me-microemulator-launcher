@@ -267,11 +267,11 @@ public class InstancesPanel extends BaseTabPanel {
         });
 
         // Max paint FPS spinner (caps SwingDisplayComponent.repaintRequest)
-        JLabel fpsLabel = new JLabel("Max paint FPS: ");
+        JLabel fpsLabel = new JLabel(Messages.get("inst.maxPaintFps"));
         int currentFps = applicationConfig.getMaxPaintFps();
         JSpinner fpsSpinner = new JSpinner(new SpinnerNumberModel(currentFps, 5, 60, 5));
         fpsSpinner.setMaximumSize(new Dimension(80, 25));
-        fpsSpinner.setToolTipText("Cap MicroEmulator paint rate. Game logic speed is unaffected.");
+        fpsSpinner.setToolTipText(Messages.get("inst.maxPaintFps.tooltip"));
         fpsSpinner.addChangeListener(e -> {
             int fps = (Integer) fpsSpinner.getValue();
             applicationConfig.setMaxPaintFps(fps);
@@ -279,11 +279,11 @@ public class InstancesPanel extends BaseTabPanel {
             me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleConfig.setFps(fps);
         });
         // Idle sleep spinner — drops paints entirely after N seconds idle.
-        JLabel idleLabel = new JLabel("  Idle sleep (sec): ");
+        JLabel idleLabel = new JLabel("  " + Messages.get("inst.idleSleep"));
         int currentIdle = applicationConfig.getIdleSleepSeconds();
         JSpinner idleSpinner = new JSpinner(new SpinnerNumberModel(currentIdle, 0, 3600, 10));
         idleSpinner.setMaximumSize(new Dimension(80, 25));
-        idleSpinner.setToolTipText("After this many seconds without mouse/keyboard activity, stop rendering all MIDlet canvases. 0 disables.");
+        idleSpinner.setToolTipText(Messages.get("inst.idleSleep.tooltip"));
         idleSpinner.addChangeListener(e -> {
             int sec = (Integer) idleSpinner.getValue();
             applicationConfig.setIdleSleepSeconds(sec);
