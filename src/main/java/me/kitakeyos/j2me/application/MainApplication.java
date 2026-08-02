@@ -6,6 +6,11 @@ import me.kitakeyos.j2me.domain.application.repository.ApplicationRepository;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
+import me.kitakeyos.j2me.domain.hook.repository.HookProvider;
+import me.kitakeyos.j2me.domain.hook.repository.HookRegistry;
+import me.kitakeyos.j2me.domain.hook.service.HookService;
+import me.kitakeyos.j2me.infrastructure.hook.HookJarLoader;
+import me.kitakeyos.j2me.infrastructure.hook.InMemoryHookRegistry;
 import me.kitakeyos.j2me.infrastructure.persistence.application.ApplicationRepositoryImpl;
 import me.kitakeyos.j2me.infrastructure.persistence.emulator.EmulatorConfigRepositoryImpl;
 import me.kitakeyos.j2me.presentation.emulator.panel.ApplicationsPanel;
@@ -37,6 +42,8 @@ public class MainApplication extends JFrame {
     private final ApplicationRepository applicationRepository;
     private final ApplicationService applicationService;
     private final EmulatorConfigRepositoryImpl emulatorConfigRepository;
+    private final HookProvider hookProvider;
+    private final HookService hookService;
     private InstancesPanel instancesPanel;
     private EmulatorsPanel emulatorsPanel;
     public InstanceManager emulatorInstanceManager;
@@ -79,10 +86,16 @@ public class MainApplication extends JFrame {
         applicationService = new ApplicationService(applicationRepository);
         emulatorConfigRepository = new EmulatorConfigRepositoryImpl(applicationConfig);
 
+        // The bytecode pipeline reads this same registry through
+        // InMemoryHookRegistry.getInstance(); the UI goes through the ports.
+        HookRegistry hookRegistry = InMemoryHookRegistry.getInstance();
+        hookService = new HookService(hookRegistry);
+        hookProvider = new HookJarLoader(hookRegistry);
+
         applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
         emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, emulatorConfigRepository);
         instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
-        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService);
+        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService, hookProvider, hookService);
 
         // Wire emulator config repository to instances panel
         instancesPanel.setEmulatorConfigRepository(emulatorConfigRepository);
@@ -96,8 +109,6 @@ public class MainApplication extends JFrame {
      * Listener for application changes - kept as field to allow removal on rebuild.
      */
     private ApplicationService.ApplicationChangeListener appChangeListener;
-    private EmulatorConfigRepositoryImpl.EmulatorConfigChangeListener emulatorConfigChangeListener;
-    private Runnable instanceChangeListener;
 
     private void initializeComponents() {
         // Create tabbed pane
@@ -133,11 +144,11 @@ public class MainApplication extends JFrame {
         };
         applicationService.addApplicationChangeListener(appChangeListener);
 
-        emulatorConfigChangeListener = () -> instancesPanel.refreshEmulatorComboBox();
+        EmulatorConfigRepositoryImpl.EmulatorConfigChangeListener emulatorConfigChangeListener = () -> instancesPanel.refreshEmulatorComboBox();
         emulatorConfigRepository.addChangeListener(emulatorConfigChangeListener);
 
 
-        instanceChangeListener = () -> injectionPanel.refreshInstanceList();
+        Runnable instanceChangeListener = () -> injectionPanel.refreshInstanceList();
         emulatorInstanceManager.addInstanceChangeListener(instanceChangeListener);
     }
 
@@ -165,7 +176,7 @@ public class MainApplication extends JFrame {
         applicationsPanel = new ApplicationsPanel(this, applicationConfig, applicationService);
         emulatorsPanel = new EmulatorsPanel(this, applicationConfig, applicationService, emulatorConfigRepository);
         instancesPanel = new InstancesPanel(this, applicationConfig, applicationService);
-        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService);
+        injectionPanel = new InjectionPanel(this, applicationConfig, applicationService, hookProvider, hookService);
 
         instancesPanel.setEmulatorConfigRepository(emulatorConfigRepository);
         emulatorInstanceManager = instancesPanel.emulatorInstanceManager;

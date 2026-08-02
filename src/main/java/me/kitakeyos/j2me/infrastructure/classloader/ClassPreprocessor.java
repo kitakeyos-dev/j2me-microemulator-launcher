@@ -26,8 +26,11 @@
  */
 package me.kitakeyos.j2me.infrastructure.classloader;
 
+import me.kitakeyos.j2me.domain.hook.repository.HookLookup;
+import me.kitakeyos.j2me.infrastructure.bytecode.HookClassVisitor;
 import me.kitakeyos.j2me.infrastructure.bytecode.InstrumentationClassVisitor;
 import me.kitakeyos.j2me.infrastructure.bytecode.PaintThrottleClassVisitor;
+import me.kitakeyos.j2me.infrastructure.hook.InMemoryHookRegistry;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -66,9 +69,17 @@ public class ClassPreprocessor {
 			ClassReader cr = new ClassReader(originalBytes);
 			ClassWriter cw = new ClassWriter(0);
 			me.kitakeyos.j2me.infrastructure.bytecode.ModificationTracker tracker = new me.kitakeyos.j2me.infrastructure.bytecode.ModificationTracker();
-			// Chain: reader → InstrumentationClassVisitor → PaintThrottleClassVisitor → writer
+			// Chain: reader → HookClassVisitor → InstrumentationClassVisitor → PaintThrottleClassVisitor → writer
 			ClassVisitor cv = new PaintThrottleClassVisitor(cw, tracker);
 			cv = new InstrumentationClassVisitor(cv, instanceId, tracker);
+
+			// Hooks run first so the preserved original body still passes through
+			// the instrumentation below it (Thread.sleep, Socket, ...).
+			HookLookup hookLookup = InMemoryHookRegistry.getInstance();
+			if (hookLookup.hasAnyHooks(instanceId)) {
+				cv = new HookClassVisitor(cv, instanceId, tracker, hookLookup);
+			}
+
 			cr.accept(cv, 0);
 
 			if (tracker.isModified()) {

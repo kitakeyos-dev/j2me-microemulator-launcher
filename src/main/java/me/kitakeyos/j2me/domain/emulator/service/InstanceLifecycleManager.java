@@ -7,6 +7,7 @@ import me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService;
 import me.kitakeyos.j2me.domain.network.service.NetworkService;
 import me.kitakeyos.j2me.domain.speed.service.SpeedService;
 import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
+import me.kitakeyos.j2me.infrastructure.hook.HookDispatcher;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -62,8 +63,9 @@ public class InstanceLifecycleManager {
                         cleanupResources(instance);
                     } finally {
                         try {
-                            // 5. Clean up network data for this instance
+                            // 5. Clean up network data and hook state for this instance
                             cleanupNetwork(instance);
+                            cleanupHooks(instance);
                         } finally {
                             try {
                                 // 6. Remove from instance manager (so XThreads created during exit are still tracked)
@@ -148,6 +150,22 @@ public class InstanceLifecycleManager {
             NetworkService.getInstance().removeInstanceData(instance.getInstanceId());
         } catch (Exception e) {
             logger.warning("Error cleaning up network data for instance #" + instance.getInstanceId()
+                    + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Drop the hook dispatcher's cached reflection state so the instance's
+     * classloader can be collected.
+     * <p>
+     * Registered hooks themselves are intentionally kept: restarting the
+     * instance should re-apply them.
+     */
+    private static void cleanupHooks(EmulatorInstance instance) {
+        try {
+            HookDispatcher.release(instance.getInstanceId());
+        } catch (Exception e) {
+            logger.warning("Error cleaning up hook state for instance #" + instance.getInstanceId()
                     + ": " + e.getMessage());
         }
     }

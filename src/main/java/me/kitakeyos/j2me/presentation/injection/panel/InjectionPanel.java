@@ -4,6 +4,9 @@ import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
+import me.kitakeyos.j2me.domain.hook.repository.HookLookup;
+import me.kitakeyos.j2me.domain.hook.repository.HookProvider;
+import me.kitakeyos.j2me.domain.hook.service.HookService;
 import me.kitakeyos.j2me.domain.injection.model.InjectionLogger;
 import me.kitakeyos.j2me.domain.injection.service.InjectionService;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
@@ -25,6 +28,8 @@ import java.util.List;
 public class InjectionPanel extends BaseTabPanel {
 
     private final InjectionService injectionService;
+    private final HookProvider hookProvider;
+    private final HookService hookService;
 
     // Header components
     private JLabel jarPathLabel;
@@ -35,10 +40,15 @@ public class InjectionPanel extends BaseTabPanel {
     private JLabel emptyLabel;
     private JTextArea logTextArea;
 
+    private File lastHookJar;
+
     public InjectionPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
-                          ApplicationService applicationService) {
+                          ApplicationService applicationService,
+                          HookProvider hookProvider, HookService hookService) {
         super(mainApplication, applicationConfig, applicationService);
         this.injectionService = new InjectionService();
+        this.hookProvider = hookProvider;
+        this.hookService = hookService;
     }
 
     @Override
@@ -112,9 +122,27 @@ public class InjectionPanel extends BaseTabPanel {
         clearLogButton.setMaximumSize(new Dimension(140, 30));
         clearLogButton.addActionListener(e -> logTextArea.setText(""));
 
+        JButton loadHooksButton = new JButton(Messages.get("inj.hooksButton"));
+        loadHooksButton.setToolTipText(Messages.get("inj.hooksButton.tooltip"));
+        loadHooksButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loadHooksButton.setPreferredSize(new Dimension(140, 30));
+        loadHooksButton.setMaximumSize(new Dimension(140, 30));
+        loadHooksButton.addActionListener(e -> browseAndLoadHooks());
+
+        JButton clearHooksButton = new JButton(Messages.get("inj.hooksClearButton"));
+        clearHooksButton.setToolTipText(Messages.get("inj.hooksClearButton.tooltip"));
+        clearHooksButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        clearHooksButton.setPreferredSize(new Dimension(140, 30));
+        clearHooksButton.setMaximumSize(new Dimension(140, 30));
+        clearHooksButton.addActionListener(e -> clearHooks());
+
         buttonsPanel.add(loadButton);
         buttonsPanel.add(Box.createVerticalStrut(8));
         buttonsPanel.add(reloadButton);
+        buttonsPanel.add(Box.createVerticalStrut(8));
+        buttonsPanel.add(loadHooksButton);
+        buttonsPanel.add(Box.createVerticalStrut(8));
+        buttonsPanel.add(clearHooksButton);
         buttonsPanel.add(Box.createVerticalStrut(8));
         buttonsPanel.add(refreshButton);
         buttonsPanel.add(Box.createVerticalStrut(8));
@@ -232,6 +260,65 @@ public class InjectionPanel extends BaseTabPanel {
         } catch (Exception e) {
             statusBar.setError(Messages.get("inj.reloadFailed", e.getMessage()));
         }
+    }
+
+    /**
+     * Load a JAR of {@code @Hook} classes.
+     * <p>
+     * Hooks are registered for every instance rather than the one selected
+     * above: the rewrite happens at class-load time, so hooks only take effect
+     * on instances started afterwards — an already-running instance has no
+     * useful hook to attach.
+     */
+    private void browseAndLoadHooks() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(Messages.get("inj.hooksDialog.title"));
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setFileFilter(new FileNameExtensionFilter(Messages.get("inj.jarFilter"), "jar"));
+
+        if (lastHookJar != null) {
+            fileChooser.setCurrentDirectory(lastHookJar.getParentFile());
+        }
+
+        if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File jarFile = fileChooser.getSelectedFile();
+        try {
+            List<String> registered = hookProvider.loadHooks(HookLookup.ALL_INSTANCES, jarFile);
+            lastHookJar = jarFile;
+
+            if (registered.isEmpty()) {
+                appendLog(Messages.get("inj.hooks.none", jarFile.getName()));
+                statusBar.setWarning(Messages.get("inj.hooks.none", jarFile.getName()));
+                ToastNotification.showWarning(Messages.get("inj.hooks.none", jarFile.getName()));
+                return;
+            }
+
+            for (String description : registered) {
+                appendLog("hook: " + description);
+            }
+            statusBar.setSuccess(Messages.get("inj.hooks.loaded", registered.size()));
+            ToastNotification.showSuccess(Messages.get("inj.hooks.loadedShort", registered.size()));
+        } catch (Exception e) {
+            appendLog("hook error: " + e);
+            statusBar.setError(Messages.get("inj.hooks.failed", e.getMessage()));
+            ToastNotification.showError(Messages.get("inj.hooks.failed", e.getMessage()));
+        }
+    }
+
+    private void clearHooks() {
+        hookService.clear(HookLookup.ALL_INSTANCES);
+        appendLog(Messages.get("inj.hooks.cleared"));
+        statusBar.setInfo(Messages.get("inj.hooks.cleared"));
+    }
+
+    private void appendLog(String line) {
+        SwingUtilities.invokeLater(() -> {
+            logTextArea.append(line + "\n");
+            logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
+        });
     }
 
     private void refreshEntryList(List<String> entryClassNames) {

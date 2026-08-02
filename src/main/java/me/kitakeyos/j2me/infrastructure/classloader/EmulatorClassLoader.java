@@ -1,6 +1,7 @@
 package me.kitakeyos.j2me.infrastructure.classloader;
 
 import me.kitakeyos.j2me.infrastructure.bytecode.ByteCodeHelper;
+import me.kitakeyos.j2me.infrastructure.hook.HookDispatcher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +53,9 @@ public class EmulatorClassLoader extends URLClassLoader {
     public EmulatorClassLoader(int instanceId, URL[] urls, ClassLoader parent) {
         super(urls, parent);
         this.instanceId = instanceId;
+        // Lets HookDispatcher resolve the declaring class of a hooked static
+        // method, where there is no receiver to take the loader from.
+        HookDispatcher.bindClassLoader(instanceId, this);
         logger.info("Created EmulatorClassLoader for instance #" + instanceId +
                 " with " + urls.length + " URL(s)");
     }
