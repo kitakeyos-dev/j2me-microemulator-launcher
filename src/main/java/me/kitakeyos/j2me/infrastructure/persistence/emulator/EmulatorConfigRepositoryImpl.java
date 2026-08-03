@@ -8,6 +8,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,7 +26,7 @@ public class EmulatorConfigRepositoryImpl implements EmulatorConfigRepository {
     private final File dataDir;
     private final File emulatorsDir;
     private final List<EmulatorConfig> configs;
-    private final List<EmulatorConfigChangeListener> listeners = new ArrayList<>();
+    private final List<EmulatorConfigChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     public EmulatorConfigRepositoryImpl(ApplicationConfig applicationConfig) {
         this.dataDir = applicationConfig.getDataDirectory();
@@ -220,12 +221,14 @@ public class EmulatorConfigRepositoryImpl implements EmulatorConfigRepository {
 
     // === Listener support ===
 
-    public interface EmulatorConfigChangeListener {
-        void onEmulatorConfigsChanged();
-    }
-
+    @Override
     public void addChangeListener(EmulatorConfigChangeListener listener) {
         listeners.add(listener);
+    }
+
+    @Override
+    public void removeChangeListener(EmulatorConfigChangeListener listener) {
+        listeners.remove(listener);
     }
 
     private void notifyListeners() {

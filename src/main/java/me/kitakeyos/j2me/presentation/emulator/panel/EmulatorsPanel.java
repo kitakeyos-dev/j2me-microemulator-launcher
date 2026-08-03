@@ -4,7 +4,7 @@ import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.application.service.ApplicationService;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorConfig;
-import me.kitakeyos.j2me.infrastructure.persistence.emulator.EmulatorConfigRepositoryImpl;
+import me.kitakeyos.j2me.domain.emulator.repository.EmulatorConfigRepository;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ToastNotification;
 import me.kitakeyos.j2me.presentation.common.dialog.ConfirmDialog;
@@ -23,7 +23,7 @@ import java.io.File;
  */
 public class EmulatorsPanel extends BaseTabPanel {
 
-    private EmulatorConfigRepositoryImpl emulatorConfigRepository;
+    private EmulatorConfigRepository emulatorConfigRepository;
 
     // Form fields
     private JTextField nameField;
@@ -41,7 +41,7 @@ public class EmulatorsPanel extends BaseTabPanel {
     private EmulatorConfig editingConfig;
 
     public EmulatorsPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
-            ApplicationService applicationService, EmulatorConfigRepositoryImpl emulatorConfigRepository) {
+            ApplicationService applicationService, EmulatorConfigRepository emulatorConfigRepository) {
         super(mainApplication, applicationConfig, applicationService);
         // Assign after super() — onInitialized() will skip refresh due to null guard
         this.emulatorConfigRepository = emulatorConfigRepository;

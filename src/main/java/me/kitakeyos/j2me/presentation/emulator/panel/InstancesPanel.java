@@ -8,9 +8,13 @@ import me.kitakeyos.j2me.application.emulator.EmulatorLauncher;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorConfig;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.domain.emulator.input.InputSynchronizerFactory;
 import me.kitakeyos.j2me.domain.emulator.repository.EmulatorConfigRepository;
+import me.kitakeyos.j2me.domain.emulator.repository.InstanceTabController;
 import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
-import me.kitakeyos.j2me.infrastructure.input.InputSynchronizerImpl;
+import me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService;
+import me.kitakeyos.j2me.domain.monitoring.SystemMetrics;
+import me.kitakeyos.j2me.domain.network.service.NetworkService;
 import me.kitakeyos.j2me.presentation.common.builder.ConfigurationPanelBuilder;
 import me.kitakeyos.j2me.presentation.common.component.BaseTabPanel;
 import me.kitakeyos.j2me.presentation.common.component.ScrollablePanel;
@@ -30,7 +34,7 @@ import java.util.logging.Logger;
  * Instances tab panel for managing emulator instances.
  * Allows users to create, configure, and manage multiple emulator instances.
  */
-public class InstancesPanel extends BaseTabPanel {
+public class InstancesPanel extends BaseTabPanel implements InstanceTabController {
 
     private static final Logger logger = Logger.getLogger(InstancesPanel.class.getName());
 
@@ -58,12 +62,24 @@ public class InstancesPanel extends BaseTabPanel {
     // Emulator config repository
     private EmulatorConfigRepository emulatorConfigRepository;
 
+    // Supplied by the composition root; the dialog is built on demand.
+    private final SystemMetrics systemMetrics;
+
     // Thread pool for launching emulator instances
     private final ExecutorService instanceLauncherPool = Executors.newCachedThreadPool();
 
+    /**
+     * @param inputSynchronizerFactory supplied by the composition root so this
+     *                                 panel never names an infrastructure
+     *                                 implementation
+     */
     public InstancesPanel(MainApplication mainApplication, ApplicationConfig applicationConfig,
-            ApplicationService j2meApplicationManager) {
+            ApplicationService j2meApplicationManager, InputSynchronizerFactory inputSynchronizerFactory,
+            SystemMetrics systemMetrics) {
         super(mainApplication, applicationConfig, j2meApplicationManager);
+        this.systemMetrics = systemMetrics;
+        // createContent() ran during super(), so the manager already exists.
+        emulatorInstanceManager.setInputSynchronizer(inputSynchronizerFactory.create(emulatorInstanceManager));
     }
 
     /**
@@ -168,9 +184,6 @@ public class InstancesPanel extends BaseTabPanel {
 
     @Override
     protected void onInitialized() {
-        // Wire InputSynchronizer implementation
-        emulatorInstanceManager.setInputSynchronizer(new InputSynchronizerImpl(emulatorInstanceManager));
-
         updateInstancesEmptyState();
     }
 
@@ -628,8 +641,7 @@ public class InstancesPanel extends BaseTabPanel {
         graphicsItem.setToolTipText(Messages.get("inst.disableGraphicsItem.tooltip"));
         graphicsItem.addActionListener(e -> {
             boolean disableGraphics = graphicsItem.isSelected();
-            me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService.getInstance()
-                    .setGraphicsEnabled(emulatorInstance, !disableGraphics);
+            GraphicsOptimizationService.getInstance().setGraphicsEnabled(emulatorInstance, !disableGraphics);
 
             String status = disableGraphics ? "DISABLED" : "ENABLED";
             showToast(Messages.get("inst.graphics.status", status, emulatorInstance.getInstanceId()),
@@ -641,8 +653,7 @@ public class InstancesPanel extends BaseTabPanel {
         JCheckBoxMenuItem packetCaptureItem = new JCheckBoxMenuItem(Messages.get("inst.packetCapture"));
         packetCaptureItem.setToolTipText(Messages.get("inst.packetCapture.tooltip"));
         packetCaptureItem.addActionListener(e -> {
-            me.kitakeyos.j2me.domain.network.service.NetworkService ns =
-                    me.kitakeyos.j2me.domain.network.service.NetworkService.getInstance();
+            NetworkService ns = NetworkService.getInstance();
             if (packetCaptureItem.isSelected()) {
                 ns.enableTapping(emulatorInstance.getInstanceId());
             } else {
@@ -717,6 +728,19 @@ public class InstancesPanel extends BaseTabPanel {
                 // Update empty state visibility
                 updateInstancesEmptyState();
             }
+        }
+    }
+
+    /**
+     * {@link InstanceTabController} entry point, called when a MIDlet exits on
+     * its own. Hops to the EDT since the caller is a MIDlet thread.
+     */
+    @Override
+    public void removeInstanceTab(EmulatorInstance instance) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            removeEmulatorInstanceTab(instance);
+        } else {
+            SwingUtilities.invokeLater(() -> removeEmulatorInstanceTab(instance));
         }
     }
 
@@ -871,7 +895,7 @@ public class InstancesPanel extends BaseTabPanel {
      */
     private void openSystemMonitor() {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        SystemMonitorDialog dialog = new SystemMonitorDialog(owner);
+        SystemMonitorDialog dialog = new SystemMonitorDialog(owner, systemMetrics);
         dialog.setVisible(true);
     }
 }

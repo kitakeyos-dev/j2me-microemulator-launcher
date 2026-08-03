@@ -1,14 +1,14 @@
 package me.kitakeyos.j2me.infrastructure.thread;
 
-import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
-import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
+import me.kitakeyos.j2me.domain.emulator.service.EmulatorRuntime;
+import me.kitakeyos.j2me.domain.speed.model.SpeedAdjustable;
 import me.kitakeyos.j2me.domain.speed.service.SpeedService;
 
 import java.util.logging.Logger;
 
 @SuppressWarnings("unused")
-public class XThread extends Thread {
+public class XThread extends Thread implements SpeedAdjustable {
 
     private static final Logger logger = Logger.getLogger(XThread.class.getName());
 
@@ -45,9 +45,12 @@ public class XThread extends Thread {
         applyEncodedName();
     }
 
+    /**
+     * Reached from instrumented MIDlet bytecode, so the owning instance has to
+     * be resolved through the runtime seam rather than injected.
+     */
     private void addToEmulatorInstance() {
-        InstanceManager manager = MainApplication.INSTANCE.emulatorInstanceManager;
-        EmulatorInstance instance = manager.findInstance(instanceId);
+        EmulatorInstance instance = EmulatorRuntime.lookup().findInstance(instanceId);
         if (instance != null) {
             instance.addThread(this);
         } else {
@@ -59,6 +62,7 @@ public class XThread extends Thread {
         return instanceId;
     }
 
+    @Override
     public double getSpeedMultiplier() {
         return speedMultiplier;
     }
@@ -68,6 +72,7 @@ public class XThread extends Thread {
      * the thread name so the next SpeedHelper.sleep() call picks up the new
      * value without any lock or map lookup.
      */
+    @Override
     public void setSpeedMultiplier(double multiplier) {
         this.speedMultiplier = multiplier;
         applyEncodedName();

@@ -1,9 +1,8 @@
 package me.kitakeyos.j2me.domain.speed.service;
 
-import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
-import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
-import me.kitakeyos.j2me.infrastructure.thread.XThread;
+import me.kitakeyos.j2me.domain.emulator.service.EmulatorRuntime;
+import me.kitakeyos.j2me.domain.speed.model.SpeedAdjustable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -83,17 +82,15 @@ public class SpeedService {
      * Newly-created XThreads pick up the value via their constructor.
      */
     private void propagateToThreads(int instanceId, double multiplier) {
-        InstanceManager manager = MainApplication.INSTANCE.emulatorInstanceManager;
-        if (manager == null) {
-            return;
-        }
-        EmulatorInstance instance = manager.findInstance(instanceId);
+        EmulatorInstance instance = EmulatorRuntime.lookup().findInstance(instanceId);
         if (instance == null) {
             return;
         }
+        // SpeedAdjustable rather than the concrete XThread: the domain states
+        // what it needs from a thread, infrastructure supplies it.
         for (Thread t : instance.getResourceManager().getThreads()) {
-            if (t instanceof XThread) {
-                ((XThread) t).setSpeedMultiplier(multiplier);
+            if (t instanceof SpeedAdjustable) {
+                ((SpeedAdjustable) t).setSpeedMultiplier(multiplier);
             }
         }
     }

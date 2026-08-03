@@ -1,6 +1,6 @@
 package me.kitakeyos.j2me.presentation.monitor;
 
-import me.kitakeyos.j2me.infrastructure.monitoring.SystemMonitorService;
+import me.kitakeyos.j2me.domain.monitoring.SystemMetrics;
 import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 
 import javax.swing.*;
@@ -11,7 +11,7 @@ import java.util.TimerTask;
 
 public class SystemMonitorDialog extends JDialog {
 
-    private final SystemMonitorService monitorService;
+    private final SystemMetrics monitorService;
     private final Timer timer;
 
     private JLabel heapLabel;
@@ -25,10 +25,10 @@ public class SystemMonitorDialog extends JDialog {
 
     private final DecimalFormat df = new DecimalFormat("#.##");
 
-    public SystemMonitorDialog(Frame owner) {
+    public SystemMonitorDialog(Frame owner, SystemMetrics monitorService) {
         super(owner, Messages.get("sysmon.title"), false);
         setResizable(false);
-        this.monitorService = new SystemMonitorService();
+        this.monitorService = monitorService;
         this.timer = new Timer(true);
 
         // Compact size

@@ -2,7 +2,7 @@ package me.kitakeyos.j2me.infrastructure.input;
 
 import me.kitakeyos.j2me.domain.emulator.input.InputSynchronizer;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
-import me.kitakeyos.j2me.domain.emulator.service.InstanceManager;
+import me.kitakeyos.j2me.domain.emulator.repository.InstanceLookup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +25,7 @@ public class InputSynchronizerImpl implements InputSynchronizer {
 
     private static final Logger logger = Logger.getLogger(InputSynchronizerImpl.class.getName());
 
-    private final InstanceManager instanceManager;
+    private final InstanceLookup instanceManager;
     private boolean enabled = false;
     private boolean scaleBySize = false;
 
@@ -39,7 +39,7 @@ public class InputSynchronizerImpl implements InputSynchronizer {
     private final Map<EmulatorInstance, MouseAdapter> mouseListeners = new ConcurrentHashMap<>();
     private final Map<EmulatorInstance, KeyAdapter> keyListeners = new ConcurrentHashMap<>();
 
-    public InputSynchronizerImpl(InstanceManager instanceManager) {
+    public InputSynchronizerImpl(InstanceLookup instanceManager) {
         this.instanceManager = instanceManager;
     }
 

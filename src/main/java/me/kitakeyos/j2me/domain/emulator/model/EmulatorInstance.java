@@ -1,9 +1,8 @@
 package me.kitakeyos.j2me.domain.emulator.model;
 
 import me.kitakeyos.j2me.domain.emulator.resource.ResourceManager;
-import me.kitakeyos.j2me.domain.emulator.service.InstanceLifecycleManager;
+import me.kitakeyos.j2me.domain.emulator.service.EmulatorRuntime;
 import me.kitakeyos.j2me.domain.speed.service.SpeedService;
-import me.kitakeyos.j2me.infrastructure.classloader.EmulatorClassLoader;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -42,7 +41,9 @@ public class EmulatorInstance {
     private JComponent emulatorDisplay;
     private ActionListener menuExitListener;
     private ClassLoader appClassLoader;
-    private EmulatorClassLoader emulatorClassLoader;
+    // Typed as ClassLoader, not the concrete EmulatorClassLoader: the domain
+    // must not depend on the infrastructure classloader implementation.
+    private ClassLoader emulatorClassLoader;
     private java.nio.file.Path transformedJarPath; // Speed control: transformed JAR
     private boolean graphicsEnabled = true; // Graphics optimization flag
 
@@ -107,7 +108,7 @@ public class EmulatorInstance {
         return appClassLoader;
     }
 
-    public EmulatorClassLoader getEmulatorClassLoader() {
+    public ClassLoader getEmulatorClassLoader() {
         return emulatorClassLoader;
     }
 
@@ -137,7 +138,7 @@ public class EmulatorInstance {
         this.appClassLoader = appClassLoader;
     }
 
-    public void setEmulatorClassLoader(EmulatorClassLoader emulatorClassLoader) {
+    public void setEmulatorClassLoader(ClassLoader emulatorClassLoader) {
         this.emulatorClassLoader = emulatorClassLoader;
     }
 
@@ -212,11 +213,11 @@ public class EmulatorInstance {
     }
 
     /**
-     * Shutdown the instance and release all resources
-     * Delegates to InstanceLifecycleManager for proper cleanup
+     * Shutdown the instance and release all resources.
+     * Delegates to the cleanup pipeline installed on {@link EmulatorRuntime}.
      */
     public void shutdown() {
-        InstanceLifecycleManager.shutdown(this);
+        EmulatorRuntime.lifecycle().shutdown(this);
     }
 
     @Override

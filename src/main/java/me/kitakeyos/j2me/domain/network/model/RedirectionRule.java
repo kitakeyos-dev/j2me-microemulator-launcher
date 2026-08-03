@@ -5,9 +5,14 @@ package me.kitakeyos.j2me.domain.network.model;
  * When a connection matches originalHost:originalPort, it will be redirected to
  * targetHost:targetPort.
  */
-public class RedirectionRule {
+public class RedirectionRule implements SocketRule {
 
-    public static final int ALL_INSTANCES = -1;
+    /**
+     * Group and order for every address-rewriting rule. Redirection runs before
+     * proxy selection so the proxy sees the final destination.
+     */
+    public static final String GROUP = "address";
+    public static final int ORDER = 100;
 
     private final String originalHost;
     private final int originalPort;
@@ -41,16 +46,28 @@ public class RedirectionRule {
         return targetPort;
     }
 
+    @Override
     public int getInstanceId() {
         return instanceId;
     }
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public String group() {
+        return GROUP;
+    }
+
+    @Override
+    public int order() {
+        return ORDER;
     }
 
     /**
@@ -62,6 +79,18 @@ public class RedirectionRule {
         if (this.instanceId != ALL_INSTANCES && this.instanceId != instanceId)
             return false;
         return originalHost.equalsIgnoreCase(host) && originalPort == port;
+    }
+
+    @Override
+    public boolean matches(SocketRoute route) {
+        // Matched against the requested address, so chained redirections cannot
+        // bounce a connection through a second hop.
+        return matches(route.getInstanceId(), route.getRequestedHost(), route.getRequestedPort());
+    }
+
+    @Override
+    public void apply(SocketRoute route) {
+        route.redirectTo(targetHost, targetPort);
     }
 
     @Override

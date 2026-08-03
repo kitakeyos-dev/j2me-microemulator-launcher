@@ -5,7 +5,9 @@ import me.kitakeyos.j2me.presentation.common.i18n.Messages;
 import me.kitakeyos.j2me.domain.network.model.PacketLog;
 import me.kitakeyos.j2me.domain.network.model.ProxyRule;
 import me.kitakeyos.j2me.domain.network.model.RedirectionRule;
+import me.kitakeyos.j2me.domain.network.service.NetworkChangeListener;
 import me.kitakeyos.j2me.domain.network.service.NetworkService;
+import me.kitakeyos.j2me.presentation.common.format.ByteFormat;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,7 +18,7 @@ import java.util.List;
  * Dialog to monitor network connections, manage redirection rules, and proxy
  * settings.
  */
-public class NetworkMonitorDialog extends JDialog implements NetworkService.NetworkChangeListener {
+public class NetworkMonitorDialog extends JDialog implements NetworkChangeListener {
 
     private final NetworkService networkService;
 
@@ -390,7 +392,8 @@ public class NetworkMonitorDialog extends JDialog implements NetworkService.Netw
     }
 
     private void updatePacketStats() {
-        packetStatsLabel.setText(networkService.getFormattedStats());
+        packetStatsLabel.setText(ByteFormat.trafficSummary(
+                networkService.getTotalBytesSent(), networkService.getTotalBytesReceived()));
     }
 
     private void showAddRedirectionDialog() {

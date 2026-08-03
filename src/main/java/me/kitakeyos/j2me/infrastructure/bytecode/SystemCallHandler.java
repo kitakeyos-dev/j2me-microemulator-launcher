@@ -26,9 +26,9 @@
  */
 package me.kitakeyos.j2me.infrastructure.bytecode;
 
-import me.kitakeyos.j2me.application.MainApplication;
 import me.kitakeyos.j2me.application.config.ApplicationConfig;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
+import me.kitakeyos.j2me.domain.emulator.service.EmulatorRuntime;
 import me.kitakeyos.j2me.domain.network.service.NetworkService;
 import me.kitakeyos.j2me.infrastructure.network.MonitoredSocket;
 
@@ -67,12 +67,12 @@ public final class SystemCallHandler implements Serializable {
     }
 
     public static void exit(int instanceId, int status) {
-        EmulatorInstance emulatorInstance = MainApplication.INSTANCE.emulatorInstanceManager.findInstance(instanceId);
+        EmulatorInstance emulatorInstance = EmulatorRuntime.lookup().findInstance(instanceId);
         if (emulatorInstance != null) {
 
             // Remove from running instances tab and shutdown
             javax.swing.SwingUtilities.invokeLater(() -> {
-                MainApplication.INSTANCE.removeEmulatorInstanceTab(emulatorInstance);
+                EmulatorRuntime.tabs().removeInstanceTab(emulatorInstance);
                 // Shutdown the instance and release all resources
                 emulatorInstance.shutdown();
             });
@@ -93,7 +93,7 @@ public final class SystemCallHandler implements Serializable {
                 realSocket, instanceId, host, port);
 
         // Track socket in emulator instance for cleanup
-        EmulatorInstance emulatorInstance = MainApplication.INSTANCE.emulatorInstanceManager.findInstance(instanceId);
+        EmulatorInstance emulatorInstance = EmulatorRuntime.lookup().findInstance(instanceId);
         if (emulatorInstance != null) {
             emulatorInstance.addSocket(socket);
         }

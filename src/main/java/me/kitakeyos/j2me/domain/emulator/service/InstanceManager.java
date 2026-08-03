@@ -3,6 +3,8 @@ package me.kitakeyos.j2me.domain.emulator.service;
 import me.kitakeyos.j2me.domain.emulator.input.InputSynchronizer;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance;
 import me.kitakeyos.j2me.domain.emulator.model.EmulatorInstance.InstanceState;
+import me.kitakeyos.j2me.domain.emulator.repository.InstanceRegistry;
+import me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -11,9 +13,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages emulator instances with ID pool for efficient ID reuse.
- * Now uses InputSynchronizer interface (Dependency Inversion Principle).
+ * Uses the InputSynchronizer interface (Dependency Inversion Principle) and
+ * exposes itself through {@link InstanceRegistry} so collaborators can depend
+ * on the narrow read or write half instead of this whole class.
  */
-public class InstanceManager {
+public class InstanceManager implements InstanceRegistry {
     private final List<EmulatorInstance> instances;
     private final JPanel instancesPanel;
     private final InstanceIdPool idPool;
@@ -33,11 +37,13 @@ public class InstanceManager {
         this.inputSynchronizer = inputSynchronizer;
     }
 
+    @Override
     public void addInstance(EmulatorInstance instance) {
         instances.add(instance);
         fireInstanceChanged();
     }
 
+    @Override
     public void removeInstance(EmulatorInstance instance) {
         instances.remove(instance);
         idPool.releaseId(instance.getInstanceId());
@@ -74,6 +80,7 @@ public class InstanceManager {
         return instances;
     }
 
+    @Override
     public List<EmulatorInstance> getRunningInstances() {
         List<EmulatorInstance> running = new ArrayList<>();
         for (EmulatorInstance instance : instances) {
@@ -94,6 +101,7 @@ public class InstanceManager {
         return runnable;
     }
 
+    @Override
     public EmulatorInstance findInstance(int instanceId) {
         for (EmulatorInstance instance : instances) {
             if (instance.getInstanceId() == instanceId) {
@@ -174,8 +182,7 @@ public class InstanceManager {
      * Enable or disable graphics rendering for all running instances.
      */
     public void setGlobalGraphicsEnabled(boolean enabled) {
-        me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService service = me.kitakeyos.j2me.domain.graphics.service.GraphicsOptimizationService
-                .getInstance();
+        GraphicsOptimizationService service = GraphicsOptimizationService.getInstance();
         for (EmulatorInstance instance : getRunningInstances()) {
             service.setGraphicsEnabled(instance, enabled);
         }

@@ -1,13 +1,19 @@
 package me.kitakeyos.j2me.domain.network.model;
 
+import java.net.InetSocketAddress;
 import java.net.Proxy;
 
 /**
  * Represents a proxy rule for socket connections.
  */
-public class ProxyRule {
+public class ProxyRule implements SocketRule {
 
-    public static final int ALL_INSTANCES = -1;
+    /**
+     * Group and order for proxy selection. Runs after address rewriting so the
+     * proxy is chosen for the final destination.
+     */
+    public static final String GROUP = "proxy";
+    public static final int ORDER = 200;
 
     public enum ProxyType {
         SOCKS,
@@ -49,6 +55,7 @@ public class ProxyRule {
         return proxyPort;
     }
 
+    @Override
     public int getInstanceId() {
         return instanceId;
     }
@@ -65,12 +72,23 @@ public class ProxyRule {
         return username != null && !username.isEmpty();
     }
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public String group() {
+        return GROUP;
+    }
+
+    @Override
+    public int order() {
+        return ORDER;
     }
 
     /**
@@ -80,6 +98,23 @@ public class ProxyRule {
         if (!enabled)
             return false;
         return this.instanceId == ALL_INSTANCES || this.instanceId == instanceId;
+    }
+
+    @Override
+    public boolean matches(SocketRoute route) {
+        return appliesTo(route.getInstanceId());
+    }
+
+    @Override
+    public void apply(SocketRoute route) {
+        route.useProxy(new Proxy(getJavaProxyType(), new InetSocketAddress(proxyHost, proxyPort)), describe());
+        if (hasAuthentication()) {
+            route.useProxyCredentials(username, password);
+        }
+    }
+
+    private String describe() {
+        return proxyType + " " + proxyHost + ":" + proxyPort + (hasAuthentication() ? " (auth)" : "");
     }
 
     /**
